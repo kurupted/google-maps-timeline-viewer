@@ -96,7 +96,7 @@ Your project directory should look like this:
 ```
 \xampp
 └── \htdocs
-   └── \timeline-project
+   └── \timeline-viewer
       ├── index.html
       └── \Takeout
          └── \Location History (Timeline)
