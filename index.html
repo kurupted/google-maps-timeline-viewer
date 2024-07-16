@@ -104,12 +104,24 @@
             font-size: 12px;
             white-space: nowrap;
         }
+        #datePickerContainer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+        #folderPickerContainer {
+            padding: 10px;
+        }
     </style>
 
 </head>
 <body>
 <div id="container">
     <div id="sidebar">
+        <div id="folderPickerContainer">
+            <button id="folderPicker">Choose Folder</button>
+        </div>
         <div id="datePickerContainer">
             <span id="prevDayBtn">&lt;</span>
             <input type="date" id="datePicker">
@@ -126,6 +138,7 @@
     let polylines = [];
     let infoWindows = [];
     let selectedPolyline = null;
+    let timelineData = {};
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
@@ -180,70 +193,58 @@
         return timelineItem;
     }
 
-    function loadTimelineDataInChunks(selectedDate) {
+    async function loadTimelineDataInChunks(selectedDate) {
         clearMap();
         clearSidebar();
-        const basePath = 'Takeout/Location History (Timeline)/Semantic Location History/';
         const year = selectedDate.getFullYear();
         const month = selectedDate.toLocaleString('default', { month: 'long' }).toUpperCase();
-        const filePath = `${basePath}${year}/${year}_${month}.json`;
+        const dataKey = `${year}_${month}`;
 
-        fetch(filePath)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const timeline = document.getElementById('timeline');
-                const relevantData = data.timelineObjects.filter(item => {
-                    const itemDate = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp).format('YYYY-MM-DD');
-                    return itemDate === selectedDate.toISOString().split('T')[0];
-                });
-
-                let firstLocationSet = false; // Flag to indicate if the first location is set
-
-                relevantData.forEach((item, index) => {
-                    const timelineItem = createTimelineItem(item, index);
-                    timeline.appendChild(timelineItem);
-
-                    // Center the map on the first location
-                    if (!firstLocationSet) {
-                        if (item.placeVisit) {
-                            const placeVisit = item.placeVisit;
-                            const latLng = {
-                                lat: placeVisit.location.latitudeE7 / 1e7,
-                                lng: placeVisit.location.longitudeE7 / 1e7
-                            };
-                            map.setCenter(latLng);
-                            map.setZoom(15);
-                            firstLocationSet = true;
-                        } else if (item.activitySegment) {
-                            const activitySegment = item.activitySegment;
-                            const startLatLng = {
-                                lat: activitySegment.startLocation.latitudeE7 / 1e7,
-                                lng: activitySegment.startLocation.longitudeE7 / 1e7
-                            };
-                            map.setCenter(startLatLng);
-                            map.setZoom(15);
-                            firstLocationSet = true;
-                        }
-                    }
-                });
-
-                // Now process the data for map rendering
-                relevantData.forEach((item, index) => {
-                    if (item.placeVisit) {
-                        renderPlaceVisit(item.placeVisit, index);
-                    } else if (item.activitySegment) {
-                        renderActivitySegment(item.activitySegment, index);
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('There has been a problem with your fetch operation:', error);
+        if (timelineData[dataKey]) {
+            const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
+                const itemDate = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp).format('YYYY-MM-DD');
+                return itemDate === selectedDate.toISOString().split('T')[0];
             });
+
+            let firstLocationSet = false;
+
+            relevantData.forEach((item, index) => {
+                const timelineItem = createTimelineItem(item, index);
+                document.getElementById('timeline').appendChild(timelineItem);
+
+                if (!firstLocationSet) {
+                    if (item.placeVisit) {
+                        const placeVisit = item.placeVisit;
+                        const latLng = {
+                            lat: placeVisit.location.latitudeE7 / 1e7,
+                            lng: placeVisit.location.longitudeE7 / 1e7
+                        };
+                        map.setCenter(latLng);
+                        map.setZoom(15);
+                        firstLocationSet = true;
+                    } else if (item.activitySegment) {
+                        const activitySegment = item.activitySegment;
+                        const startLatLng = {
+                            lat: activitySegment.startLocation.latitudeE7 / 1e7,
+                            lng: activitySegment.startLocation.longitudeE7 / 1e7
+                        };
+                        map.setCenter(startLatLng);
+                        map.setZoom(15);
+                        firstLocationSet = true;
+                    }
+                }
+            });
+
+            relevantData.forEach((item, index) => {
+                if (item.placeVisit) {
+                    renderPlaceVisit(item.placeVisit, index);
+                } else if (item.activitySegment) {
+                    renderActivitySegment(item.activitySegment, index);
+                }
+            });
+        } else {
+            console.log('No data available for the selected date');
+        }
     }
 
     function clearMap() {
@@ -706,14 +707,43 @@
         });
     }
 
+    async function readFilesFromDirectory(dirHandle) {
+        for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file' && entry.name.endsWith('.json')) {
+                const file = await entry.getFile();
+                const content = await file.text();
+                const data = JSON.parse(content);
+                const fileName = entry.name.split('.')[0]; // Assuming filename format is YYYY_MONTH.json
+                timelineData[fileName] = data;
+            } else if (entry.kind === 'directory') {
+                await readFilesFromDirectory(entry);
+            }
+        }
+    }
+
+    async function initFolderPicker() {
+        const folderPicker = document.getElementById('folderPicker');
+        folderPicker.addEventListener('click', async () => {
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                await readFilesFromDirectory(dirHandle);
+                console.log('Files loaded:', Object.keys(timelineData));
+                // Load data for the currently selected date
+                loadTimelineDataInChunks(new Date(document.getElementById('datePicker').value));
+            } catch (err) {
+                console.error('Error selecting folder:', err);
+            }
+        });
+    }
+
     window.onload = () => {
         initMap();
         initDatePicker();
-        const initialDate = new Date('2024-05-25'); // Set initial date to May 25, 2024
+        initFolderPicker();
+        const initialDate = new Date('2024-05-25');
         document.getElementById('datePicker').value = moment(initialDate).format('YYYY-MM-DD');
-        loadTimelineDataInChunks(initialDate);
-        map.setZoom(14); // Set zoom level to 15
     };
+
 </script>
 </body>
 </html>

@@ -58,29 +58,12 @@ Setup procedure:
 
 4. **Download the Export:**
     - Once the export is ready, download the file.
+    - Extract the archive to anywhere you like, eg My Documents.
+   
 
-## Install a Web Server (eg XAMPP)
-You'll need to install a local web server. We'll use XAMPP as an example.
-1. **Download XAMPP:**
-    - Visit [XAMPP Official Website](https://www.apachefriends.org/index.html) and download XAMPP for your operating system.
-
-2. **Install XAMPP:**
-    - Run the installer and follow the instructions to install XAMPP.
-
-3. **Start Apache Server:**
-    - Open the XAMPP Control Panel.
-    - Start the Apache server by clicking the "Start" button next to "Apache".
-
-##  Set Up the Web Folder & Extract Your Data
-1. **Locate XAMPP Web Folder:**
-    - Navigate to the XAMPP installation directory.
-    - Open the `htdocs` folder (typically found at `C:\xampp\htdocs` on Windows).
-
-2. **Create a New Folder for Your Project:**
-    - Create a new folder within `htdocs` (e.g., `timeline-viewer`).
-
-3. **Move the HTML File to the Project Folder:**
-    - Place this project's `index.html` file in the newly created project folder.
+##  Final Set Up
+1. **Download The Google Maps Timeline Viewer:**
+    - Save this project's `index.html` file anywhere you like, eg My Documents.
    
 4. **Add your API key:**
    - Open the index.html file in a text editor and find the code below, near the top:
@@ -89,30 +72,9 @@ You'll need to install a local web server. We'll use XAMPP as an example.
      ```
    - Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, and save.
 
-5. **Extract Google Timeline Data:**
-    - Extract the contents of the downloaded Takeout zip file to your project folder.
-
-Your project directory should look like this:
-```
-\xampp
-└── \htdocs
-   └── \timeline-viewer
-      ├── index.html
-      └── \Takeout
-         └── \Location History (Timeline)
-            └── \Semantic Location History
-               ├── \2023
-                  ├── 2023_January.json
-                  ├── 2023_February.json
-                  └── ...
-               ├── \2024
-                  ├── 2024_January.json
-                  ├── 2024_February.json
-                  └── ...
-               └── ...
-```
-
 
 ## View Your Timeline
-1. **Open Your Web Browser:**
-    - Navigate to `http://localhost/timeline-viewer`
+1. **Open the index.html File:**
+    - Double-click the file to open it. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
+    - At the top left of the page, click Choose Folder and navigate to your Google Takeout data. The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
+    - Use the date picker to choose a date that contains timeline data.
