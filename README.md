@@ -63,7 +63,7 @@ Setup procedure:
 
 ##  Final Set Up
 1. **Download The Google Maps Timeline Viewer:**
-    - Save this project's `index.html` file anywhere you like, eg My Documents.
+    - Save this project's `index.html` file anywhere you like, eg My Documents. (Click the index.html file, then click on "Raw" in the top-right of the content area. Copy/paste to eg Notepad and save as index.html)
    
 4. **Add your API key:**
    - Open the index.html file in a text editor and find the code below, near the top:
