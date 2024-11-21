@@ -1,0 +1,95 @@
+
+  "createdTime": "2020-10-24T00:16:28.632Z",
+  "modifiedTime": "2024-11-21T00:45:25.486Z",
+  "deviceSettings": [{
+    "deviceTag": 1433686876,
+    "reportingEnabled": false,
+    "legalCountryCode": "us",
+    "devicePrettyName": "iPad",
+    "platformType": "IOS",
+    "deviceCreationTime": "2024-07-10T21:26:57.609Z",
+    "latestLocationReportingSettingChange": {
+      "reportingEnabledModificationTime": "2024-07-10T21:26:57.609Z"
+    },
+    "iosVersion": "16.7.10",
+    "deviceSpec": {
+      "device": "iPad6,3"
+    },
+    "deviceActiveness": {
+      "hasSavedTimelineData": true,
+      "observedPlaceVisitsFor30PercentOfTheLast7d": true
+    }
+  }, {
+    "deviceTag": 576659698,
+    "reportingEnabled": false,
+    "legalCountryCode": "us",
+    "devicePrettyName": "iPhone",
+    "platformType": "IOS",
+    "deviceCreationTime": "2024-04-07T19:15:00.447Z",
+    "latestLocationReportingSettingChange": {
+      "reportingEnabledModificationTime": "2024-04-13T14:19:26.991Z"
+    },
+    "iosVersion": "17.6.1",
+    "deviceSpec": {
+      "device": "iPhone13,4"
+    },
+    "deviceActiveness": {
+      "hasSavedTimelineData": true,
+      "observedPlaceVisitsFor30PercentOfTheLast7d": false
+    }
+  }, {
+    "deviceTag": -1504585131,
+    "reportingEnabled": false,
+    "legalCountryCode": "us",
+    "devicePrettyName": "iPhone",
+    "platformType": "IOS",
+    "deviceCreationTime": "2021-03-14T05:21:36.485Z",
+    "latestLocationReportingSettingChange": {
+      "reportingEnabledModificationTime": "2024-06-20T14:05:45.579Z"
+    },
+    "iosVersion": "18.0.1",
+    "deviceSpec": {
+      "device": "iPhone13,2"
+    },
+    "deviceActiveness": {
+      "hasSavedTimelineData": true,
+      "observedPlaceVisitsFor30PercentOfTheLast7d": true
+    }
+  }],
+  "hasReportedLocations": true,
+  "hasSetRetention": true,
+  "storeVisitControl": {
+    "enabled": true,
+    "updateTime": "2022-07-19T07:06:06.699026200Z"
+  },
+  "timelineEditUploadsControl": {
+    "enabled": true,
+    "updateTime": "2024-06-20T13:39:07.228021146Z"
+  },
+  "encryptedBackupsControls": {
+    "-1504585131": {
+      "enabled": true,
+      "updateTime": "2024-11-21T00:45:25.486850938Z"
+    },
+    "576659698": {
+      "enabled": false,
+      "updateTime": "2024-07-12T17:33:12.862358212Z"
+    },
+    "1433686876": {
+      "enabled": false,
+      "updateTime": "2024-07-12T18:40:20.527812401Z"
+    }
+  },
+  "retentionControl": {
+    "retentionWindowDays": 2147483647
+  },
+  "timelineEnabled": true,
+  "timelineDeletionTime": "2024-07-12T21:04:00.569Z",
+  "latestTimelineSettingChange": {
+    "timelineEnabledModificationTime": "2024-07-14T04:15:27.430Z"
+  },
+  "googleOpinionRewardsControl": {
+    "enabled": true,
+    "updateTime": "2024-11-09T17:26:31.299685829Z"
+  }
+}
