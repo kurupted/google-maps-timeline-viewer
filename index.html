@@ -1,18 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<!-- -----
-
- Be sure to set your API key in place of "YOUR_API_KEY"
-
-----  -->
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Maps Timeline</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
     <style>
         body, html {
@@ -160,7 +145,7 @@
             timelineItem.innerHTML = `
             <span class="timeline-icon-container">📍</span>
             <div>
-                <strong>${locationName}</strong><br>
+                <strong class="nametag">${locationName}</strong><br>
                 ${moment(placeVisit.duration.startTimestamp).format('hh:mm A')} -
                 ${moment(placeVisit.duration.endTimestamp).format('hh:mm A')}
             </div>
@@ -201,6 +186,7 @@
         const dataKey = `${year}_${month}`;
 
         if (timelineData[dataKey]) {
+			//console.log(timelineData[dataKey]);
             const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
                 const itemDate = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp).format('YYYY-MM-DD');
                 return itemDate === selectedDate.toISOString().split('T')[0];
@@ -262,20 +248,25 @@
     }
 
     function renderPlaceVisit(placeVisit, index) {
-        const locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown location');
+        var locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
 
         const placeService = new google.maps.places.PlacesService(map);
         const request = {
             placeId: placeVisit.location.placeId,
-            fields: ["icon", "icon_background_color", "formatted_address", "photos", "website"]
+            fields: ["icon", "icon_background_color", "formatted_address", "photos", "website", "name"]
         };
 
         placeService.getDetails(request, (place, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && !place.icon.includes("generic_business") && !place.icon.includes("geocode")) {
+			console.log(place);
+            if (status === google.maps.places.PlacesServiceStatus.OK) { //  && !place.icon.includes("geocode")
                 const pinElement = new google.maps.marker.PinElement({
                     background: place.icon_background_color,
                     glyph: new URL(String(place.icon)),
                 });
+                
+                if (!placeVisit.location.name || placeVisit.location.name === "Unknown Location" || placeVisit.location.name === "Unknown location"){
+					locationName = place.name;
+				}
 
                 const marker = new google.maps.marker.AdvancedMarkerElement({
                     position: {
@@ -306,11 +297,15 @@
                 });
                 infoWindows.push(infoWindow);
 
-                // Update the sidebar item with the place icon
+                // Update the sidebar item with the place icon (& name if needed)
                 const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
                 if (sidebarItem) {
-                    const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
-                    iconContainer.innerHTML = `<img src="${place.icon}" alt="${locationName}" style="width: 24px; height: 24px;">`;
+					//if (!place.icon.includes("generic_business") && !place.icon.includes("geocode")){
+						const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
+						iconContainer.innerHTML = `<img src="${place.icon}" alt="${locationName}" style="width: 24px; height: 24px;">`;
+                    //}
+                    const nametag = sidebarItem.querySelector('.nametag');
+                    nametag.innerHTML = `${locationName}`;
                 }
 
                 addMarkerClickListener(marker, infoWindow, sidebarItem);
@@ -360,50 +355,73 @@
     }
 
 
-    function renderActivitySegment(activitySegment, index) {
-        let path = [];
 
-        path.push({
-            lat: activitySegment.startLocation.latitudeE7 / 1e7,
-            lng: activitySegment.startLocation.longitudeE7 / 1e7
-        });
+function renderActivitySegment(activitySegment, index) {
+    let path = [];
 
-        if (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.points) {
-            path = path.concat(activitySegment.simplifiedRawPath.points.map(point => ({
-                lat: point.latE7 / 1e7,
-                lng: point.lngE7 / 1e7
-            })));
-        } else if (activitySegment.waypointPath && activitySegment.waypointPath.waypoints) {
-            path = path.concat(activitySegment.waypointPath.waypoints.map(point => ({
-                lat: point.latE7 / 1e7,
-                lng: point.lngE7 / 1e7
-            })));
-        }
+    // Start by adding the start location to the path
+    path.push({
+        lat: activitySegment.startLocation.latitudeE7 / 1e7,
+        lng: activitySegment.startLocation.longitudeE7 / 1e7
+    });
 
-        path.push({
-            lat: activitySegment.endLocation.latitudeE7 / 1e7,
-            lng: activitySegment.endLocation.longitudeE7 / 1e7
-        });
-
-        const polyline = new google.maps.Polyline({
-            path: path,
-            geodesic: true,
-            strokeColor: getActivityColor(activitySegment.activityType),
-            strokeOpacity: 1.0,
-            strokeWeight: 5,
-            map: map
-        });
-        polylines.push(polyline);
-
-        const lineSymbol = {
-            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-        };
-
-        const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-
-        addPolylineClickListener(polyline, sidebarItem, path);
-        addSidebarItemClickListener(sidebarItem, null, null, polyline, path);
+    // Add the detailed path points, giving priority to the most detailed available
+    if (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.points) {
+        path = path.concat(activitySegment.simplifiedRawPath.points.map(point => ({
+            lat: point.latE7 / 1e7,
+            lng: point.lngE7 / 1e7
+        })));
+//this elseif removed in other version *****
+    } else if (activitySegment.timelinePath && activitySegment.timelinePath.points) {
+        path = path.concat(activitySegment.timelinePath.points.map(point => ({
+            lat: point.latE7 / 1e7,
+            lng: point.lngE7 / 1e7
+        })));
+    } else if (activitySegment.waypointPath && activitySegment.waypointPath.waypoints) {
+        path = path.concat(activitySegment.waypointPath.waypoints.map(point => ({
+            lat: point.latE7 / 1e7,
+            lng: point.lngE7 / 1e7
+        })));
     }
+
+    // Add the end location to the path
+    path.push({
+        lat: activitySegment.endLocation.latitudeE7 / 1e7,
+        lng: activitySegment.endLocation.longitudeE7 / 1e7
+    });
+
+    // Define a line symbol to add arrows to the polyline
+    const lineSymbol = {
+        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+    };
+
+    // Create a polyline on the map
+    const polyline = new google.maps.Polyline({
+        path: path,
+        geodesic: true,
+        strokeColor: getActivityColor(activitySegment.activityType),
+        strokeOpacity: 1.0,
+        strokeWeight: 5,
+		// don't add arrows all the time *****
+        /*icons: [{
+            icon: lineSymbol,
+            offset: '50%', // Position arrow in the middle of the polyline
+            repeat: '100px' // Repeat the arrow along the path for long routes
+        }],*/
+        map: map
+    });
+
+    // Store the polyline so it can be cleared later if needed
+    polylines.push(polyline);
+
+    // Find the corresponding sidebar item
+    const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+
+    // Add event listeners for user interaction
+    addPolylineClickListener(polyline, sidebarItem, path);
+    addSidebarItemClickListener(sidebarItem, null, null, polyline, path);
+}
+
 
     function addMarkerClickListener(marker, infoWindow, timelineItem) {
         marker.addListener('click', () => {
@@ -432,10 +450,11 @@
             polyline.setOptions({
                 icons: [{
                     icon: {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 4
                     },
                     offset: '50%',
-                    repeat: '100px'
+                    repeat: '80px'
                 }],
             });
 
@@ -467,10 +486,11 @@
                 polyline.setOptions({
                     icons: [{
                         icon: {
-                            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW
+                            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                            scale: 4
                         },
                         offset: '50%',
-                        repeat: '100px'
+                        repeat: '80px'
                     }],
                 });
 
@@ -707,7 +727,115 @@
         });
     }
 
-    async function readFilesFromDirectory(dirHandle) {
+async function readFilesFromDirectory(dirHandle) {
+    let timelineJsonFile = null;
+
+    // First, check for a single Timeline.json file
+    for await (const entry of dirHandle.values()) {
+        if (entry.kind === 'file' && entry.name === 'Timeline.json') {
+            timelineJsonFile = entry;
+            break;
+        }
+    }
+
+    if (timelineJsonFile) {
+        // If Timeline.json is found, load it directly
+        try {
+            const file = await timelineJsonFile.getFile();
+            
+            // Check file size before parsing
+            if (file.size > 50 * 1024 * 1024) { // 50 MB limit
+                console.warn('Timeline.json is very large. This may take some time to process.');
+            }
+
+            const content = await file.text();
+            const data = JSON.parse(content);
+
+            // Organize the data by year and month for compatibility with existing code
+            const processedData = {};
+
+            // Check if it's the semantic segments format
+            if (data.semanticSegments) {
+                const processedTimelineObjects = data.semanticSegments.map(segment => {
+                    if (segment.visit) {
+                        // Convert semantic segments visit to a similar format as the original timeline objects
+                        return {
+                            placeVisit: {
+                                location: {
+                                    latitudeE7: Math.round(parseFloat(segment.visit.topCandidate.placeLocation.latLng.split('°,')[0]) * 1e7),
+                                    longitudeE7: Math.round(parseFloat(segment.visit.topCandidate.placeLocation.latLng.split('°,')[1]) * 1e7),
+                                    placeId: segment.visit.topCandidate.placeId,
+                                    semanticType: segment.visit.topCandidate.semanticType,
+                                    name: 'Unknown Location'
+                                },
+                                duration: {
+                                    startTimestamp: segment.startTime,
+                                    endTimestamp: segment.endTime
+                                }
+                            }
+                        };
+                    } else if (segment.activity) {
+                        // Define activitySegment properly here
+                        const activitySegment = {
+                            activityType: segment.activity.topCandidate.type || 'UNKNOWN',
+                            duration: {
+                                startTimestamp: segment.startTime,
+                                endTimestamp: segment.endTime
+                            },
+                            distance: segment.activity.distanceMeters,
+                            startLocation: {
+                                latitudeE7: Math.round(parseFloat(segment.activity.start.latLng.split('°,')[0]) * 1e7),
+                                longitudeE7: Math.round(parseFloat(segment.activity.start.latLng.split('°,')[1]) * 1e7)
+                            },
+                            endLocation: {
+                                latitudeE7: Math.round(parseFloat(segment.activity.end.latLng.split('°,')[0]) * 1e7),
+                                longitudeE7: Math.round(parseFloat(segment.activity.end.latLng.split('°,')[1]) * 1e7)
+                            }
+                        };
+
+                        // Add simplified raw path if timelinePath exists
+                        if (segment.timelinePath) {
+                            activitySegment.simplifiedRawPath = {
+                                points: segment.timelinePath.map(point => ({
+                                    latE7: Math.round(parseFloat(point.point.split('°,')[0]) * 1e7),
+                                    lngE7: Math.round(parseFloat(point.point.split('°,')[1]) * 1e7)
+                                }))
+                            };
+                        }
+
+                        return {
+                            activitySegment: activitySegment
+                        };
+                    }
+                }).filter(Boolean); // Remove any undefined entries
+
+                // Group by year and month
+                processedTimelineObjects.forEach(item => {
+                    const timestamp = item.placeVisit 
+                        ? item.placeVisit.duration.startTimestamp 
+                        : item.activitySegment.duration.startTimestamp;
+                    const date = new Date(timestamp);
+                    const key = `${date.getFullYear()}_${date.toLocaleString('default', { month: 'long' }).toUpperCase()}`;
+                    
+                    if (!processedData[key]) {
+                        processedData[key] = { timelineObjects: [] };
+                    }
+                    processedData[key].timelineObjects.push(item);
+                });
+
+                timelineData = processedData;
+            } 
+            // Fallback for original Google Takeout format
+            else if (data.timelineObjects) {
+                timelineData = data;
+            }
+
+            console.log('Timeline.json loaded successfully');
+        } catch (err) {
+            console.error('Error parsing Timeline.json:', err);
+        }
+    } else {
+        // Fallback to original method of reading multiple JSON files
         for await (const entry of dirHandle.values()) {
             if (entry.kind === 'file' && entry.name.endsWith('.json')) {
                 const file = await entry.getFile();
@@ -720,6 +848,8 @@
             }
         }
     }
+}
+
 
     async function initFolderPicker() {
         const folderPicker = document.getElementById('folderPicker');
