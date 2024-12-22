@@ -7,6 +7,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 ![Alt text](/screenshot.png?raw=true "Screenshot")
 
 ### Features:
+- Supports both Google Takeout data and new (as of late 2024) On-Device data file
 - Timeline and map view
 - Place info and icons
 - Duration of visits ; distance traveled
@@ -43,7 +44,7 @@ Setup procedure:
 
 
 
-## Get Your Google Timeline Data with Google Takeout
+## Get Your Data: Option 1, Google Takeout (for data prior to the change to on-device)
 1. **Go to Google Takeout:**
     - Visit [Google Takeout](https://takeout.google.com/).
 
@@ -59,6 +60,10 @@ Setup procedure:
 4. **Download the Export:**
     - Once the export is ready, download the file.
     - Extract the archive to anywhere you like, eg My Documents.
+  
+## Get Your Data: Option 2, On-Device data export
+1. Open the Maps app, go to your Timeline, and click the export icon in the top right.
+2. Transfer the file to your computer, and save it anywhere you like, eg My Documents.
    
 
 ##  Final Set Up
@@ -76,5 +81,7 @@ Setup procedure:
 ## View Your Timeline
 1. **Open the index.html File:**
     - Double-click the file to open it. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
-    - At the top left of the page, click Choose Folder and navigate to your Google Takeout data. The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
+    - At the top left of the page, click Choose Folder and navigate to the folder that contains your Timeline data.
+        - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
+        - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
     - Use the date picker to choose a date that contains timeline data.
