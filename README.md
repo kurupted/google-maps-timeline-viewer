@@ -64,6 +64,7 @@ Setup procedure:
 ## Get Your Data: Option 2, On-Device data export
 1. Open the Maps app, go to your Timeline, and click the export icon in the top right.
 2. Transfer the file to your computer, and save it anywhere you like, eg My Documents.
+3. Note: On-device data appears to be less detailed when it comes to your walking/driving/etc paths.
    
 
 ##  Final Set Up
