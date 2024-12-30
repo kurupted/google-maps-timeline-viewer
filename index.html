@@ -11,7 +11,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Maps Timeline Viewer</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiEcOa1tyssB2xgJgAamJZ9NdbEI8YQlc&libraries=marker,places"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
     <style>
@@ -767,11 +767,29 @@ async function readFilesFromDirectory(dirHandle) {
             const data = JSON.parse(content);
 
             // Organize the data by year and month for compatibility with existing code
-            const processedData = {};
+            const processedData = [];
+
+			//Create array for the timelinePath points
+            const processedTimelinePathObjects = [];
 
             // Check if it's the semantic segments format
-            if (data.semanticSegments) {
-                const processedTimelineObjects = data.semanticSegments.map(segment => {
+			
+			if (data.semanticSegments) {
+				// Populate the timelinePath points from every timelinePath object
+				data.semanticSegments.forEach(segment => {
+					if (segment.timelinePath) {
+                        segment.timelinePath.forEach(point => {
+							const tempPoint = {
+								latE7: Math.round(parseFloat(point.point.split('°,')[0]) * 1e7),
+								lngE7: Math.round(parseFloat(point.point.split('°,')[1]) * 1e7),
+								time:point.time
+								};
+							processedTimelinePathObjects.push(tempPoint);
+						});	
+					}
+				});
+				var timelinePathObjectsPointer = 0;  // Define pointer for path points loop below
+				const processedTimelineObjects = data.semanticSegments.map(segment => {
                     if (segment.visit) {
                         // Convert semantic segments visit to a similar format as the original timeline objects
                         return {
@@ -805,19 +823,25 @@ async function readFilesFromDirectory(dirHandle) {
                             endLocation: {
                                 latitudeE7: Math.round(parseFloat(segment.activity.end.latLng.split('°,')[0]) * 1e7),
                                 longitudeE7: Math.round(parseFloat(segment.activity.end.latLng.split('°,')[1]) * 1e7)
-                            }
+                            },
+							simplifiedRawPath: {
+								distanceMeters: segment.activity.distanceMeters,
+								points: []
+							}
                         };
-
-                        // Add simplified raw path if timelinePath exists
-                        if (segment.timelinePath) {
-                            activitySegment.simplifiedRawPath = {
-                                points: segment.timelinePath.map(point => ({
-                                    latE7: Math.round(parseFloat(point.point.split('°,')[0]) * 1e7),
-                                    lngE7: Math.round(parseFloat(point.point.split('°,')[1]) * 1e7)
-                                }))
-                            };
-                        }
-
+						// Add simplified raw path if timelinePath exists
+						// Find the associated timelinePath points for this activitySegment
+						for (let i = timelinePathObjectsPointer; i < processedTimelinePathObjects.length; i++) {
+							const point = processedTimelinePathObjects[i];
+							
+							if (point.time >= activitySegment.duration.startTimestamp && point.time <= activitySegment.duration.endTimestamp) {
+								activitySegment.simplifiedRawPath.points.push(point)
+							};
+							if (point.time > activitySegment.duration.endTimestamp) {
+								timelinePathObjectsPointer = i;
+								break;
+							}
+						};
                         return {
                             activitySegment: activitySegment
                         };
@@ -885,7 +909,7 @@ async function readFilesFromDirectory(dirHandle) {
         initMap();
         initDatePicker();
         initFolderPicker();
-        const initialDate = new Date('2024-05-25');
+        const initialDate = new Date('2024-02-16');
         document.getElementById('datePicker').value = moment(initialDate).format('YYYY-MM-DD');
     };
 
