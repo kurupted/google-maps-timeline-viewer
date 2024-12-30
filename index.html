@@ -729,14 +729,14 @@ function renderActivitySegment(activitySegment, index) {
 
         document.getElementById('prevDayBtn').addEventListener('click', () => {
             const selectedDate = new Date(datePicker.value);
-            selectedDate.setDate(selectedDate.getDate() - 1);
+            selectedDate.setDate(selectedDate.getUTCDate() - 1);
             datePicker.value = moment(selectedDate).format('YYYY-MM-DD');
             loadTimelineDataInChunks(selectedDate);
         });
 
         document.getElementById('nextDayBtn').addEventListener('click', () => {
             const selectedDate = new Date(datePicker.value);
-            selectedDate.setDate(selectedDate.getDate() + 1);
+            selectedDate.setDate(selectedDate.getUTCDate() + 1);
             datePicker.value = moment(selectedDate).format('YYYY-MM-DD');
             loadTimelineDataInChunks(selectedDate);
         });
