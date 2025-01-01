@@ -990,6 +990,15 @@ async function readFilesFromDirectory(dirHandle) {
         initFolderPicker();
         const initialDate = new Date('2024-02-16');
         document.getElementById('datePicker').value = moment(initialDate).format('YYYY-MM-DD');
+
+        // Add keyboard navigation
+	document.addEventListener('keydown', async (e) => {
+		if (e.key === 'ArrowLeft') {
+			document.getElementById("prevDayBtn").click();
+		} else if (e.key === 'ArrowRight') {
+			document.getElementById("nextDayBtn").click();
+		}
+	}); };
     };
 
 </script>
