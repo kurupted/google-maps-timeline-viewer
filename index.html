@@ -14,7 +14,7 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
-	<style>
+    <style>
         body, html {
             height: 100%;
             margin: 0;
@@ -150,6 +150,43 @@
             align-items: center;
             padding: 10px;
         }
+				
+		/* Loading overlay */
+		#loading-overlay {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background: rgba(255, 255, 255, 0.9);
+			padding: 16px 24px;
+			border-radius: 8px;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+			display: none;
+			align-items: center;
+			gap: 12px;
+			z-index: 1000;
+		}
+		#loading-spinner {
+			width: 30px;
+			height: 30px;
+			border: 3px solid #f3f3f3;
+			border-top: 3px solid #4285F4;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+			margin-left: auto;
+			margin-right: auto;
+			margin-bottom:12px;
+		}
+		@keyframes spin {
+		  0% {
+			transform: rotate(0deg);
+		  }
+
+		  100% {
+			transform: rotate(360deg);
+		  }
+		}
+
     </style>
 
 </head>
@@ -165,10 +202,16 @@
             <input type="date" id="datePicker">
             <span id="nextDayBtn">&gt;</span>
         </div>
+		<div id="loading-overlay">
+			<div id="loading-spinner"></div>
+			<span>Loading data...</span>
+		</div>
         <div id="timeline"></div>
     </div>
     <div id="map"></div>
 </div>
+
+
 
 <script>
     let map;
@@ -782,6 +825,8 @@ function renderActivitySegment(activitySegment, index) {
 
 async function readFilesFromDirectory(dirHandle) {
     let timelineJsonFile = null;
+    
+    document.getElementById('loading-overlay').style.display = "block";
 
     // First, check for a single Timeline.json file
     for await (const entry of dirHandle.values()) {
@@ -795,11 +840,6 @@ async function readFilesFromDirectory(dirHandle) {
         // If Timeline.json is found, load it directly
         try {
             const file = await timelineJsonFile.getFile();
-            
-            // Check file size before parsing
-            if (file.size > 50 * 1024 * 1024) { // 50 MB limit
-                console.warn('Timeline.json is very large. This may take some time to process.');
-            }
 
             const content = await file.text();
             const data = JSON.parse(content);
@@ -925,6 +965,7 @@ async function readFilesFromDirectory(dirHandle) {
             }
         }
     }
+    document.getElementById('loading-overlay').style.display = "none";
 }
 
 
