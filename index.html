@@ -337,6 +337,7 @@
 		}
 
 		async function loadTimelineDataForDate(selectedDate) {
+			selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset());
 			const year = selectedDate.getFullYear();
 			const month = selectedDate.toLocaleString('default', {
 				month: 'long'
@@ -946,20 +947,20 @@
             document.getElementById('prevDayBtn').addEventListener('click', () => {
                 const startDate = new Date(startDatePicker.value);
                 const endDate = new Date(endDatePicker.value);
-                startDate.setDate(startDate.getDate() - 1);
-                endDate.setDate(endDate.getDate() - 1);
-                startDatePicker.value = moment(startDate).format('YYYY-MM-DD');
-                endDatePicker.value = moment(endDate).format('YYYY-MM-DD');
+                startDate.setUTCDate(startDate.getUTCDate() - 1);
+                endDate.setUTCDate(endDate.getUTCDate() - 1);
+                startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
+                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
                 loadTimelineDataInDateRange(startDate, endDate);
             });
 
             document.getElementById('nextDayBtn').addEventListener('click', () => {
                 const startDate = new Date(startDatePicker.value);
                 const endDate = new Date(endDatePicker.value);
-                startDate.setDate(startDate.getDate() + 1);
-                endDate.setDate(endDate.getDate() + 1);
-                startDatePicker.value = moment(startDate).format('YYYY-MM-DD');
-                endDatePicker.value = moment(endDate).format('YYYY-MM-DD');
+                startDate.setUTCDate(startDate.getUTCDate() + 1);
+                endDate.setUTCDate(endDate.getUTCDate() + 1);
+                startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
+                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
                 loadTimelineDataInDateRange(startDate, endDate);
             });
 
