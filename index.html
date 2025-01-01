@@ -14,7 +14,7 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
-    <style>
+	<style>
         body, html {
             height: 100%;
             margin: 0;
@@ -30,27 +30,67 @@
             overflow-y: auto;
             position: relative;
         }
-        #datePickerContainer {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 1000;
-        }
+		#datePickerContainer {
+		  padding: 16px;
+		  background: white;
+		  border-bottom: 1px solid #e0e0e0;
+		  display: flex;
+		  align-items: center;
+		  gap: 8px;
+		}
         #datePicker {
-            width: 70%;
-            margin: 5px;
+          flex: 1;
+		  padding: 8px;
+		  border: 1px solid #ddd;
+		  border-radius: 4px;
+		  font-size: 14px;
         }
-        #prevDayBtn, #nextDayBtn {
-            cursor: pointer;
-            font-size: 18px;
-            padding: 5px 10px;
-        }
+		#prevDayBtn, #nextDayBtn {
+		  background: #f8f9fa;
+		  border: 1px solid #ddd;
+		  border-radius: 4px;
+		  padding: 8px 12px;
+		  cursor: pointer;
+		  font-size: 16px;
+		  color: #555;
+		  transition: all 0.2s ease;
+		}
+
+		#prevDayBtn:hover, nextDayBtn:hover {
+		  background: #e9ecef;
+		  color: #333;
+		}
         #map {
             flex-grow: 1;
         }
+        
+        .controls-container {
+		  padding: 16px;
+		  border-bottom: 1px solid #e0e0e0;
+		  display: flex;
+		  align-items: center;
+		  justify-content: center;
+		  gap: 8px;
+		}
+		.control-btn {
+		  padding: 12px 20px;
+		  background: #4285F4;
+		  color: white;
+		  border: none;
+		  border-radius: 4px;
+		  cursor: pointer;
+		  font-size: 14px;
+		  font-weight: 500;
+		  transition: background-color 0.2s ease;
+		}
+		.control-btn:hover {
+		  background: #3367d6;
+		}
+		.btn-icon {
+		  font-size: 12px;
+		}
+
+        
         .timeline-item {
             display: flex;
             align-items: center;
@@ -87,7 +127,7 @@
             bottom: 5px;
             right: 5px;
             font-size: 12px;
-            opacity: 10%;
+            opacity: 20%;
         }
         .highlighted .confirmed-checkmark{
             opacity: 35%;
@@ -110,17 +150,15 @@
             align-items: center;
             padding: 10px;
         }
-        #folderPickerContainer {
-            padding: 10px;
-        }
     </style>
 
 </head>
 <body>
 <div id="container">
     <div id="sidebar">
-        <div id="folderPickerContainer">
-            <button id="folderPicker">Choose Folder</button>
+        <div id="controls-container">
+            <button id="folderPicker" class="control-btn">Choose Folder</button>
+            <!--button id="modePicker" class="control-btn">Display Mode</button-->
         </div>
         <div id="datePickerContainer">
             <span id="prevDayBtn">&lt;</span>
