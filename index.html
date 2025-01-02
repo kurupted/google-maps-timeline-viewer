@@ -227,6 +227,7 @@
             <div id="controls-container">
                 <button id="folderPicker" class="control-btn">Choose Folder</button>
                 <button id="layerBtn" class="control-btn">Layers</button>
+                <button id="goBtn" class="control-btn">GO</button>
             </div>
             <div id="layerOptions" style="display: none;">
                 <h4>View Options</h4>
@@ -337,6 +338,7 @@
 		}
 
 		async function loadTimelineDataForDate(selectedDate) {
+			selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset());
 			const year = selectedDate.getFullYear();
 			const month = selectedDate.toLocaleString('default', {
 				month: 'long'
@@ -946,35 +948,34 @@
             document.getElementById('prevDayBtn').addEventListener('click', () => {
                 const startDate = new Date(startDatePicker.value);
                 const endDate = new Date(endDatePicker.value);
-                startDate.setDate(startDate.getDate() - 1);
-                endDate.setDate(endDate.getDate() - 1);
-                startDatePicker.value = moment(startDate).format('YYYY-MM-DD');
-                endDatePicker.value = moment(endDate).format('YYYY-MM-DD');
+                startDate.setUTCDate(startDate.getUTCDate() - 1);
+                endDate.setUTCDate(endDate.getUTCDate() - 1);
+                startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
+                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
                 loadTimelineDataInDateRange(startDate, endDate);
             });
 
             document.getElementById('nextDayBtn').addEventListener('click', () => {
                 const startDate = new Date(startDatePicker.value);
                 const endDate = new Date(endDatePicker.value);
-                startDate.setDate(startDate.getDate() + 1);
-                endDate.setDate(endDate.getDate() + 1);
-                startDatePicker.value = moment(startDate).format('YYYY-MM-DD');
-                endDatePicker.value = moment(endDate).format('YYYY-MM-DD');
+                startDate.setUTCDate(startDate.getUTCDate() + 1);
+                endDate.setUTCDate(endDate.getUTCDate() + 1);
+                startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
+                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
                 loadTimelineDataInDateRange(startDate, endDate);
             });
 
-            const handleDateChange = () => {
+            document.getElementById('goBtn').addEventListener('click', () => {
                 const startDate = new Date(startDatePicker.value);
                 const endDate = new Date(endDatePicker.value);
                 if (startDate > endDate) {
                     alert('Start date must be before end date.');
                     return;
                 }
+				startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
+                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
                 loadTimelineDataInDateRange(startDate, endDate);
-            };
-
-            startDatePicker.addEventListener('change', handleDateChange);
-            endDatePicker.addEventListener('change', handleDateChange);
+            });
         }
 
         function populateActivityFilters() {
