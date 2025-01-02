@@ -68,7 +68,8 @@
             flex-grow: 1;
         }
         
-        #controls-container {
+        #controls-container,
+        #go-container {
 		  padding: 10px;
 		  border-bottom: 1px solid #e0e0e0;
 		  display: flex;
@@ -93,6 +94,12 @@
 		}
 		.btn-icon {
 		  font-size: 12px;
+		}
+		#goBtn {
+			background: #91a5c4;
+		}
+		#goBtn:hover {
+		  background: #7b91b5;
 		}
 
         
@@ -227,7 +234,6 @@
             <div id="controls-container">
                 <button id="folderPicker" class="control-btn">Choose Folder</button>
                 <button id="layerBtn" class="control-btn">Layers</button>
-                <button id="goBtn" class="control-btn">GO</button>
             </div>
             <div id="layerOptions" style="display: none;">
                 <h4>View Options</h4>
@@ -246,6 +252,9 @@
                 <span>to</span>
                 <input type="date" id="endDatePicker">
                 <span id="nextDayBtn">&gt;</span>
+            </div>
+            <div id="go-container">
+				<button id="goBtn" class="control-btn">GO</button>
             </div>
             <div id="loading-overlay">
                 <div id="loading-spinner"></div>
