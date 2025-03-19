@@ -230,6 +230,16 @@
             display: block;
             margin-bottom: 5px;
         }
+        
+		#data-source-indicator {
+			font-size: 12px;
+			padding: 10px;
+			color: #777;
+			text-align: center;
+			margin-top: 10px;
+			border-top: 1px solid #e0e0e0;
+		}
+
     </style>
 </head>
 
@@ -266,6 +276,7 @@
                 <span>Loading data...</span>
             </div>
             <div id="timeline"></div>
+            <div id="data-source-indicator"></div>
         </div>
         <div id="map"></div>
     </div>
@@ -430,7 +441,7 @@
 
         async function loadTimelineDataInDateRange(startDate, endDate) {
             clearMap();
-            clearSidebar();
+            clearTimeline();
             const currentDate = moment(startDate);
             while (currentDate.isSameOrBefore(endDate, 'day')) {
                 await loadTimelineDataForDate(currentDate.toDate());
@@ -447,7 +458,7 @@
             infoWindows = [];
         }
 
-        function clearSidebar() {
+        function clearTimeline() {
             const timeline = document.getElementById('timeline');
             timeline.innerHTML = '';
         }
@@ -1037,6 +1048,7 @@
 
         async function readFilesFromDirectory(dirHandle, isRecursive=false) {
 			let timelineJsonFile = null;
+			let dataSourceText = '';
 			globalIndex = 0; // Reset global index
 
 			document.getElementById('loading-overlay').style.display = "flex";
@@ -1048,16 +1060,7 @@
 					break;
 				}
 			}
-			
-			// Create data source indicator element
-			const dataSourceIndicator = document.createElement('div');
-			dataSourceIndicator.id = 'data-source-indicator';
-			dataSourceIndicator.style.fontSize = '12px';
-			dataSourceIndicator.style.padding = '10px';
-			dataSourceIndicator.style.color = '#777';
-			dataSourceIndicator.style.textAlign = 'center';
-			dataSourceIndicator.style.marginTop = '10px';
-			dataSourceIndicator.style.borderTop = '1px solid #e0e0e0';
+		
 
 			if (timelineJsonFile) {
 				// If Timeline.json is found, load it directly
@@ -1067,7 +1070,7 @@
 					const content = await file.text();
 					const data = JSON.parse(content);
 					
-					dataSourceIndicator.textContent = 'Data source format: Local Timeline.json';
+					dataSourceText = 'Local Timeline.json';
 
 					// Organize the data by year and month for compatibility with existing code
 					const processedData = [];
@@ -1204,8 +1207,8 @@
 					console.error('Error parsing Timeline.json:', err);
 				}
 			} else {
-				// Fallback to original method of reading multiple JSON files
-				dataSourceIndicator.textContent = 'Data source format: Google Takeout';
+				// Fallback to original method of reading multiple JSON files (Takeout format)
+				dataSourceText = 'Google Takeout';
 				for await (const entry of dirHandle.values()) {
 					if (entry.kind === 'file' && entry.name.endsWith('.json')) {
 						const file = await entry.getFile();
@@ -1229,7 +1232,7 @@
 			}
 			
 			if (!isRecursive){
-				document.getElementById('sidebar').appendChild(dataSourceIndicator);
+				document.getElementById('data-source-indicator').textContent = 'Data source format: ' + dataSourceText;
 			}
 			
 			populateActivityFilters();
