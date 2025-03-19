@@ -3,17 +3,22 @@
 
 <!-- -----
 
-
  Be sure to set your API key in place of "YOUR_API_KEY"
+ 
+ Version: March 19, 2025
+ Full details here:
+ https://github.com/kurupted/google-maps-timeline-viewer/
 
 ----  -->
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Maps Timeline</title>
+    <title>Google Maps Timeline Viewer</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+
 
 
     <style>
@@ -648,7 +653,7 @@
 
             // Add event listeners for user interaction
             addPolylineClickListener(polyline, sidebarItem, path);
-            addSidebarItemClickListener(sidebarItem, index, null, polyline, path);
+            addSidebarItemClickListener(sidebarItem, index, null, null, polyline, path);
         }
 
 
@@ -1030,7 +1035,7 @@
             });
         }
 
-        async function readFilesFromDirectory(dirHandle) {
+        async function readFilesFromDirectory(dirHandle, isRecursive=false) {
 			let timelineJsonFile = null;
 			globalIndex = 0; // Reset global index
 
@@ -1043,6 +1048,16 @@
 					break;
 				}
 			}
+			
+			// Create data source indicator element
+			const dataSourceIndicator = document.createElement('div');
+			dataSourceIndicator.id = 'data-source-indicator';
+			dataSourceIndicator.style.fontSize = '12px';
+			dataSourceIndicator.style.padding = '10px';
+			dataSourceIndicator.style.color = '#777';
+			dataSourceIndicator.style.textAlign = 'center';
+			dataSourceIndicator.style.marginTop = '10px';
+			dataSourceIndicator.style.borderTop = '1px solid #e0e0e0';
 
 			if (timelineJsonFile) {
 				// If Timeline.json is found, load it directly
@@ -1051,6 +1066,8 @@
 
 					const content = await file.text();
 					const data = JSON.parse(content);
+					
+					dataSourceIndicator.textContent = 'Data source format: Local Timeline.json';
 
 					// Organize the data by year and month for compatibility with existing code
 					const processedData = [];
@@ -1188,6 +1205,7 @@
 				}
 			} else {
 				// Fallback to original method of reading multiple JSON files
+				dataSourceIndicator.textContent = 'Data source format: Google Takeout';
 				for await (const entry of dirHandle.values()) {
 					if (entry.kind === 'file' && entry.name.endsWith('.json')) {
 						const file = await entry.getFile();
@@ -1205,10 +1223,15 @@
 							});
 						}
 					} else if (entry.kind === 'directory') {
-						await readFilesFromDirectory(entry);
+						await readFilesFromDirectory(entry, true);
 					}
 				}
 			}
+			
+			if (!isRecursive){
+				document.getElementById('sidebar').appendChild(dataSourceIndicator);
+			}
+			
 			populateActivityFilters();
 			document.getElementById('loading-overlay').style.display = "none";
 		}
