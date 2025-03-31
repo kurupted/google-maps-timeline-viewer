@@ -5,7 +5,7 @@
 
  Be sure to set your API key in place of "YOUR_API_KEY"
  
- Version: March 19, 2025
+ Version: March 31, 2025
  Full details here:
  https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -27,6 +27,12 @@
             margin: 0;
             font-family: Arial, sans-serif;
         }
+		a {
+			text-decoration:none;
+		}
+		a:hover {
+			text-decoration:underline;
+		}
         #container {
             display: flex;
             height: 100%;
@@ -47,13 +53,13 @@
 		  justify-content: space-between;
 		  gap: 8px;
 		}
-        #datePicker {
-          flex: 1;
-		  padding: 8px;
-		  border: 1px solid #ddd;
-		  border-radius: 4px;
-		  font-size: 14px;
-        }
+		#datePicker {
+			flex: 1;
+			padding: 8px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 14px;
+		}
 		#prevDayBtn, #nextDayBtn {
 		  background: #f8f9fa;
 		  border: 1px solid #ddd;
@@ -64,7 +70,6 @@
 		  color: #555;
 		  transition: all 0.2s ease;
 		}
-
 		#prevDayBtn:hover, nextDayBtn:hover {
 		  background: #e9ecef;
 		  color: #333;
@@ -83,31 +88,30 @@
 		  gap: 8px;
 		}
 		.control-btn {
-		  flex-grow:1;
-		  padding: 12px 20px;
-		  background: #4285F4;
-		  color: white;
-		  border: none;
-		  border-radius: 4px;
-		  cursor: pointer;
-		  font-size: 14px;
-		  font-weight: 500;
-		  transition: background-color 0.2s ease;
+			flex-grow:1;
+			padding: 12px 20px;
+			background: #4285F4;
+			color: white;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			transition: background-color 0.2s ease;
 		}
 		.control-btn:hover {
-		  background: #3367d6;
+		  	background: #3367d6;
 		}
 		.btn-icon {
-		  font-size: 12px;
+		  	font-size: 12px;
 		}
 		#goBtn {
 			background: #91a5c4;
 		}
 		#goBtn:hover {
-		  background: #7b91b5;
+		  	background: #7b91b5;
 		}
 
-        
         .timeline-item {
             display: flex;
             align-items: center;
@@ -231,13 +235,16 @@
             margin-bottom: 5px;
         }
         
-		#data-source-indicator {
+		#data-source-indicator,
+		#about {
 			font-size: 12px;
 			padding: 10px;
 			color: #777;
 			text-align: center;
-			margin-top: 10px;
 			border-top: 1px solid #e0e0e0;
+		}
+		#data-source-indicator {
+			margin-top: 25px;
 		}
 
     </style>
@@ -277,6 +284,7 @@
             </div>
             <div id="timeline"></div>
             <div id="data-source-indicator"></div>
+			<div id="about"><a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">View project on Github</a></div>
         </div>
         <div id="map"></div>
     </div>
