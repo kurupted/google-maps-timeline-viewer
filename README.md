@@ -38,7 +38,7 @@ Setup procedure:
     - Extract the archive to anywhere you like, eg My Documents.
   
 ## Get Your Data: Option 2, On-Device data export
-1. Open the Maps app, go to your Timeline, and click ~~the export icon~~ the three dots in the top right, then "Location & privacy settings". Click where it says "Location is on", then click "Location serives". Click "Timeline", then "Export Timeline data". Save the file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
+1. Open the Maps app, go to your Timeline, and click ~~the export icon~~ the three dots in the top right, then "Location & privacy settings". Click where it says "Location is on", then click "Location services". Click "Timeline", then "Export Timeline data". Save the file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
 2. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
    
 
