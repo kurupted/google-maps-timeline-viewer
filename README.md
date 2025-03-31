@@ -18,6 +18,30 @@ If you're like me, you have years worth of timeline data that you want to be abl
 
 Setup procedure:
 
+
+
+## Get Your Data: Option 1, Google Takeout (for data prior to the change to on-device)
+1. **Go to Google Takeout:**
+    - Visit [Google Takeout](https://takeout.google.com/).
+
+2. **Select Data to Include:**
+    - Click "Deselect all".
+    - Scroll down and select **Location History**. (The default format is JSON, which is what we want.)
+    - Click "Next step".
+
+3. **Customize Export Format:**
+    - Choose the delivery method, etc. Doesn't matter what you choose here.
+    - Click "Create export".
+
+4. **Download the Export:**
+    - Once the export is ready, download the file.
+    - Extract the archive to anywhere you like, eg My Documents.
+  
+## Get Your Data: Option 2, On-Device data export
+1. Open the Maps app, go to your Timeline, and click ~~the export icon~~ the three dots in the top right, then "Location & privacy settings". Click where it says "Location is on", then click "Location serives". Click "Timeline", then "Export Timeline data". Save the file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
+2. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
+   
+
 ## Obtain a Google Maps API Key
 
 1. **Go to the Google Cloud Console:**
@@ -43,36 +67,12 @@ Setup procedure:
     - In the API key's settings, under **API restrictions**, select "Restrict key" and choose the APIs you enabled.
 
 
-
-## Get Your Data: Option 1, Google Takeout (for data prior to the change to on-device)
-1. **Go to Google Takeout:**
-    - Visit [Google Takeout](https://takeout.google.com/).
-
-2. **Select Data to Include:**
-    - Click "Deselect all".
-    - Scroll down and select **Location History**. (The default format is JSON, which is what we want.)
-    - Click "Next step".
-
-3. **Customize Export Format:**
-    - Choose the delivery method, etc. Doesn't matter what you choose here.
-    - Click "Create export".
-
-4. **Download the Export:**
-    - Once the export is ready, download the file.
-    - Extract the archive to anywhere you like, eg My Documents.
-  
-## Get Your Data: Option 2, On-Device data export
-1. Open the Maps app, go to your Timeline, and click the export icon in the top right.
-2. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
-Note: On English-language devices, the filename is "Timeline.json", but this may differ on other systems. Rename the file to "Timeline.json" if needed.
-   
-
 ##  Final Set Up
 1. **Download The Google Maps Timeline Viewer:**
-    - Save this project's `index.html` file anywhere you like, eg My Documents. (Click the index.html file, then click on "Raw" in the top-right of the content area. Copy/paste to eg Notepad and save as index.html)
+    - Save this project's `timeline.html` file anywhere you like, eg My Documents. (Click the timeline.html file, then click on "Raw" in the top-right of the content area. Copy/paste to eg Notepad and save as eg "timeline.html")
    
 4. **Add your API key:**
-   - Open the index.html file in a text editor and find the code below, near the top:
+   - Open the timeline.html file in a text editor and find the code below, near the top:
      ```html
      <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
      ```
@@ -80,7 +80,7 @@ Note: On English-language devices, the filename is "Timeline.json", but this may
 
 
 ## View Your Timeline
-1. **Open the index.html File:**
+1. **Open the timeline.html File:**
     - Double-click the file to open it. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
     - At the top left of the page, click Choose Folder and navigate to the folder that contains your Timeline data.
         - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
