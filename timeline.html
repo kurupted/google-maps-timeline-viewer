@@ -921,7 +921,7 @@
             const placeService = new google.maps.places.PlacesService(map);
             const request = {
                 placeId: placeId,
-                fields: ["name", "formatted_address", "geometry", "icon", "icon_background_color", "photos", "website", "url"] // Added URL field
+                fields: ["name", "formatted_address", "geometry", "icon", "icon_background_color", "photos", "url"]
             };
             placeService.getDetails(request, (place, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK && place) {
@@ -979,7 +979,6 @@
             });
             markers.push(marker);
             const photoUrl = place.photos?.[0]?.getUrl({ maxWidth: 200, maxHeight: 150 });
-            const websiteLink = place.website ? `<a href="${place.website}" target="_blank">Website</a> <b>&nbsp;|&nbsp;</b> ` : "";
             const mapsLink = place.url ? `<a href="${place.url}" target="_blank">View on Google Maps</a>` : `<a href="https://www.google.com/maps?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`; // Fallback link
             const infoWindowContent = `
                 <div style="max-width: 250px;">
@@ -987,7 +986,7 @@
                     <p style="margin: 3px 0; font-size: 0.9em;">${place.formatted_address || ""}</p>
                     ${photoUrl ? `<img src="${photoUrl}" alt="${locationName}" style="max-width: 200px; max-height: 200px; margin-top: 5px; border-radius: 3px;"><br>` : ""}
                     <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
-                    <p style="margin-top: 5px; font-size: 0.85em;">${websiteLink}${mapsLink}</p>
+                    <p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
                 </div>
             `;
             const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
