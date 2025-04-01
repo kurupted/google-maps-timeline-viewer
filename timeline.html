@@ -1,264 +1,523 @@
 <!DOCTYPE html>
 <html lang="en">
+	<!-- -----
 
-<!-- -----
+	 Be sure to set your API key in place of "YOUR_API_KEY"
 
- Be sure to set your API key in place of "YOUR_API_KEY"
- 
- Version: March 31, 2025
- Full details here:
- https://github.com/kurupted/google-maps-timeline-viewer/
+	 Version: April 1, 2025
+	 Full details here:
+	 https://github.com/kurupted/google-maps-timeline-viewer/
 
-----  -->
-
+	----  -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Maps Timeline Viewer</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-
-
-
-
     <style>
         body, html {
             height: 100%;
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f8f9fa;
+            overflow: hidden; /* Prevent body scroll */
         }
-		a {
-			text-decoration:none;
-		}
-		a:hover {
-			text-decoration:underline;
-		}
+        a {
+            color: #007bff;
+            text-decoration:none;
+        }
+        a:hover {
+            text-decoration:underline;
+        }
         #container {
             display: flex;
             height: 100%;
+            position: relative;
         }
         #sidebar {
-            width: 330px;
-            padding: 10px;
-            overflow-y: auto;
-            position: relative;
-        }
-		#datePickerContainer {
-		  padding: 0px;
-		  padding-top:12px;
-		  background: white;
-		  border-bottom: 1px solid #e0e0e0;
-		  display: flex;
-		  align-items: center;
-		  justify-content: space-between;
-		  gap: 8px;
-		}
-		#datePicker {
-			flex: 1;
-			padding: 8px;
-			border: 1px solid #ddd;
-			border-radius: 4px;
-			font-size: 14px;
-		}
-		#prevDayBtn, #nextDayBtn {
-		  background: #f8f9fa;
-		  border: 1px solid #ddd;
-		  border-radius: 4px;
-		  padding: 4px 6px;
-		  cursor: pointer;
-		  font-size: 16px;
-		  color: #555;
-		  transition: all 0.2s ease;
-		}
-		#prevDayBtn:hover, nextDayBtn:hover {
-		  background: #e9ecef;
-		  color: #333;
-		}
-        #map {
-            flex-grow: 1;
-        }
-        
-        #controls-container,
-        #go-container {
-		  padding: 10px;
-		  border-bottom: 1px solid #e0e0e0;
-		  display: flex;
-		  align-items: center;
-		  justify-content: center;
-		  gap: 8px;
-		}
-		.control-btn {
-			flex-grow:1;
-			padding: 12px 20px;
-			background: #4285F4;
-			color: white;
-			border: none;
-			border-radius: 4px;
-			cursor: pointer;
-			font-size: 14px;
-			font-weight: 500;
-			transition: background-color 0.2s ease;
-		}
-		.control-btn:hover {
-		  	background: #3367d6;
-		}
-		.btn-icon {
-		  	font-size: 12px;
-		}
-		#goBtn {
-			background: #91a5c4;
-		}
-		#goBtn:hover {
-		  	background: #7b91b5;
-		}
-
-        .timeline-item {
+            width: 350px;
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
             display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            height: 100%; /* Ensure sidebar takes full height */
+            overflow: hidden; /* Prevent sidebar itself from scrolling */
+            position: relative; /* Ensure sidebar stays in flow */
+            z-index: 60; /* Keep sidebar above summary view background if needed */
+        }
+        /* --- Control Sections (Non-scrolling) --- */
+        #controls-container,
+        #layerOptions,
+        #datePickerContainer,
+        #icon-buttons-container,
+        #go-container {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0; /* Prevent these sections from shrinking */
+            background-color: #ffffff; /* Ensure background */
+        }
+        #controls-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .control-btn {
+            flex-grow:1;
+            padding: 10px 15px;
+            background-color: #5A95F5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            text-align: center;
+        }
+        .control-btn:hover:not(:disabled) {
+            background-color: #4a85e5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .control-btn:disabled {
+            background: #ced4da;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+        #layerOptions {
+            display: none; /* Initially hidden */
+        }
+         #layerOptionsHeader {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
-            padding: 5px;
-            background-color: #f0f0f0;
+        }
+        #layerOptions h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        #layerOptions label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .layer-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .layer-checkbox {
+            margin-right: 8px;
+        }
+         #closeLayerBtn {
+            padding: 4px 10px;
+            font-size: 12px;
             cursor: pointer;
-            position: relative;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            color: #495057;
         }
-        .timeline-icon-container {
-            width: 32px;
-            text-align: center;
-            padding-right: 12px;
+        #closeLayerBtn:hover {
+            background-color: #e9ecef;
         }
-        .place-visit-item {
-            background-color: #fffacd;
-            border: 1px solid #ffd700;
-            padding-top: 10px;
-            padding-bottom: 10px;
+        #activityFilters {
+            margin-left: 20px;
+            padding-top: 5px;
         }
-        .highlighted {
-            border: 2px solid #000;
+        #datePickerContainer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
         }
-        /*.timeline-item::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 3px;
-            height: 100%;
-        }*/
+        #startDatePicker, #endDatePicker {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #fff;
+        }
+        #startDatePicker:disabled, #endDatePicker:disabled {
+             background-color: #e9ecef;
+             cursor: not-allowed;
+        }
+        #datePickerContainer span {
+            color: #6c757d;
+        }
+        #dateToSpan {
+            font-size: 10px;
+        }
+        #prevDayBtn, #nextDayBtn {
+          background: #f8f9fa;
+          border: 1px solid #ced4da;
+          border-radius: 4px;
+          padding: 2px 4px;
+          cursor: pointer;
+          font-size: 10px;
+          color: #495057;
+          transition: all 0.2s ease;
+        }
+        #prevDayBtn:hover:not(:disabled), #nextDayBtn:hover:not(:disabled) {
+          background: #e9ecef;
+          color: #343a40;
+        }
+        #prevDayBtn:disabled, #nextDayBtn:disabled {
+            background: #e9ecef;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        /* --- Icon Buttons --- */
+        #icon-buttons-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            min-height: 30px;
+        }
+        #icon-buttons-left, #icon-buttons-right {
+            display: flex;
+            gap: 2px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            padding: 5px;
+            cursor: pointer;
+            color: #6c757d;
+            border-radius: 4px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .icon-btn:hover:not(:disabled) {
+            background-color: #e9ecef;
+            color: #343a40;
+        }
+         .icon-btn:disabled {
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        .icon-btn.active {
+            background-color: #e9ecef;
+        }
+        #go-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding-top: 5px;
+        }
+        #goBtn {
+            flex-grow: 1;
+            padding: 12px 20px;
+            background-color: #48a765;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        #goBtn:hover:not(:disabled) {
+             background-color: #218838;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #goBtn:disabled {
+            background: #ced4da;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+         #goBtn:disabled:hover {
+            background: #ced4da;
+            box-shadow: none;
+        }
+        /* --- Timeline (Scrollable Area) --- */
+        #timeline {
+            flex-grow: 1; /* Allow timeline to fill remaining vertical space */
+            overflow-y: auto; /* Make ONLY the timeline scrollable */
+            padding: 10px 12px;
+            padding-top:0px;
+            background-color: #f8f9fa;
+        }
+        /* --- Sticky Date Header --- */
         #timeline .date-header{
             display: flex;
             align-items: center;
             margin-bottom: 10px;
-            padding: 30px 10px 10px 10px;
-            background-color: #fff;
+            padding: 8px 10px;
+            background-color: #cccccc;
+            position: sticky; /* Enable sticky behavior */
+            top: 0; /* Stick to the top of the #timeline container */
+            z-index: 10; /* Ensure it stays above timeline items */
+            font-weight: 600;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+            color: #192027;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
             position: relative;
-			font-weight: bold;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .timeline-item:hover {
+            border-color: #adb5bd;
+        }
+        .timeline-icon-container {
+            width: 32px;
+            text-align: center;
+            padding-right: 10px;
+            padding-top: 2px;
+            flex-shrink: 0;
+        }
+        .timeline-item-details {
+            flex-grow: 1;
+        }
+         .timeline-item-details strong {
+             font-weight: 500;
+             font-size: 15px;
+             color: #343a40;
+         }
+        .timeline-item-details div {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #495057;
+        }
+        .timeline-item-time {
+             display: block;
+             font-size: 12px;
+             color: #6c757d;
+             margin-top: 2px;
+             margin-bottom: 4px;
+        }
+        /* Specific style for distance */
+        .timeline-item-details .distance {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .place-visit-item {
+            background-color: #fffacd;
+             border-left: 4px solid #ffc107;
+             padding-left: 10px;
+        }
+        /* Adjust Activity Segment border */
+         .timeline-item:not(.place-visit-item) { /* Target activity segments */
+            border-left: 4px solid var(--activity-color, #6c757d);
+            padding-left: 10px;
+        }
+        .highlighted {
+            border-color: #007bff !important;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
         .confirmed-checkmark {
             position: absolute;
             bottom: 5px;
-            right: 5px;
+            right: 8px;
             font-size: 12px;
-            opacity: 20%;
+            opacity: 0.3;
+            color: #28a745;
         }
         .highlighted .confirmed-checkmark{
-            opacity: 35%;
+            opacity: 0.6;
         }
-        .advanced-marker {
+        /* --- Bottom Sidebar Elements (Non-scrolling) --- */
+        #data-source-indicator,
+        #about {
+            font-size: 11px;
+            padding: 8px 12px;
+            color: #6c757d;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+            flex-shrink: 0;
+            background-color: #ffffff;
+        }
+        #data-source-indicator {
+            /* margin-top: auto; Let timeline push it down */
+        }
+        #about {
+             margin-top: auto; /* Pushes About link to the very bottom */
+             border-top: none; /* Remove double border if indicator is shown */
+             padding-top: 0;
+        }
+        #map {
+            flex-grow: 1;
+            height: 100%;
+            position: relative; /* Needed for absolute positioning of summary view */
+            transition: opacity 0.3s ease; /* Smooth map fade */
+        }
+        /* --- Advanced Marker (if needed, seems okay) --- */
+        .advanced-marker { display: flex; flex-direction: column; align-items: center; }
+        .marker-icon { font-size: 24px; }
+        .marker-label { font-size: 12px; white-space: nowrap; }
+        /* --- Summary View Styles --- */
+        #summaryView,
+        #howToMessage {
+            position: absolute; /* Position over the map area */
+            top: 0;
+            left: 351px; /* Sidebar width (350px) + border (1px) */
+            right: 0;
+            bottom: 0;
+            background-color: #f8f9fa; /* Match sidebar scroll background */
+            z-index: 50; /* Above map, below loading overlay */
+            padding: 20px;
+            padding-left:40px;
+            overflow-y: auto; /* Scroll if content overflows */
+            border-left: 1px solid #dee2e6; /* Match sidebar border */
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        #summary-controls {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        #closeSummaryBtn {
+            background: none;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            width: 24px;
+            height: 24px;
+            color: #666;
+            padding: 0;
+        }
+        #closeSummaryBtn:hover {
+            background-color: #eee;
+            border-color: #aaa;
+        }
+        #summaryView h4 {
+             margin-top: 15px;
+             margin-bottom: 8px;
+             border-bottom: 1px solid #e0e0e0;
+             padding-bottom: 5px;
+             font-weight: 500;
+             color: #333;
+        }
+         #summaryView h4:first-of-type {
+             margin-top: 0;
+         }
+        #summary-years, #summary-months {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .marker-icon {
-            font-size: 24px;
+        .summary-year-item, .summary-month-item {
+            border: 1px solid #ced4da;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            min-width: 120px; /* Ensure items have some width */
+            font-size: 13px;
         }
-        .marker-label {
-            font-size: 12px;
-            white-space: nowrap;
+        .summary-year-item:hover, .summary-month-item:hover {
+             border-color: #adb5bd;
+             background-color: #f1f3f4;
         }
-
+        .summary-year-item.selected {
+            border-color: #007bff;
+            background-color: #e7f1ff;
+            font-weight: bold;
+        }
+        .summary-year-item strong, .summary-month-item strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #0056b3;
+        }
+        .summary-month-item strong {
+             color: #1a73e8;
+        }
+		.summary-details {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			font-size: 12px;
+			color: #495057;
+			margin-top: 3px;
+		}
+		.summary-details span {
+			text-align: right;
+		}
+        .summary-month-item ul {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0 0 0;
+            font-size: 11px;
+            color: #6c757d;
+        }
+        .summary-month-item ul li {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+        .summary-month-item li {
+             margin-bottom: 2px;
+        }
+         .summary-month-item li span {
+             color: #343a40;
+             font-weight: 500;
+         }
+        /* Style to hide map when summary is shown */
+        #map.hidden {
+            opacity: 0;
+            pointer-events: none; /* Prevent interaction with hidden map */
+        }
+        /* --- Loading Overlay --- */
         #loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Initially hidden */
+            z-index: 1000; /* Ensure above summary view */
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
             font-size: 1.2em;
         }
-
         #loading-spinner {
             border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
+            border-top: 8px solid #5A95F5;
             border-radius: 50%;
             width: 50px;
             height: 50px;
-            animation: spin 2s linear infinite;
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 15px;
         }
-
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        .layer-option {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .layer-checkbox {
-            margin-right: 8px;
-        }
-
-        #layerOptions {
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-        }
-
-        #layerOptions h4 {
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-
-        #layerOptions label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        
-		#data-source-indicator,
-		#about {
-			font-size: 12px;
-			padding: 10px;
-			color: #777;
-			text-align: center;
-			border-top: 1px solid #e0e0e0;
-		}
-		#data-source-indicator {
-			margin-top: 25px;
-		}
-
     </style>
 </head>
-
 <body>
     <div id="container">
         <div id="sidebar">
             <div id="controls-container">
                 <button id="folderPicker" class="control-btn">Choose Folder</button>
-                <button id="layerBtn" class="control-btn">Layers</button>
+                <button id="layerBtn" class="control-btn" disabled>Layers</button>
+                <button id="fitMapBtn" class="control-btn" disabled>Fit Map</button>
             </div>
             <div id="layerOptions" style="display: none;">
-                <h4>View Options</h4>
+                <div id="layerOptionsHeader">
+                    <h4>View Options</h4>
+                    <button id="closeLayerBtn">Close</button>
+                </div>
                 <label>
                     <input type="checkbox" id="showVisits" class="layer-checkbox" checked> Show Visits
                 </label>
@@ -266,29 +525,64 @@
                     <input type="checkbox" id="showActivities" class="layer-checkbox" checked> Show Activities
                 </label>
                 <div id="activityFilters" style="margin-left: 20px;">
-                </div>
+                        <!-- Activity filters will be populated here -->
+                    </div>
             </div>
             <div id="datePickerContainer">
-                <span id="prevDayBtn">&lt;</span>
-                <input type="date" id="startDatePicker">
-                <span>to</span>
-                <input type="date" id="endDatePicker">
-                <span id="nextDayBtn">&gt;</span>
+                <button id="prevDayBtn" disabled><</button>
+                <input type="date" id="startDatePicker" disabled>
+                <span id="dateToSpan">to</span>
+                <input type="date" id="endDatePicker" disabled>
+                <button id="nextDayBtn" disabled>></button>
+            </div>
+            <div id="icon-buttons-container">
+                <div id="icon-buttons-left">
+					<button id="mapBtn" class="icon-btn" title="Show Map" disabled>🗺️</button>
+                    <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>📊</button>
+                </div>
+                <div id="icon-buttons-right">
+                    </div>
             </div>
             <div id="go-container">
-				<button id="goBtn" class="control-btn">GO</button>
+                <button id="goBtn" class="control-btn" disabled>GO</button>
             </div>
             <div id="loading-overlay">
                 <div id="loading-spinner"></div>
                 <span>Loading data...</span>
             </div>
-            <div id="timeline"></div>
-            <div id="data-source-indicator"></div>
-			<div id="about"><a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">View project on Github</a></div>
+            <div id="timeline"></div> 
+            <div id="data-source-indicator">No data loaded. Use "Choose Folder".</div>
+            <div id="about"><a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">View project on Github</a></div>
         </div>
-        <div id="map"></div>
+        <div id="summaryView">
+             <div id="summary-controls">
+                <button id="closeSummaryBtn" title="Close Summary">&times;</button>
+            </div>
+            <h4>Yearly Summary</h4>
+            <div id="summary-years">
+                <p>Calculating...</p>
+            </div>
+            <h4>Monthly Summary (<span id="summary-selected-year"></span>)</h4>
+            <div id="summary-months">
+                 <p>Select a year above.</p>
+            </div>
+        </div>
+        <div id="map" class="hidden"></div>
+        <div id="howToMessage">
+			<h3>How to use:</h3>
+			First, complete the initial setup as explained on the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">Github project page</a>.<br><br>
+			Click "Choose Folder" on the left and navigate to the folder that contains your Timeline data.<br>
+			<h4>For Google Takeout data:</h4>
+			The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History".<br>
+			Navigate into the "Semantic Location History" folder, and then click "Select Folder" on the dialog.<br>
+			(Do not navigate into one of the yearly subfolders.)<br>
+			<h4>For On-Device exported data:</h4>
+			Simply choose the folder that contains your exported Timeline.json file.<br>
+			(On non-English systems, the filename may be different -- rename the file to Timeline.json)
+			<br><br><br><br>
+			After the data has loaded, use the date picker to choose a date or date range that contains timeline data.<br>
+		</div>
     </div>
-
     <script>
         let map;
         let markers = [];
@@ -299,7 +593,65 @@
         let activityTypes = new Set(); // Keep track of unique activity types
         let placeDetailsCache = {}; // Cache for storing Place Details
         let globalIndex = 0; // Global counter for unique data-index
+        let uiEnabled = false; // Flag to track if UI is enabled
 
+        // Summary View Globals
+        let allYearlySummaries = null;
+        let allMonthlySummaries = null;
+        let selectedSummaryYear = null;
+        let summaryViewVisible = false;
+
+        // --- Activity Type Mapping ---
+        const activityGroupMapping = {
+            'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE'],
+            'TAXI': ['IN_TAXI'],
+            'MOTORCYCLING': ['MOTORCYCLING'],
+            'CYCLING': ['ON_BICYCLE', 'CYCLING'],
+            'WALKING': ['ON_FOOT', 'WALKING', 'WALKING_NORDIC'],
+            'HIKING': ['HIKING'],
+            'RUNNING': ['RUNNING'],
+            'BUS': ['IN_BUS'],
+            'SUBWAY': ['IN_SUBWAY'],
+            'TRAIN': ['IN_TRAIN'],
+            'TRAM': ['IN_TRAM'],
+            'FERRY': ['IN_FERRY'],
+            'STATIONARY': ['STILL'],
+            'FLYING': ['FLYING'],
+            'CABLECAR': ['IN_CABLECAR'],
+            'FUNICULAR': ['IN_FUNICULAR'],
+            'GONDOLA_LIFT': ['IN_GONDOLA_LIFT'],
+            'WHEELCHAIR': ['IN_WHEELCHAIR'],
+            'SNOWMOBILE': ['SNOWMOBILE'],
+            'BOATING': ['BOATING'],
+            'CATCHING_POKEMON': ['CATCHING_POKEMON'],
+            'HORSEBACK_RIDING': ['HORSEBACK_RIDING'],
+            'KAYAKING': ['KAYAKING'],
+            'KITESURFING': ['KITESURFING'],
+            'PARAGLIDING': ['PARAGLIDING'],
+            'ROWING': ['ROWING'],
+            'SAILING': ['SAILING'],
+            'SKATEBOARDING': ['SKATEBOARDING'],
+            'SKATING': ['SKATING'],
+            'SKIING': ['SKIING'],
+            'SLEDDING': ['SLEDDING'],
+            'SNOWBOARDING': ['SNOWBOARDING'],
+            'SNOWSHOEING': ['SNOWSHOEING'],
+            'SURFING': ['SURFING'],
+            'SWIMMING': ['SWIMMING'],
+            'UNKNOWN': ['UNKNOWN', 'UNKNOWN_ACTIVITY_TYPE', 'TILTING']
+        };
+
+        // Reverse mapping for easy lookup: RawType -> GroupName
+        const rawToGroupMapping = {};
+        for (const groupName in activityGroupMapping) {
+            activityGroupMapping[groupName].forEach(rawType => {
+                rawToGroupMapping[rawType] = groupName;
+            });
+        }
+        function getGroupedActivityType(rawType) {
+            return rawToGroupMapping[rawType] || 'UNKNOWN'; // Default to UNKNOWN if not found
+        }
+        // --- End Activity Type Mapping ---
 
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
@@ -312,721 +664,640 @@
             });
         }
 
-		function createTimelineItem(item, index, currentDate) {
-			console.log('Creating timeline item:', item, 'with index:', index, 'and date:', currentDate);
-			const timelineItem = document.createElement('div');
-			timelineItem.className = 'timeline-item';
-			timelineItem.dataset.index = index;
+        function getActivityIcon(activityType) {
+            let group = (activityType in activityGroupMapping) ? activityType : getGroupedActivityType(activityType);
+            switch (group) {
+                case 'DRIVING': case 'TAXI': return '🚗';
+                case 'MOTORCYCLING': return '🏍️';
+                case 'CYCLING': return '🚴';
+                case 'WALKING': return '🚶';
+                case 'RUNNING': return '🏃';
+                case 'HIKING': return '🥾';
+                case 'BUS': return '🚌';
+                case 'SUBWAY': return '🚇';
+                case 'TRAIN': return '🚆';
+                case 'TRAM': return '🚊';
+                case 'FERRY': return '⛴️';
+                case 'STATIONARY': return '🛑';
+                case 'FLYING': return '✈️';
+                case 'CABLECAR': return '🚠';
+                case 'FUNICULAR': return '🚞';
+                case 'GONDOLA_LIFT': return '🚡';
+                case 'WHEELCHAIR': return '♿';
+                case 'SNOWMOBILE': return '🚜';
+                case 'BOATING': return '🚤';
+                case 'CATCHING_POKEMON': return '👾'; // Using alien monster
+                case 'HORSEBACK_RIDING': return '🐎';
+                case 'KAYAKING': return '🛶';
+                case 'KITESURFING': return '🏄‍♂️';
+                case 'PARAGLIDING': return '🪂';
+                case 'ROWING': return '🚣';
+                case 'SAILING': return '⛵';
+                case 'SKATEBOARDING': return '🛹';
+                case 'SKATING': return '⛸️';
+                case 'SKIING': return '⛷️';
+                case 'SLEDDING': return '🛷';
+                case 'SNOWBOARDING': return '🏂';
+                case 'SNOWSHOEING': return '❄️';
+                case 'SURFING': return '🏄';
+                case 'SWIMMING': return '🏊';
+                case 'UNKNOWN':
+                    switch (activityType) { case 'TILTING': return '📱'; default: return '❓'; }
+                default: return '❓';
+            }
+        }
 
-			// Check if a date header needs to be added
-			if (!document.querySelector(`.date-header[data-date="${currentDate}"]`)) {
-				const dateHeader = document.createElement('div');
-				dateHeader.className = 'date-header';
-				dateHeader.dataset.date = currentDate;
-				dateHeader.textContent = moment(currentDate).format('dddd, MMMM DD, YYYY');
-				document.getElementById('timeline').appendChild(dateHeader);
-			}
+        function createTimelineItem(item, index, currentDate) {
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item';
+            timelineItem.dataset.index = index;
+            // Check if a date header needs to be added
+            const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
+            if (!existingHeader) {
+                const dateHeader = document.createElement('div');
+                dateHeader.className = 'date-header';
+                dateHeader.dataset.date = currentDate;
+                dateHeader.textContent = moment(currentDate).format('dddd, MMMM DD, YYYY');
+                const firstItemOfDay = document.querySelector(`.timeline-item[data-item-date="${currentDate}"]`);
+                if (firstItemOfDay) {
+                        document.getElementById('timeline').insertBefore(dateHeader, firstItemOfDay);
+                } else {
+                    document.getElementById('timeline').appendChild(dateHeader);
+                }
+            }
+            let startTimestamp, endTimestamp;
+            if (item.placeVisit) {
+                const placeVisit = item.placeVisit;
+                startTimestamp = placeVisit.duration.startTimestamp;
+                endTimestamp = placeVisit.duration.endTimestamp;
+                const locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown location');
+                timelineItem.classList.add('place-visit-item');
+                timelineItem.innerHTML = `
+                        <span class="timeline-icon-container">📍</span>
+                        <div class="timeline-item-details">
+                            <strong class="nametag">${locationName}</strong><br>
+                            <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
+                        </div>
+                    `;
+                timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
+            } else if (item.activitySegment) {
+                const activitySegment = item.activitySegment;
+                startTimestamp = activitySegment.duration.startTimestamp;
+                endTimestamp = activitySegment.duration.endTimestamp;
+                const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || 0;
+                const distanceKm = distanceMeters / 1000;
+                const formattedType = formatActivityType(activitySegment.activityType);
+                timelineItem.innerHTML = `
+                        <span class="timeline-icon-container">${getActivityIcon(activitySegment.activityType)}</span>
+                        <div class="timeline-item-details">
+                            <strong>${formattedType}</strong><br>
+                            <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
+                            <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
+                        </div>
+                    `;
+                const activityColor = getActivityColor(activitySegment.activityType);
+                timelineItem.style.setProperty('--activity-color', activityColor);
+            }
+            timelineItem.dataset.startTimestamp = startTimestamp;
+            timelineItem.dataset.endTimestamp = endTimestamp;
+            timelineItem.dataset.itemDate = currentDate; // Store the date context
+            if ((item.placeVisit && item.placeVisit.editConfirmationStatus === "CONFIRMED") ||
+                (item.activitySegment && item.activitySegment.editConfirmationStatus === "CONFIRMED")) {
+                const checkmark = document.createElement('span');
+                checkmark.className = 'confirmed-checkmark';
+                checkmark.textContent = '✔️';
+                timelineItem.appendChild(checkmark);
+            }
+            return timelineItem;
+        }
 
-			if (item.placeVisit) {
-				const placeVisit = item.placeVisit;
-				const locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ?
-					"Home" : 'Unknown location');
-				timelineItem.classList.add('place-visit-item');
-				timelineItem.innerHTML = `
-						<span class="timeline-icon-container">📍</span>
-						<div>
-							<strong class="nametag">${locationName}</strong><br>
-							${moment(placeVisit.duration.startTimestamp).format('hh:mm A')} -
-							${moment(placeVisit.duration.endTimestamp).format('hh:mm A')}
-						</div>
-					`;
-				timelineItem.style.setProperty('--activity-color', '#8B4513');
-				console.log("createTimelineItem for index " + index + ", place is " + locationName);
-			} else if (item.activitySegment) {
-				const activitySegment = item.activitySegment;
-				const distance = (activitySegment.distance || (activitySegment.simplifiedRawPath &&
-					activitySegment.simplifiedRawPath.distanceMeters) || 0) / 1000;
-				timelineItem.innerHTML = `
-						<span class="timeline-icon-container">${getActivityIcon(activitySegment.activityType)}</span>
-						<div>
-							<strong>${formatActivityType(activitySegment.activityType)}</strong><br>
-							${moment(activitySegment.duration.startTimestamp).format('hh:mm A')} -
-							${moment(activitySegment.duration.endTimestamp).format('hh:mm A')}<br>
-							Distance: ${distance.toFixed(2)} km
-						</div>
-					`;
-
-				timelineItem.style.setProperty('--activity-color', getActivityColor(activitySegment.activityType));
-				timelineItem.style.borderRight = `3px solid ${getActivityColor(activitySegment.activityType)}`;
-			}
-
-			if (item.placeVisit && item.placeVisit.editConfirmationStatus === "CONFIRMED" ||
-				item.activitySegment && item.activitySegment.editConfirmationStatus === "CONFIRMED") {
-				const checkmark = document.createElement('span');
-				checkmark.className = 'confirmed-checkmark';
-				checkmark.textContent = '✔️';
-				timelineItem.appendChild(checkmark);
-			}
-			return timelineItem;
-		}
-
-		async function loadTimelineDataForDate(selectedDate) {
-			selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset());
-			const year = selectedDate.getFullYear();
-			const month = selectedDate.toLocaleString('default', {
-				month: 'long'
-			}).toUpperCase();
-			const dataKey = `${year}_${month}`;
-
-			if (timelineData[dataKey]) {
-				const selectedDateMoment = moment(selectedDate);
-				const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
-					const itemStartTimestamp = moment(item.placeVisit ? item.placeVisit.duration
-						.startTimestamp : item.activitySegment.duration.startTimestamp);
-					const itemEndTimestamp = moment(item.placeVisit ? item.placeVisit.duration
-						.endTimestamp : item.activitySegment.duration.endTimestamp);
-
-					// Check if the item should be displayed based on layer visibility
-					if (item.placeVisit && !document.getElementById('showVisits').checked) return false;
-					if (item.activitySegment && !document.getElementById('showActivities').checked) return false;
-					if (item.activitySegment) {
-						const activityType = item.activitySegment.activityType;
-						if (!document.getElementById(`filter-${activityType}`).checked) return false;
-					}
-
-					return itemStartTimestamp.isSameOrBefore(selectedDateMoment, 'day') && itemEndTimestamp
-						.isSameOrAfter(selectedDateMoment, 'day');
-				});
-
-				let firstLocationSet = false;
-
-				console.log('Relevant data for this date:', relevantData);
-
-				relevantData.forEach((item, index) => {
-
-					// Set the map center only once, based on the first valid item
-					if (!firstLocationSet) {
-						if (item.placeVisit) {
-							const placeVisit = item.placeVisit;
-							const latLng = {
-								lat: placeVisit.location.latitudeE7 / 1e7,
-								lng: placeVisit.location.longitudeE7 / 1e7
-							};
-							map.setCenter(latLng);
-							map.setZoom(15);
-							firstLocationSet = true;
-						} else if (item.activitySegment) {
-							const activitySegment = item.activitySegment;
-							const startLatLng = {
-								lat: activitySegment.startLocation.latitudeE7 / 1e7,
-								lng: activitySegment.startLocation.longitudeE7 / 1e7
-							};
-							map.setCenter(startLatLng);
-							map.setZoom(15);
-							firstLocationSet = true;
-						}
-					}
-				});
-
-				relevantData.forEach((item, index) => {
-					const currentDate = selectedDateMoment.format('YYYY-MM-DD'); // Get the formatted date
-					const timelineItem = createTimelineItem(item, globalIndex, currentDate);
-					document.getElementById('timeline').appendChild(timelineItem);
-					console.log("loadTimelineDataForDate appended for index " + globalIndex + ".");
-
-					if (item.placeVisit) {
-						renderPlaceVisit(item.placeVisit, globalIndex);
-					} else if (item.activitySegment) {
-						renderActivitySegment(item.activitySegment, globalIndex);
-					}
-
-					globalIndex++;
-				});
-			} else {
-				console.log('No data available for the selected date');
-			}
-		}
+        async function loadTimelineDataForDate(selectedDate) {
+            if (!uiEnabled) return;
+            const localSelectedDate = moment(selectedDate);
+            const year = localSelectedDate.year();
+            const month = localSelectedDate.format('MMMM').toUpperCase();
+            const dataKey = `${year}_${month}`;
+            if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
+                const selectedDateStr = localSelectedDate.format('YYYY-MM-DD');
+                const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
+                    const itemStartMoment = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
+                    const itemEndMoment = moment(item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
+                    if (!itemStartMoment.isSame(localSelectedDate, 'day') && !itemEndMoment.isSame(localSelectedDate, 'day') && !(itemStartMoment.isBefore(localSelectedDate, 'day') && itemEndMoment.isAfter(localSelectedDate, 'day'))) {
+                        return false;
+                    }
+                    if (item.placeVisit && !document.getElementById('showVisits').checked) return false;
+                    if (item.activitySegment && !document.getElementById('showActivities').checked) return false;
+                    if (item.activitySegment) {
+                        const groupedType = getGroupedActivityType(item.activitySegment.activityType);
+                        const filterCheckbox = document.getElementById(`filter-${groupedType}`);
+                        if (filterCheckbox && !filterCheckbox.checked) return false;
+                    }
+                    return true;
+                });
+                let firstLocationSet = false;
+                relevantData.sort((a, b) => {
+                    const timeA = moment(a.placeVisit ? a.placeVisit.duration.startTimestamp : a.activitySegment.duration.startTimestamp);
+                    const timeB = moment(b.placeVisit ? b.placeVisit.duration.startTimestamp : b.activitySegment.duration.startTimestamp);
+                    return timeA - timeB;
+                });
+                relevantData.forEach((item, localIndex) => {
+                    if (!firstLocationSet) {
+                        let latLng;
+                        if (item.placeVisit) {
+                            latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
+                        } else if (item.activitySegment && item.activitySegment.startLocation) {
+                            latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
+                        }
+                        if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
+                            map.setCenter(latLng);
+                            map.setZoom(15);
+                            firstLocationSet = true;
+                        }
+                    }
+                });
+                relevantData.forEach((item) => {
+                    const timelineItem = createTimelineItem(item, globalIndex, selectedDateStr);
+                    document.getElementById('timeline').appendChild(timelineItem);
+                    if (item.placeVisit) {
+                        renderPlaceVisit(item.placeVisit, globalIndex);
+                    } else if (item.activitySegment) {
+                        renderActivitySegment(item.activitySegment, globalIndex);
+                    }
+                    globalIndex++;
+                });
+            }
+        }
 
         async function loadTimelineDataInDateRange(startDate, endDate) {
+             // Ensure map is visible when loading data range
+            if (summaryViewVisible) {
+                document.getElementById('summaryView').style.display = 'none';
+                document.getElementById('map').classList.remove('hidden');
+                summaryViewVisible = false;
+            }
+            if (!uiEnabled) return;
             clearMap();
             clearTimeline();
-            const currentDate = moment(startDate);
-            while (currentDate.isSameOrBefore(endDate, 'day')) {
-                await loadTimelineDataForDate(currentDate.toDate());
+            globalIndex = 0;
+            placeDetailsCache = {};
+            const startMoment = moment.utc(startDate).startOf('day');
+            const endMoment = moment.utc(endDate).endOf('day'); // Use end of day for comparison
+            document.getElementById('loading-overlay').style.display = "flex";
+            const promises = [];
+            let currentDate = startMoment.clone();
+            while (currentDate.isSameOrBefore(endMoment, 'day')) {
+                promises.push(loadTimelineDataForDate(currentDate.toDate())); // Pass Date object
                 currentDate.add(1, 'days');
+            }
+            try {
+                await Promise.all(promises);
+            } catch (error) {
+                console.error("Error loading data for date range:", error);
+            } finally {
+                document.getElementById('loading-overlay').style.display = "none";
+                document.getElementById('howToMessage').style.display = "none";
+                document.getElementById('map').classList.remove('hidden');
+                fitMapToData(); // Optionally fit map after loading range
             }
         }
 
         function clearMap() {
-            markers.forEach(marker => marker.setMap(null));
+            markers.forEach(marker => marker.map = null);
             markers = [];
             polylines.forEach(polyline => polyline.setMap(null));
             polylines = [];
             infoWindows.forEach(infoWindow => infoWindow.close());
             infoWindows = [];
+            deselectPolyline(); // Also deselect any highlighted polyline
         }
 
         function clearTimeline() {
-            const timeline = document.getElementById('timeline');
-            timeline.innerHTML = '';
+            document.getElementById('timeline').innerHTML = '';
         }
 
-		function renderPlaceVisit(placeVisit, index) {
-			let locationName = placeVisit.location.name || 
-							   (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : "Unknown Location");
-			const placeId = placeVisit.location.placeId;
-			console.log("renderPlaceVisit for index "+index+". place is "+locationName+", id is "+placeId);
+        function renderPlaceVisit(placeVisit, index) {
+            let locationName = placeVisit.location.name ||
+                               (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : null);
+            const placeId = placeVisit.location.placeId;
+            const lat = placeVisit.location.latitudeE7 / 1e7;
+            const lng = placeVisit.location.longitudeE7 / 1e7;
+            const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            // Attempt to fetch Place Details if placeId exists
+            if (placeId) {
+                if (placeDetailsCache[placeId]) {
+                    renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index);
+                } else {
+                    fetchPlaceDetails(placeId, fallbackName, placeVisit, index);
+                }
+            } else {
+                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                updateSidebarItem(index, fallbackName, null);
+            }
+        }
 
-			// Attempt to fetch Place Details if placeId exists
-			if (placeId) {
-				if (placeDetailsCache[placeId]) {
-					console.log("Using cached details for: "+locationName+", id is "+placeId);
-					renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index);
-				} else {
-					fetchPlaceDetails(placeId, locationName, placeVisit, index);
-				}
-			} else {
-				console.warn("No placeId available for placeVisit:", placeVisit);
-				updateSidebarItem(index, locationName, null);
-			}
-		}
+        function renderBasicMarker(lat, lng, name, placeVisit, index) {
+            const position = { lat, lng };
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                position: position,
+                map: map,
+                title: name,
+            });
+            markers.push(marker);
+            const infoWindowContent = `
+                <h3>${name}</h3>
+                <p>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
+                <p>${moment(placeVisit.duration.startTimestamp).format("YYYY-MM-DD hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("YYYY-MM-DD hh:mm A")}</p>
+                <p><a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">View on Google Maps</a></p> `;
+            const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+            infoWindows.push(infoWindow);
+            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+            addMarkerClickListener(marker, infoWindow, index);
+            if (sidebarItem) {
+                addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+            }
+        }
 
-		function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
-			const placeService = new google.maps.places.PlacesService(map);
-			const request = {
-				placeId: placeId,
-				fields: ["name", "formatted_address", "icon", "photos", "website"]
-			};
+        function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
+            const placeService = new google.maps.places.PlacesService(map);
+            const request = {
+                placeId: placeId,
+                fields: ["name", "formatted_address", "geometry", "icon", "icon_background_color", "photos", "website", "url"] // Added URL field
+            };
+            placeService.getDetails(request, (place, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                    // Cache the result
+                    placeDetailsCache[placeId] = place;
+                    // Render details
+                    renderPlaceDetails(place, placeVisit, index);
+                } else {
+                    console.warn("Error fetching place details:", status, "for placeId:", placeId, "Falling back to basic marker.");
+                    // Fallback to basic marker if details fetch fails
+                    const lat = placeVisit.location.latitudeE7 / 1e7;
+                    const lng = placeVisit.location.longitudeE7 / 1e7;
+                    renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                    updateSidebarItem(index, fallbackName, null);
+                }
+            });
+        }
 
-			placeService.getDetails(request, (place, status) => {
-				if (status === google.maps.places.PlacesServiceStatus.OK) {
-					console.log("fetchPlaceDetails result for index: "+index+", id is "+placeId+". result:"+place);
-				
-					// Cache the result
-					placeDetailsCache[placeId] = place;
+        function updateSidebarItem(index, locationName, iconUrl) {
+            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+            if (sidebarItem) {
+                const nametag = sidebarItem.querySelector('.nametag');
+                if (nametag) nametag.textContent = locationName;
+                const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
+                if (iconContainer) {
+                    iconContainer.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="Icon" style="width: 20px; height: 20px; vertical-align: middle;">` : '📍';
+                }
+            }
+        }
 
-					// Render details
-					renderPlaceDetails(place, placeVisit, index);
-				} else {
-					console.error("Error fetching place details:", status, "for placeId:", placeId);
-					updateSidebarItem(index, fallbackName, null);
-				}
-			});
-		}
-
-		function updateSidebarItem(index, locationName, iconUrl) {
-			const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-			if (sidebarItem) {
-				const nametag = sidebarItem.querySelector('.nametag');
-				if (nametag) {
-					nametag.textContent = locationName;
-				}
-				console.log("updateSidebarItem for index "+index+". place is "+locationName);
-
-				const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
-				if (iconContainer && iconUrl) {
-					iconContainer.innerHTML = `<img src="${iconUrl}" alt="${locationName}" style="width: 24px; height: 24px;">`;
-				}
-			} else {
-				console.warn("Sidebar item not found for index:", index);
-			}
-		}
-
-
-		function renderPlaceDetails(place, placeVisit, index) {
-			var locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
-			// Only update the name if it's not already set to something other than "Unknown Location"
-			if (!placeVisit.location.name || placeVisit.location.name === "Unknown Location" || placeVisit.location.name === "Unknown location"){
-				locationName = place.name;
-			}
-			console.log("renderPlaceDetails for index "+index+". place is "+locationName);
-			
-			const pinElement = new google.maps.marker.PinElement({
-				background: place.icon_background_color,
-				glyph: new URL(String(place.icon)),
-			});
-
-			const marker = new google.maps.marker.AdvancedMarkerElement({
-				position: {
-					lat: placeVisit.location.latitudeE7 / 1e7,
-					lng: placeVisit.location.longitudeE7 / 1e7
-				},
-				map: map,
-				content: pinElement.element,
-				title: locationName,
-			});
-
-			markers.push(marker);
-
-			const photoUrl = place.photos
-				? place.photos[0].getUrl({
-					maxWidth: 200,
-					maxHeight: 200,
-				})
-				: "";
-			const websiteLink = place.website
-				? `<a href="${place.website}" target="_blank">Website</a><br>`
-				: "";
-			const infoWindowContent = `
-				<h3>${locationName}</h3>
-				<p>${place.formatted_address || "Address not available"}</p>
-				${photoUrl
-					? `<img src="${photoUrl}" alt="${locationName}" style="max-width: 200px; max-height: 200px;"><br>`
-					: ""
-				}
-				<p>${moment(placeVisit.duration.startTimestamp).format(
-					"YYYY-MM-DD hh:mm A"
-				)} -
-				${moment(placeVisit.duration.endTimestamp).format(
-					"YYYY-MM-DD hh:mm A"
-				)}</p>
-				${websiteLink || ""}
-				<p><a href="https://www.google.com/maps/place/?q=place_id:${placeVisit.location.placeId
-				}" target="_blank">View on Google Maps</a></p>
-			`;
-
-			const infoWindow = new google.maps.InfoWindow({
-				content: infoWindowContent,
-			});
-			infoWindows.push(infoWindow);
-
-			const sidebarItem = document.querySelector(
-				`.timeline-item[data-index="${index}"]`
-			);
-			if (sidebarItem) {
-				const iconContainer =
-					sidebarItem.querySelector(".timeline-icon-container");
-				const nametag = sidebarItem.querySelector(".nametag");
-
-				if (nametag) {
-					iconContainer.innerHTML = `<img src="${place.icon}" alt="${locationName}" style="width: 24px; height: 24px;">`;
-					nametag.innerHTML = `${locationName}`;
-				} else {
-					console.warn("Nametag element not found for place:", locationName);
-				}
-			} else {
-				console.warn(
-					`Sidebar item not found for place with index ${index}:`,
-					locationName
-				);
-			}
-
-			addMarkerClickListener(marker, infoWindow, index);
-			addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
-		}
+        function renderPlaceDetails(place, placeVisit, index) {
+            let locationName = place.name || placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
+            const position = place.geometry?.location || { lat: placeVisit.location.latitudeE7 / 1e7, lng: placeVisit.location.longitudeE7 / 1e7 };
+            let markerContent;
+            if (place.icon && place.icon_background_color) {
+                try {
+                    // NOTE: PinElement border thickness cannot be directly controlled via API.
+                    const pinElement = new google.maps.marker.PinElement({
+                        background: place.icon_background_color,
+                        glyph: new URL(place.icon),
+                        glyphColor: '#FFFFFF',
+                        borderColor: '#000000',
+                    });
+                    markerContent = pinElement.element;
+                } catch (e) {
+                    console.warn("Could not create PinElement, using default marker:", e);
+                    markerContent = null; // Fallback to default marker rendering below
+                }
+            }
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                position: position,
+                map: map,
+                content: markerContent,
+                title: locationName,
+            });
+            markers.push(marker);
+            const photoUrl = place.photos?.[0]?.getUrl({ maxWidth: 200, maxHeight: 150 });
+            const websiteLink = place.website ? `<a href="${place.website}" target="_blank">Website</a> <b>&nbsp;|&nbsp;</b> ` : "";
+            const mapsLink = place.url ? `<a href="${place.url}" target="_blank">View on Google Maps</a>` : `<a href="https://www.google.com/maps?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`; // Fallback link
+            const infoWindowContent = `
+                <div style="max-width: 250px;">
+                    <h3 style="margin: 5px 0;">${locationName}</h3>
+                    <p style="margin: 3px 0; font-size: 0.9em;">${place.formatted_address || ""}</p>
+                    ${photoUrl ? `<img src="${photoUrl}" alt="${locationName}" style="max-width: 200px; max-height: 200px; margin-top: 5px; border-radius: 3px;"><br>` : ""}
+                    <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
+                    <p style="margin-top: 5px; font-size: 0.85em;">${websiteLink}${mapsLink}</p>
+                </div>
+            `;
+            const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+            infoWindows.push(infoWindow);
+            updateSidebarItem(index, locationName, place.icon);
+            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+            addMarkerClickListener(marker, infoWindow, index);
+            if (sidebarItem) {
+                addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+            }
+        }
 
         function renderActivitySegment(activitySegment, index) {
-			console.log("renderActivitySegment for index "+index+". segment is "+activitySegment);
             let path = [];
-
-            // Start by adding the start location to the path
-            path.push({
-                lat: activitySegment.startLocation.latitudeE7 / 1e7,
-                lng: activitySegment.startLocation.longitudeE7 / 1e7
+            const startLat = activitySegment.startLocation?.latitudeE7 / 1e7;
+            const startLng = activitySegment.startLocation?.longitudeE7 / 1e7;
+            const endLat = activitySegment.endLocation?.latitudeE7 / 1e7;
+            const endLng = activitySegment.endLocation?.longitudeE7 / 1e7;
+            if (!isNaN(startLat) && !isNaN(startLng)) path.push({ lat: startLat, lng: startLng });
+            let intermediatePoints = activitySegment.simplifiedRawPath?.points || activitySegment.timelinePath?.points || activitySegment.waypointPath?.waypoints || [];
+            intermediatePoints.forEach(point => {
+                const pLat = point.latE7 / 1e7;
+                const pLng = point.lngE7 / 1e7;
+                if (!isNaN(pLat) && !isNaN(pLng)) path.push({ lat: pLat, lng: pLng });
             });
-
-            // Add the detailed path points, giving priority to the most detailed available
-            if (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.points) {
-                path = path.concat(activitySegment.simplifiedRawPath.points.map(point => ({
-                    lat: point.latE7 / 1e7,
-                    lng: point.lngE7 / 1e7
-                })));
-            } else if (activitySegment.timelinePath && activitySegment.timelinePath.points) {
-                path = path.concat(activitySegment.timelinePath.points.map(point => ({
-                    lat: point.latE7 / 1e7,
-                    lng: point.lngE7 / 1e7
-                })));
-            } else if (activitySegment.waypointPath && activitySegment.waypointPath.waypoints) {
-                path = path.concat(activitySegment.waypointPath.waypoints.map(point => ({
-                    lat: point.latE7 / 1e7,
-                    lng: point.lngE7 / 1e7
-                })));
+            if (!isNaN(endLat) && !isNaN(endLng)) {
+                 const lastPoint = path[path.length - 1];
+                 if (!lastPoint || lastPoint.lat !== endLat || lastPoint.lng !== endLng) {
+                    path.push({ lat: endLat, lng: endLng });
+                 }
             }
-
-            // Add the end location to the path
-            path.push({
-                lat: activitySegment.endLocation.latitudeE7 / 1e7,
-                lng: activitySegment.endLocation.longitudeE7 / 1e7
-            });
-
-            // Define a line symbol to add arrows to the polyline
-            const lineSymbol = {
-                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            };
-
-            // Create a polyline on the map
+            if (path.length < 2) return;
             const polyline = new google.maps.Polyline({
                 path: path,
                 geodesic: true,
                 strokeColor: getActivityColor(activitySegment.activityType),
-                strokeOpacity: 1.0,
+                strokeOpacity: 0.8, // Slightly less opaque
                 strokeWeight: 5,
-                map: map
+                map: map,
+                clickable: true,
+                zIndex: 0 // Default zIndex
             });
-
-            // Store the polyline so it can be cleared later if needed
+            polyline.set('originalColor', getActivityColor(activitySegment.activityType)); // Store original color
             polylines.push(polyline);
-
-            // Find the corresponding sidebar item
             const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-
-            // Add event listeners for user interaction
             addPolylineClickListener(polyline, sidebarItem, path);
-            addSidebarItemClickListener(sidebarItem, index, null, null, polyline, path);
-        }
-
-
-        function addMarkerClickListener(marker, infoWindow, index) {
-			marker.addListener('click', () => {
-				infoWindows.forEach(iw => iw.close());
-				infoWindow.open(map, marker);
-				highlightSidebarItem(index);
-
-				if (selectedPolyline) {
-					selectedPolyline.setOptions({
-						icons: []
-					});
-					selectedPolyline = null;
-				}
-			});
-		}
-
-        function addPolylineClickListener(polyline, timelineItem, path) {
-            polyline.addListener('click', () => {
-                highlightSidebarItem(timelineItem.dataset.index);
-                const bounds = new google.maps.LatLngBounds();
-                path.forEach(point => bounds.extend(point));
-                map.fitBounds(bounds);
-
-                if (selectedPolyline) {
-                    selectedPolyline.setOptions({
-                        icons: []
-                    });
-                }
-
-                polyline.setOptions({
-                    icons: [{
-                        icon: {
-                            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                            scale: 4
-                        },
-                        offset: '50%',
-                        repeat: '80px'
-                    }],
-                });
-
-                selectedPolyline = polyline;
-
-                // Close all info windows
-                infoWindows.forEach(iw => iw.close());
-
-                timelineItem.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest'
-                });
-            });
-        }
-
-		function addSidebarItemClickListener(sidebarItem, index, marker, infoWindow, polyline, path) {
-			sidebarItem.addEventListener('click', () => {
-				if (marker && infoWindow) {
-					map.setCenter(marker.position);
-					map.setZoom(15);
-					infoWindows.forEach(iw => iw.close());
-					infoWindow.open(map, marker);
-				} else if (polyline && path) {
-					const bounds = new google.maps.LatLngBounds();
-					path.forEach(point => bounds.extend(point));
-					map.fitBounds(bounds);
-
-					if (selectedPolyline) {
-						selectedPolyline.setOptions({
-							icons: []
-						});
-					}
-
-					polyline.setOptions({
-						icons: [{
-							icon: {
-								path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-								scale: 4
-							},
-							offset: '50%',
-							repeat: '80px'
-						}],
-					});
-
-					selectedPolyline = polyline;
-				}
-
-				highlightSidebarItem(index);
-			});
-		}
-		
-        function highlightSidebarItem(index) {
-			console.log("highlightSidebarItem for index "+index);
-			const timelineItems = document.querySelectorAll('.timeline-item');
-			timelineItems.forEach((timelineItem) => {
-				if (timelineItem.dataset.index === index.toString()) {
-					timelineItem.classList.add('highlighted');
-					timelineItem.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest'
-					});
-				} else {
-					timelineItem.classList.remove('highlighted');
-				}
-			});
-		}
-
-        function getActivityIcon(activityType) {
-            switch (activityType) {
-                case 'IN_VEHICLE':
-                case 'IN_PASSENGER_VEHICLE':
-                case 'IN_TAXI':
-                    return '🚗';
-                case 'ON_BICYCLE':
-                case 'CYCLING':
-                    return '🚴';
-                case 'ON_FOOT':
-                case 'WALKING':
-                case 'WALKING_NORDIC':
-                    return '🚶';
-                case 'STILL':
-                    return '🛑';
-                case 'UNKNOWN':
-                case 'UNKNOWN_ACTIVITY_TYPE':
-                    return '❓';
-                case 'TILTING':
-                    return '📱';
-                case 'RUNNING':
-                    return '🏃';
-                case 'FLYING':
-                    return '✈️';
-                case 'IN_BUS':
-                    return '🚌';
-                case 'IN_SUBWAY':
-                    return '🚇';
-                case 'IN_TRAIN':
-                    return '🚆';
-                case 'IN_TRAM':
-                    return '🚊';
-                case 'IN_CABLECAR':
-                    return '🚠';
-                case 'IN_FERRY':
-                    return '⛴️';
-                case 'IN_FUNICULAR':
-                    return '🚞';
-                case 'IN_GONDOLA_LIFT':
-                    return '🚡';
-                case 'IN_WHEELCHAIR':
-                    return '♿';
-                case 'BOATING':
-                    return '🚤';
-                case 'CATCHING_POKEMON':
-                    return '🎮';
-                case 'HIKING':
-                    return '🥾';
-                case 'HORSEBACK_RIDING':
-                    return '🐎';
-                case 'KAYAKING':
-                    return '🛶';
-                case 'KITESURFING':
-                    return '🏄‍♂️';
-                case 'MOTORCYCLING':
-                    return '🏍️';
-                case 'PARAGLIDING':
-                    return '🪂';
-                case 'ROWING':
-                    return '🚣';
-                case 'SAILING':
-                    return '⛵';
-                case 'SKATEBOARDING':
-                    return '🛹';
-                case 'SKATING':
-                    return '⛸️';
-                case 'SKIING':
-                    return '⛷️';
-                case 'SLEDDING':
-                    return '🛷';
-                case 'SNOWBOARDING':
-                    return '🏂';
-                case 'SNOWMOBILE':
-                    return '🚜';
-                case 'SNOWSHOEING':
-                    return '❄️';
-                case 'SURFING':
-                    return '🏄';
-                case 'SWIMMING':
-                    return '🏊';
-                default:
-                    return '❓';
+            if (sidebarItem) {
+                addSidebarItemClickListener(sidebarItem, index, null, null, polyline, path);
             }
         }
 
+        function addMarkerClickListener(marker, infoWindow, index) {
+            marker.addListener('click', () => {
+                if (!marker.map) return;
+                infoWindows.forEach(iw => iw.close());
+                infoWindow.open({ map: map, anchor: marker });
+                highlightSidebarItem(index);
+                deselectPolyline();
+            });
+        }
+
+        function addPolylineClickListener(polyline, timelineItem, path) {
+            polyline.addListener('click', (e) => { // e is PolyMouseEvent
+                if (!polyline.getMap()) return;
+                const index = timelineItem ? timelineItem.dataset.index : null;
+                if (index !== null) highlightSidebarItem(index);
+                selectPolyline(polyline); // Select clicked polyline
+                infoWindows.forEach(iw => iw.close()); // Close info windows
+                if (timelineItem) {
+                    timelineItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                // Optional: Fit bounds on click? Sometimes selecting is enough.
+                // const bounds = new google.maps.LatLngBounds();
+                // path.forEach(point => bounds.extend(point));
+                // map.fitBounds(bounds);
+            });
+        }
+
+        function selectPolyline(polyline) {
+            if (selectedPolyline === polyline) return; // Already selected
+            deselectPolyline(); // Deselect previous first
+            polyline.setOptions({
+                strokeWeight: 7, // Make it slightly thicker
+                icons: [{
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 4,
+                        strokeColor: '#FFF', // White outline for visibility
+                        strokeWeight: 1
+                    },
+                    offset: '50%',
+                    repeat: '90px'
+                }],
+                zIndex: 1 // Bring to front
+            });
+            selectedPolyline = polyline;
+        }
+
+        function deselectPolyline() {
+            if (selectedPolyline) {
+                selectedPolyline.setOptions({
+                    icons: [],
+                    strokeWeight: 5,
+                    strokeOpacity: 0.8,
+                    zIndex: 0
+                });
+                selectedPolyline = null;
+            }
+        }
+
+        function addSidebarItemClickListener(sidebarItem, index, marker, infoWindow, polyline, path) {
+            if (!sidebarItem) return;
+            sidebarItem.addEventListener('click', () => {
+                highlightSidebarItem(index);
+                if (marker && infoWindow && marker.map) {
+                    // Center on marker and open its info window
+                    map.setCenter(marker.position);
+                    map.setZoom(Math.max(map.getZoom(), 15)); // Zoom in if necessary
+                    infoWindows.forEach(iw => iw.close());
+                    infoWindow.open({ map: map, anchor: marker });
+                    deselectPolyline(); // Deselect any selected polyline
+                } else if (polyline && path?.length > 0 && polyline.getMap()) {
+                    // Fit map to polyline bounds and select it
+                    const bounds = new google.maps.LatLngBounds();
+                    path.forEach(point => bounds.extend(point));
+                    map.fitBounds(bounds, 30); // Add some padding
+                    selectPolyline(polyline);
+                    infoWindows.forEach(iw => iw.close());
+                }
+            });
+        }
+
+        function highlightSidebarItem(index) {
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            document.getElementById('layerOptions').style.display = 'none';
+            timelineItems.forEach((item) => {
+                const timeElement = item.querySelector('.timeline-item-time');
+                const startTimestamp = item.dataset.startTimestamp;
+                const endTimestamp = item.dataset.endTimestamp;
+                if (item.dataset.index === String(index)) {
+                    item.classList.add('highlighted');
+                    if (!isElementInViewport(item)) {
+                        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                    if (timeElement && startTimestamp && endTimestamp) {
+                         timeElement.textContent = `${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}`;
+                    }
+                } else {
+                    item.classList.remove('highlighted');
+                    if (timeElement && startTimestamp && endTimestamp) {
+                         timeElement.textContent = `${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}`;
+                    }
+                }
+            });
+        }
+
+        function isElementInViewport (el) {
+            if (!el) return false;
+            const rect = el.getBoundingClientRect();
+            const timeline = document.getElementById('timeline'); // Check against timeline scroll container
+            const timelineRect = timeline.getBoundingClientRect();
+            return (
+                rect.top >= timelineRect.top &&
+                rect.bottom <= timelineRect.bottom
+            );
+        }
+
         function getActivityColor(activityType) {
-            switch (activityType) {
-                case 'ON_FOOT':
-                case 'WALKING':
-                case 'RUNNING':
-                case 'ON_BICYCLE':
-                case 'CYCLING':
-                    return '#FF0000'; // Red
-                case 'IN_VEHICLE':
-                case 'IN_PASSENGER_VEHICLE':
-                case 'IN_TAXI':
-                    return '#0000FF'; // Blue
-                case 'IN_SUBWAY':
-                    return '#006400'; // Dark Green
-                case 'IN_BUS':
-                    return '#800080'; // Purple
-                default:
-                    return '#8B4513'; // Brown
+            const group = getGroupedActivityType(activityType);
+            switch (group) {
+                case 'DRIVING': case 'TAXI': return '#4285F4'; // Google Blue
+                case 'MOTORCYCLING': return '#1E90FF';
+                case 'CYCLING': return '#0F9D58'; // Google Green
+                case 'WALKING': return '#DB4437'; // Google Red
+                case 'RUNNING': return '#DB4437';
+                case 'HIKING': return '#0F9D58'; // Google Green (for nature)
+                case 'BUS': return '#9C27B0'; // Purple
+                case 'SUBWAY': case 'TRAIN': case 'TRAM': case 'FERRY': return '#673AB7'; // Deep Purple
+                case 'STATIONARY': return '#757575'; // Grey
+                case 'FLYING': return '#03A9F4'; // Light Blue
+                case 'CABLECAR': case 'FUNICULAR': case 'GONDOLA_LIFT': case 'WHEELCHAIR': return '#607D8B'; // Blue Grey
+                case 'BOATING': case 'KAYAKING': case 'ROWING': case 'SAILING': case 'SURFING': case 'SWIMMING': return '#00BCD4'; // Cyan
+                case 'CATCHING_POKEMON': return '#FFEB3B'; // Yellow
+                case 'HORSEBACK_RIDING': return '#795548'; // Brown
+                case 'KITESURFING': case 'PARAGLIDING': return '#87CEEB'; // Sky Blue
+                case 'SKATEBOARDING': case 'SKATING': return '#FF9800'; // Orange
+                case 'SKIING': case 'SLEDDING': case 'SNOWBOARDING': case 'SNOWSHOEING': case 'SNOWMOBILE': return '#B0E0E6'; // Powder Blue
+                case 'UNKNOWN': default: return '#9E9E9E'; // Darker Grey
             }
         }
 
         function formatActivityType(activityType) {
             switch (activityType) {
-                case 'IN_VEHICLE':
-                case 'IN_PASSENGER_VEHICLE':
-                    return 'In a Vehicle';
-                case 'ON_BICYCLE':
-                case 'CYCLING':
-                    return 'On a Bicycle';
-                case 'ON_FOOT':
-                    return 'On Foot';
-                case 'STILL':
-                    return 'Still';
-                case 'UNKNOWN':
-                case 'UNKNOWN_ACTIVITY_TYPE':
-                    return 'Unknown Travel';
-                case 'TILTING':
-                    return 'Tilting';
-                case 'WALKING':
-                    return 'Walking';
-                case 'WALKING_NORDIC':
-                    return 'Nordic Walking';
-                case 'RUNNING':
-                    return 'Running';
-                case 'FLYING':
-                    return 'Flying';
-                case 'IN_BUS':
-                    return 'On a Bus';
-                case 'IN_SUBWAY':
-                    return 'On the Subway';
-                case 'IN_TRAIN':
-                    return 'On a Train';
-                case 'IN_TRAM':
-                    return 'On a Tram';
-                case 'IN_CABLECAR':
-                    return 'In a Cable Car';
-                case 'IN_FERRY':
-                    return 'On a Ferry';
-                case 'IN_FUNICULAR':
-                    return 'On a Funicular';
-                case 'IN_GONDOLA_LIFT':
-                    return 'In a Gondola Lift';
-                case 'IN_WHEELCHAIR':
-                    return 'By Wheelchair';
-                case 'BOATING':
-                    return 'Boating';
-                case 'CATCHING_POKEMON':
-                    return 'Catching Pokémon';
-                case 'HIKING':
-                    return 'Hiking';
-                case 'HORSEBACK_RIDING':
-                    return 'Horseback Riding';
-                case 'KAYAKING':
-                    return 'Kayaking';
-                case 'KITESURFING':
-                    return 'Kitesurfing';
-                case 'MOTORCYCLING':
-                    return 'Motorcycling';
-                case 'PARAGLIDING':
-                    return 'Paragliding';
-                case 'ROWING':
-                    return 'Rowing';
-                case 'SAILING':
-                    return 'Sailing';
-                case 'SKATEBOARDING':
-                    return 'Skateboarding';
-                case 'SKATING':
-                    return 'Skating';
-                case 'SKIING':
-                    return 'Skiing';
-                case 'SLEDDING':
-                    return 'Sledding';
-                case 'SNOWBOARDING':
-                    return 'Snowboarding';
-                case 'SNOWMOBILE':
-                    return 'Snowmobiling';
-                case 'SNOWSHOEING':
-                    return 'Snowshoeing';
-                case 'SURFING':
-                    return 'Surfing';
-                case 'SWIMMING':
-                    return 'Swimming';
-                default:
-                    return 'Unknown';
+                case 'IN_VEHICLE': return 'Driving';
+                case 'IN_PASSENGER_VEHICLE': return 'In a Vehicle';
+                case 'IN_TAXI': return 'In a Taxi';
+                case 'MOTORCYCLING': return 'Motorcycling';
+                case 'ON_BICYCLE': case 'CYCLING': return 'Biking';
+                case 'ON_FOOT': case 'WALKING': return 'Walking';
+                case 'WALKING_NORDIC': return 'Nordic Walking';
+                case 'HIKING': return 'Hiking';
+                case 'RUNNING': return 'Running';
+                case 'IN_BUS': return 'On a Bus';
+                case 'IN_SUBWAY': return 'On the Subway';
+                case 'IN_TRAIN': return 'On a Train';
+                case 'IN_TRAM': return 'On a Tram';
+                case 'IN_FERRY': return 'On a Ferry';
+                case 'STILL': return 'Stationary';
+                case 'FLYING': return 'On a Plane';
+                case 'IN_CABLECAR': return 'On a Cable Car';
+                case 'IN_FUNICULAR': return 'On a Funicular';
+                case 'IN_GONDOLA_LIFT': return 'On a Gondola';
+                case 'IN_WHEELCHAIR': return 'In a Wheelchair';
+                case 'SNOWMOBILE': return 'On a Snowmobile';
+                case 'BOATING': return 'Boating';
+                case 'CATCHING_POKEMON': return 'Catching Pokémon';
+                case 'HORSEBACK_RIDING': return 'Horseback Riding';
+                case 'KAYAKING': return 'Kayaking';
+                case 'KITESURFING': return 'Kitesurfing';
+                case 'PARAGLIDING': return 'Paragliding';
+                case 'ROWING': return 'Rowing';
+                case 'SAILING': return 'Sailing';
+                case 'SKATEBOARDING': return 'Skateboarding';
+                case 'SKATING': return 'Skating';
+                case 'SKIING': return 'Skiing';
+                case 'SLEDDING': return 'Sledding';
+                case 'SNOWBOARDING': return 'Snowboarding';
+                case 'SNOWSHOEING': return 'Snowshoeing';
+                case 'SURFING': return 'Surfing';
+                case 'SWIMMING': return 'Swimming';
+                case 'UNKNOWN': case 'UNKNOWN_ACTIVITY_TYPE': return 'Unknown Activity';
+                case 'TILTING': return 'Device Tilt';
+                default: return activityType ? activityType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity';
             }
         }
 
         function initDatePicker() {
             const startDatePicker = document.getElementById('startDatePicker');
             const endDatePicker = document.getElementById('endDatePicker');
-
-            startDatePicker.value = moment().subtract(7, 'days').format('YYYY-MM-DD');
-            endDatePicker.value = moment().format('YYYY-MM-DD');
-
-            document.getElementById('prevDayBtn').addEventListener('click', () => {
-                const startDate = new Date(startDatePicker.value);
-                const endDate = new Date(endDatePicker.value);
-                startDate.setUTCDate(startDate.getUTCDate() - 1);
-                endDate.setUTCDate(endDate.getUTCDate() - 1);
-                startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
-                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
-                loadTimelineDataInDateRange(startDate, endDate);
-            });
-
-            document.getElementById('nextDayBtn').addEventListener('click', () => {
-                const startDate = new Date(startDatePicker.value);
-                const endDate = new Date(endDatePicker.value);
-                startDate.setUTCDate(startDate.getUTCDate() + 1);
-                endDate.setUTCDate(endDate.getUTCDate() + 1);
-                startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
-                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
-                loadTimelineDataInDateRange(startDate, endDate);
-            });
-
-            document.getElementById('goBtn').addEventListener('click', () => {
-                const startDate = new Date(startDatePicker.value);
-                const endDate = new Date(endDatePicker.value);
+            const prevDayBtn = document.getElementById('prevDayBtn');
+            const nextDayBtn = document.getElementById('nextDayBtn');
+            const goBtn = document.getElementById('goBtn');
+            const today = moment().format('YYYY-MM-DD');
+            startDatePicker.value = today;
+            endDatePicker.value = today;
+            const navigateDays = (days) => {
+                 if (!uiEnabled) return;
+                const startMoment = moment.utc(startDatePicker.value).add(days, 'days');
+                const endMoment = moment.utc(endDatePicker.value).add(days, 'days');
+                 if (startMoment.isAfter(endMoment)) {
+                    endMoment.add(days, 'days');
+                }
+                startDatePicker.value = startMoment.format('YYYY-MM-DD');
+                endDatePicker.value = endMoment.format('YYYY-MM-DD');
+                loadTimelineDataInDateRange(startMoment.toDate(), endMoment.toDate());
+            };
+            prevDayBtn.addEventListener('click', () => navigateDays(-1));
+            nextDayBtn.addEventListener('click', () => navigateDays(1));
+            goBtn.addEventListener('click', () => {
+                if (!uiEnabled) return;
+                const startDate = moment.utc(startDatePicker.value).toDate();
+                const endDate = moment.utc(endDatePicker.value).toDate();
                 if (startDate > endDate) {
-                    alert('Start date must be before end date.');
+					console.log(`${startDate} not before ${endDate}`);
+					clearMap();
+					clearTimeline();
+					globalIndex = 0;
+					placeDetailsCache = {};
+					document.getElementById('summary-years').innerHTML = '';
+					document.getElementById('summary-months').innerHTML = '';
                     return;
                 }
-				startDatePicker.value = moment.utc(startDate).format('YYYY-MM-DD');
-                endDatePicker.value = moment.utc(endDate).format('YYYY-MM-DD');
                 loadTimelineDataInDateRange(startDate, endDate);
             });
+            startDatePicker.addEventListener('change', () => { if(uiEnabled) goBtn.click(); });
+            endDatePicker.addEventListener('change', () => { if(uiEnabled) goBtn.click(); });
         }
 
         function populateActivityFilters() {
             const activityFilters = document.getElementById('activityFilters');
-            activityFilters.innerHTML = ''; // Clear existing filters
-
-            const sortedActivityTypes = Array.from(activityTypes).sort();
-
-            sortedActivityTypes.forEach(type => {
+            activityFilters.innerHTML = '';
+            const uniqueGroupedTypes = new Set();
+            Object.values(timelineData).forEach(monthData => {
+                monthData.timelineObjects?.forEach(item => {
+                    if (item.activitySegment) {
+                        uniqueGroupedTypes.add(getGroupedActivityType(item.activitySegment.activityType));
+                    }
+                });
+            });
+            const sortedGroupedTypes = Array.from(uniqueGroupedTypes).sort((a, b) => {
+                if (a === 'UNKNOWN') return 1;
+                if (b === 'UNKNOWN') return -1;
+                return a.localeCompare(b);
+             });
+            sortedGroupedTypes.forEach(groupType => {
+                if (groupType === 'STATIONARY') return;
                 const label = document.createElement('label');
+                label.className = 'layer-option';
+                const formattedName = groupType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 label.innerHTML = `
-                <input type="checkbox" id="filter-${type}" class="layer-checkbox" checked> ${formatActivityType(type)}
-            `;
+                    <input type="checkbox" id="filter-${groupType}" class="layer-checkbox activity-filter-checkbox" checked data-group-type="${groupType}">
+                    <span style="color:${getActivityColor(groupType)}; margin-right: 4px;">${getActivityIcon(groupType)}</span>
+                    ${formattedName}
+                `;
                 activityFilters.appendChild(label);
-
-                // Add event listener to each filter checkbox
-                const checkbox = document.getElementById(`filter-${type}`);
+                const checkbox = label.querySelector('input');
                 checkbox.addEventListener('change', () => {
+                    if (!uiEnabled) return;
+                    const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
+                    document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
                     const startDate = new Date(document.getElementById('startDatePicker').value);
                     const endDate = new Date(document.getElementById('endDatePicker').value);
                     loadTimelineDataInDateRange(startDate, endDate);
@@ -1037,229 +1308,536 @@
         function initLayerButton() {
             const layerBtn = document.getElementById('layerBtn');
             const layerOptions = document.getElementById('layerOptions');
+            const closeLayerBtn = document.getElementById('closeLayerBtn');
+            const showActivitiesCheckbox = document.getElementById('showActivities');
+            const showVisitsCheckbox = document.getElementById('showVisits');
+            const activityFiltersDiv = document.getElementById('activityFilters');
             layerBtn.addEventListener('click', () => {
+                if (!uiEnabled) return;
                 layerOptions.style.display = layerOptions.style.display === 'none' ? 'block' : 'none';
             });
-
-            // Add event listeners to layer visibility checkboxes
-            document.getElementById('showVisits').addEventListener('change', () => {
+            closeLayerBtn.addEventListener('click', () => layerOptions.style.display = 'none');
+            const reloadData = () => {
+                if (!uiEnabled) return;
                 const startDate = new Date(document.getElementById('startDatePicker').value);
                 const endDate = new Date(document.getElementById('endDatePicker').value);
                 loadTimelineDataInDateRange(startDate, endDate);
-            });
-            document.getElementById('showActivities').addEventListener('change', () => {
-                const startDate = new Date(document.getElementById('startDatePicker').value);
-                const endDate = new Date(document.getElementById('endDatePicker').value);
-                loadTimelineDataInDateRange(startDate, endDate);
+            };
+            showVisitsCheckbox.addEventListener('change', reloadData);
+            showActivitiesCheckbox.addEventListener('change', function() {
+                if (!uiEnabled) return;
+                const isChecked = this.checked;
+                activityFiltersDiv.querySelectorAll('.activity-filter-checkbox').forEach(checkbox => checkbox.checked = isChecked);
+                reloadData();
             });
         }
 
+        function initFitMapButton() {
+            document.getElementById('fitMapBtn').addEventListener('click', fitMapToData);
+        }
+
+        function fitMapToData() {
+            if (!uiEnabled || (markers.length === 0 && polylines.length === 0)) return;
+            const bounds = new google.maps.LatLngBounds();
+            let itemCount = 0;
+            markers.forEach(marker => {
+                if (marker.map) {
+                    bounds.extend(marker.position);
+                    itemCount++;
+                }
+            });
+            polylines.forEach(polyline => {
+                if (polyline.getMap()) {
+                    polyline.getPath().forEach(point => bounds.extend(point));
+                    itemCount++;
+                }
+            });
+            if (itemCount > 0) {
+                if (itemCount === 1 && markers.length === 1) {
+                     // Single marker: center and set zoom
+                     map.setCenter(bounds.getCenter());
+                     map.setZoom(15);
+                 } else if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+                     // Multiple items at the exact same point
+                     map.setCenter(bounds.getCenter());
+
+                     map.setZoom(16); // Zoom slightly closer for identical points
+                 } else {
+                     map.fitBounds(bounds, 50); // Fit multiple items with padding
+                }
+            }
+        }
+
+        // --- Summary View Calculation ---
+        function calculateSummaries() {
+            console.log("Calculating summaries...");
+            const yearly = {};
+            const monthly = {};
+            const kmConversion = 0.001;
+            for (const key in timelineData) {
+                if (!timelineData[key].timelineObjects) continue;
+                const parts = key.split('_');
+                if (parts.length < 2) continue;
+                const yearStr = parts[0];
+                const monthStr = parts[1];
+                const year = parseInt(yearStr, 10);
+                let monthIndex = moment().month(monthStr).format("M") - 1;
+                if (monthIndex < 0) {
+                    const monthNum = parseInt(monthStr, 10);
+                    if (!isNaN(monthNum) && monthNum >= 1 && monthNum <= 12) {
+                        monthIndex = monthNum - 1;
+                    }
+                }
+                if (isNaN(year) || monthIndex < 0 || monthIndex > 11) continue;
+                if (!yearly[year]) yearly[year] = { visits: 0, distanceKm: 0 };
+                if (!monthly[year]) monthly[year] = {};
+                if (!monthly[year][monthIndex]) {
+                    monthly[year][monthIndex] = { visits: 0, distanceKm: 0, distanceByActivity: {} };
+                }
+                timelineData[key].timelineObjects.forEach(item => {
+                    if (item.placeVisit) {
+                        yearly[year].visits++;
+                        monthly[year][monthIndex].visits++;
+                    } else if (item.activitySegment) {
+                        const segment = item.activitySegment;
+                        const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
+                        const distanceKm = distanceMeters * kmConversion;
+                        if (distanceKm > 0) {
+                            yearly[year].distanceKm += distanceKm;
+                            monthly[year][monthIndex].distanceKm += distanceKm;
+                            const groupedType = getGroupedActivityType(segment.activityType);
+                            monthly[year][monthIndex].distanceByActivity[groupedType] = (monthly[year][monthIndex].distanceByActivity[groupedType] || 0) + distanceKm;
+                        }
+                    }
+                });
+            }
+            allYearlySummaries = yearly;
+            allMonthlySummaries = monthly;
+            console.log("Summaries calculated:", allYearlySummaries, allMonthlySummaries);
+        }
+
+        // --- Summary View Display Functions ---
+        function displayYearSummary() {
+            const container = document.getElementById('summary-years');
+            container.innerHTML = ''; // Clear previous
+            if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
+                 container.innerHTML = '<p>No summary data available.</p>';
+                 document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
+                 document.getElementById('summary-selected-year').textContent = '';
+                 return;
+            }
+            const sortedYears = Object.keys(allYearlySummaries).map(Number).sort((a, b) => b - a);
+            sortedYears.forEach(year => {
+                const data = allYearlySummaries[year];
+                const item = document.createElement('div');
+                item.className = 'summary-year-item';
+                item.dataset.year = year;
+                item.innerHTML = `
+                    <strong>${year}</strong>
+                    <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+                    <div class="summary-details">Distance: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
+                `;
+                item.addEventListener('click', () => {
+                    displayMonthSummary(year);
+                    container.querySelectorAll('.summary-year-item.selected').forEach(el => el.classList.remove('selected'));
+                    item.classList.add('selected');
+                });
+                container.appendChild(item);
+            });
+            if (sortedYears.length > 0) {
+                const initialYear = selectedSummaryYear && allYearlySummaries[selectedSummaryYear] ? selectedSummaryYear : sortedYears[0];
+                displayMonthSummary(initialYear);
+                container.querySelector(`.summary-year-item[data-year="${initialYear}"]`)?.classList.add('selected');
+            } else {
+                 document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
+                 document.getElementById('summary-selected-year').textContent = '';
+            }
+        }
+
+        function displayMonthSummary(year) {
+            selectedSummaryYear = year;
+            document.getElementById('summary-selected-year').textContent = year;
+            const container = document.getElementById('summary-months');
+            container.innerHTML = '';
+            if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
+                container.innerHTML = `<p>No monthly data available for ${year}.</p>`;
+                return;
+            }
+            const sortedMonths = Object.keys(allMonthlySummaries[year]).map(Number).sort((a, b) => a - b);
+            sortedMonths.forEach(monthIndex => {
+                const data = allMonthlySummaries[year][monthIndex];
+                const monthName = moment().month(monthIndex).format("MMMM");
+                const item = document.createElement('div');
+                item.className = 'summary-month-item';
+                item.dataset.year = year;
+                item.dataset.month = monthIndex;
+                let activityHtml = '<ul>';
+                const sortedActivities = Object.keys(data.distanceByActivity).sort((a,b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
+                if (sortedActivities.length > 0) {
+                     sortedActivities.forEach(activityGroup => {
+                        const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        const icon = getActivityIcon(activityGroup);
+                        activityHtml += `<li>${icon} ${formattedName}: <span>${data.distanceByActivity[activityGroup].toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></li>`;
+                    });
+                } else {
+                    activityHtml += '<li>No distance recorded</li>';
+                }
+                activityHtml += '</ul>';
+                item.innerHTML = `
+                    <strong>${monthName}</strong>
+                    <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+                    <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
+                    ${activityHtml}
+                `;
+                 item.addEventListener('click', () => navigateToMonth(year, monthIndex));
+                container.appendChild(item);
+            });
+        }
+
+        // --- Navigation from Summary to Map ---
+        function navigateToMonth(year, monthIndex) {
+            console.log(`Navigating to: ${year}-${String(monthIndex + 1).padStart(2, '0')}`);
+            const startOfMonth = moment.utc({ year: year, month: monthIndex }).startOf('month').format('YYYY-MM-DD');
+            const endOfMonth = moment.utc({ year: year, month: monthIndex }).endOf('month').format('YYYY-MM-DD');
+            document.getElementById('startDatePicker').value = startOfMonth;
+            document.getElementById('endDatePicker').value = endOfMonth;
+            document.getElementById('summaryView').style.display = 'none';
+            document.getElementById('map').classList.remove('hidden');
+            summaryViewVisible = false;
+            document.getElementById('goBtn').click(); // Trigger data load
+        }
+
+        // --- Initialize Summary View ---
+        function initSummaryView() {
+             const summaryBtn = document.getElementById('summaryBtn');
+             const closeSummaryBtn = document.getElementById('closeSummaryBtn');
+             const summaryView = document.getElementById('summaryView');
+             const mapElement = document.getElementById('map');
+             const mapBtn = document.getElementById('mapBtn');
+             summaryBtn.addEventListener('click', () => {
+                if (!uiEnabled) return;
+                if (!summaryViewVisible) {
+                    if (!allYearlySummaries) {
+                        calculateSummaries();
+                    }
+                    displayYearSummary();
+                    summaryView.style.display = 'block';
+                    mapElement.classList.add('hidden');
+                    summaryViewVisible = true;
+                } else {
+                    summaryView.style.display = 'none';
+                    mapElement.classList.remove('hidden');
+                    summaryViewVisible = false;
+                }
+                updateViewToggleButtons();
+             });
+             closeSummaryBtn.addEventListener('click', () => {
+                summaryView.style.display = 'none';
+                mapElement.classList.remove('hidden');
+                summaryViewVisible = false;
+                updateViewToggleButtons();
+             });
+             mapBtn.addEventListener('click', () => {
+                summaryView.style.display = 'none';
+                mapElement.classList.remove('hidden');
+                summaryViewVisible = false;
+                updateViewToggleButtons();
+             });
+        }
+        function updateViewToggleButtons() {
+            const summaryBtn = document.getElementById('summaryBtn');
+            const mapBtn = document.getElementById('mapBtn');
+            if (summaryViewVisible) {
+                summaryBtn.classList.add('active');
+                mapBtn.classList.remove('active');
+            } else {
+                summaryBtn.classList.remove('active');
+                mapBtn.classList.add('active');
+            }
+        }
+
+        // --- UI Enable/Disable ---
+        function setUIEnabled(enabled) {
+            uiEnabled = enabled;
+            const elementsToToggle = [
+                document.getElementById('startDatePicker'),
+                document.getElementById('endDatePicker'),
+                document.getElementById('prevDayBtn'),
+                document.getElementById('nextDayBtn'),
+                document.getElementById('goBtn'),
+                document.getElementById('layerBtn'),
+                document.getElementById('fitMapBtn'),
+                document.getElementById('summaryBtn'),
+                document.getElementById('mapBtn')
+            ];
+            elementsToToggle.forEach(el => { if(el) el.disabled = !enabled; });
+            const layerCheckboxes = document.querySelectorAll('#layerOptions input[type="checkbox"]');
+            layerCheckboxes.forEach(cb => cb.disabled = !enabled);
+            if (!enabled) {
+                document.getElementById('data-source-indicator').textContent = 'No data loaded. Use "Choose Folder".';
+                clearMap();
+                clearTimeline();
+                document.getElementById('layerOptions').style.display = 'none';
+                document.getElementById('summaryView').style.display = 'none'; // Hide summary view
+                document.getElementById('map').classList.remove('hidden'); // Ensure map is visible
+                summaryViewVisible = false;
+                allYearlySummaries = null;
+                allMonthlySummaries = null;
+                selectedSummaryYear = null;
+            }
+        }
+
         async function readFilesFromDirectory(dirHandle, isRecursive=false) {
-			let timelineJsonFile = null;
-			let dataSourceText = '';
-			globalIndex = 0; // Reset global index
+            let timelineJsonFile = null;
+            let dataSourceText = 'Unknown';
+            if (!isRecursive) {
+                console.log("Initial call to readFilesFromDirectory, resetting globals...");
+                globalIndex = 0;
+                timelineData = {}; // Reset main data object
+                activityTypes = new Set(); // Reset activity types
+                placeDetailsCache = {}; // Reset cache
+                allYearlySummaries = null;
+                allMonthlySummaries = null;
+                selectedSummaryYear = null;
+                // Show loading overlay only on initial call
+                document.getElementById('loading-overlay').style.display = "flex";
+                setUIEnabled(false); // Disable UI only on initial call
+            }
+            try {
+                if (!isRecursive) {
+                    for await (const entry of dirHandle.values()) {
+                        if (entry.kind === 'file' && entry.name.toLowerCase() === 'timeline.json') {
+                            timelineJsonFile = entry;
+                            break;
+                        }
+                    }
+                }
+                if (timelineJsonFile) {
+                    // If Timeline.json is found, try parsing it (Semantic History format)
+                    console.log("Found Timeline.json, attempting to parse...");
+                    const file = await timelineJsonFile.getFile();
+                    const content = await file.text();
+                    const data = JSON.parse(content);
+                    // Create temp structure to hold processed objects grouped by key
+                    const processedData = {};
 
-			document.getElementById('loading-overlay').style.display = "flex";
+                    if (data.timelineObjects) { // Check for standard Takeout Timeline.json format first
+                        dataSourceText = 'Local Timeline.json (Standard Format)';
+                        data.timelineObjects.forEach(item => {
+                            const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
+                            if (!timestamp) return;
+                            const date = new Date(timestamp);
+                            const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
+                            if (!processedData[key]) processedData[key] = { timelineObjects: [] };
+                            processedData[key].timelineObjects.push(item);
+                            if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
+                        });
+                        timelineData = processedData;
+                    } else if (data.semanticSegments) { // check for Semantic History format
+                         dataSourceText = 'Local Timeline.json (Semantic Format)';
 
-			// First, check for a single Timeline.json file
-			for await (const entry of dirHandle.values()) {
-				if (entry.kind === 'file' && entry.name === 'Timeline.json') {
-					timelineJsonFile = entry;
-					break;
-				}
-			}
-		
+                        // Populate the timelinePath points from every timelinePath object first
+                        const allPathPoints = []; // Array to hold all path points with time
+                        data.semanticSegments.forEach(segment => {
+                            if (segment.timelinePath) {
+                                segment.timelinePath.forEach(point => {
+                                    try {
+                                        const latLngMatch = point.point?.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                        const time = point.time;
+                                        if (latLngMatch && time) {
+                                            const lat = parseFloat(latLngMatch[1]);
+                                            const lng = parseFloat(latLngMatch[2]);
+                                            if (!isNaN(lat) && !isNaN(lng)) {
+                                                allPathPoints.push({
+                                                    latE7: Math.round(lat * 1e7),
+                                                    lngE7: Math.round(lng * 1e7),
+                                                    time: time
+                                                });
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.warn("Error parsing timelinePath point:", point, e);
+                                    }
+                                });
+                            }
+                        });
+                        // Sort path points by time
+                        allPathPoints.sort((a, b) => moment(a.time).valueOf() - moment(b.time).valueOf());
+                        let pathPointPointer = 0; // Pointer for efficient matching
+                        const processedTimelineObjects = data.semanticSegments.map(segment => {
+                            const startTime = segment.startTime;
+                            const endTime = segment.endTime;
+                            if (!startTime || !endTime) return null;
+                            if (segment.visit?.topCandidate?.placeLocation?.latLng && segment.visit?.topCandidate?.placeId) {
+                                const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                if (!latLngMatch) return null;
+                                const lat = parseFloat(latLngMatch[1]);
+                                const lng = parseFloat(latLngMatch[2]);
+                                if (isNaN(lat) || isNaN(lng)) return null;
+                                return {
+                                    placeVisit: {
+                                        location: {
+                                            latitudeE7: Math.round(lat * 1e7),
+                                            longitudeE7: Math.round(lng * 1e7),
+                                            placeId: segment.visit.topCandidate.placeId,
+                                            semanticType: segment.visit.topCandidate.semanticType || null,
+                                            name: segment.visit.topCandidate.name || 'Unknown Location'
+                                        },
+                                        duration: { startTimestamp: startTime, endTimestamp: endTime },
+                                        editConfirmationStatus: segment.visit.editConfirmationStatus
+                                    }
+                                };
+                            } else if (segment.activity?.topCandidate?.type && segment.activity?.start?.latLng && segment.activity?.end?.latLng) {
+                                const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                if (!startLatLngMatch || !endLatLngMatch) return null;
+                                const startLat = parseFloat(startLatLngMatch[1]);
+                                const startLng = parseFloat(startLatLngMatch[2]);
+                                const endLat = parseFloat(endLatLngMatch[1]);
+                                const endLng = parseFloat(endLatLngMatch[2]);
+                                if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) return null;
+                                const activitySegment = {
+                                    activityType: segment.activity.topCandidate.type || 'UNKNOWN',
+                                    duration: { startTimestamp: startTime, endTimestamp: endTime },
+                                    distance: segment.activity.distanceMeters,
+                                    startLocation: {
+                                        latitudeE7: Math.round(startLat * 1e7),
+                                        longitudeE7: Math.round(startLng * 1e7)
+                                    },
+                                    endLocation: {
+                                        latitudeE7: Math.round(endLat * 1e7),
+                                        longitudeE7: Math.round(endLng * 1e7)
+                                    },
+                                    editConfirmationStatus: segment.activity.editConfirmationStatus,
 
-			if (timelineJsonFile) {
-				// If Timeline.json is found, load it directly
-				try {
-					const file = await timelineJsonFile.getFile();
+                                    simplifiedRawPath: { // Structure expected by rendering function
+                                        distanceMeters: segment.activity.distanceMeters,
+                                        points: []
+                                    }
+                                };
+                                // Efficiently find associated path points
+                                const segmentStartMoment = moment(startTime);
+                                const segmentEndMoment = moment(endTime);
+                                for (let i = pathPointPointer; i < allPathPoints.length; i++) {
+                                    const pointTime = moment(allPathPoints[i].time);
+                                    if (pointTime.isBefore(segmentStartMoment)) {
+                                        // If the point is before the segment starts, advance the pointer
+                                        pathPointPointer = i + 1;
+                                        continue;
+                                    }
+                                    if (pointTime.isAfter(segmentEndMoment)) {
+                                        // If the point is after the segment ends, we're done for this segment
+                                        break;
+                                    }
+                                    // Point is within the segment's time range
+                                    activitySegment.simplifiedRawPath.points.push(allPathPoints[i]);
+                                }
+                                return { activitySegment: activitySegment };
+                            }
 
-					const content = await file.text();
-					const data = JSON.parse(content);
-					
-					dataSourceText = 'Local Timeline.json';
+                            return null; // Return null for segments that can't be processed
+                        }).filter(Boolean); // Remove null entries
+                        // Group by year and month
+                        processedTimelineObjects.forEach(item => {
+                             const timestamp = item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp;
+                             const date = new Date(timestamp);
+                             if (isNaN(date.getTime())) return;
+                             const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
+                             if (!processedData[key]) processedData[key] = { timelineObjects: [] };
+                             processedData[key].timelineObjects.push(item);
+                             if (item.activitySegment) activityTypes.add(item.activitySegment.activityType);
+                         });
+                         timelineData = processedData;
+                    } else {
+                            throw new Error("Timeline data does not contain known data structure (timelineObjects or semanticSegments).");
+                    }
+                    console.log('Timeline data loaded successfully');
+                } else {
+                    // Fallback to original method of reading multiple JSON files (Takeout Month files format)
+                    dataSourceText = 'Google Takeout (Monthly Files)';
 
-					// Organize the data by year and month for compatibility with existing code
-					const processedData = [];
+                    let fileFoundInThisLevel = false; // Track if files are found at the current level/recursion
+                    for await (const entry of dirHandle.values()) {
+                        if (entry.kind === 'file' && entry.name.endsWith('.json') && /^\d{4}_\w+\.json$/i.test(entry.name)) {
+                            // Process monthly file directly
+                            fileFoundInThisLevel = true; // Mark that we found a file here
+                            console.log(`Processing ${entry.name}`);
+                            const file = await entry.getFile();
+                            const content = await file.text();
+                            try {
+                                const data = JSON.parse(content);
+                                const fileNameKey = entry.name.split('.')[0].toUpperCase();
+                                if (data.timelineObjects) {
+                                    // Directly add to the global timelineData object
+                                    timelineData[fileNameKey] = data;
+                                    data.timelineObjects.forEach(item => {
+                                        if (item.activitySegment?.activityType) {
+                                            activityTypes.add(item.activitySegment.activityType);
+                                        }
+                                    });
+                                } else {
+                                    console.warn(`Skipping file ${entry.name}: Does not contain 'timelineObjects'. File keys:`, Object.keys(data));
+                                }
+                            } catch (parseError) {
+                                console.warn(`Skipping file ${entry.name} due to JSON parsing error:`, parseError.message);
+                            }
+                        } else if (entry.kind === 'directory') {
+                            // Make recursive call for subdirectories
+                             console.log(`Recursively checking directory: ${entry.name}`);
+                            await readFilesFromDirectory(entry, true);
+                        }
+                    }
+                     // Check if files were found ONLY on the initial call if no Timeline.json was processed
+                    if (!isRecursive && !timelineJsonFile && Object.keys(timelineData).length === 0) {
+                        throw new Error("No valid timeline data files found in the selected folder or subfolders.");
+                    }
+                }
+                if (!isRecursive) {
+                    // --- Post Loading ---
+                    if (Object.keys(timelineData).length > 0) {
+                    document.getElementById('data-source-indicator').textContent = 'Data source: ' + dataSourceText;
+                    populateActivityFilters();
+                    setUIEnabled(true);
+                    const startDate = new Date(document.getElementById('startDatePicker').value);
+                    const endDate = new Date(document.getElementById('endDatePicker').value);
+                        await loadTimelineDataInDateRange(startDate, endDate); // Await initial load
+                    } else {
+                        document.getElementById('data-source-indicator').textContent = 'No valid timeline data found.';
+                        setUIEnabled(false); // Keep UI disabled
+                    }
+                }
+            } catch (err) {
+                console.error('Error processing directory:', err);
+                alert(`Error processing folder: ${err.message}`);
 
-					//Create array for the timelinePath points
-					const processedTimelinePathObjects = [];
-
-					// Check if it's the semantic segments format
-
-					if (data.semanticSegments) {
-						// Populate the timelinePath points from every timelinePath object
-						data.semanticSegments.forEach(segment => {
-							if (segment.timelinePath) {
-								segment.timelinePath.forEach(point => {
-									const tempPoint = {
-										latE7: Math.round(parseFloat(point.point.split('°,')[0]) * 1e7),
-										lngE7: Math.round(parseFloat(point.point.split('°,')[1]) * 1e7),
-										time: point.time
-									};
-									processedTimelinePathObjects.push(tempPoint);
-								});
-							}
-						});
-						var timelinePathObjectsPointer = 0; // Define pointer for path points loop below
-						const processedTimelineObjects = data.semanticSegments.map(segment => {
-							if (segment.visit) {
-								// Convert semantic segments visit to a similar format as the original timeline objects
-								return {
-									placeVisit: {
-										location: {
-											latitudeE7: Math.round(parseFloat(segment.visit.topCandidate.placeLocation.latLng.split('°,')[0]) * 1e7),
-											longitudeE7: Math.round(parseFloat(segment.visit.topCandidate.placeLocation.latLng.split('°,')[1]) * 1e7),
-											placeId: segment.visit.topCandidate.placeId,
-											semanticType: segment.visit.topCandidate.semanticType,
-											name: 'Unknown Location'
-										},
-										duration: {
-											startTimestamp: segment.startTime,
-											endTimestamp: segment.endTime
-										}
-									}
-								};
-							} else if (segment.activity) {
-								// Define activitySegment properly here
-								const activitySegment = {
-									activityType: segment.activity.topCandidate.type || 'UNKNOWN',
-									duration: {
-										startTimestamp: segment.startTime,
-										endTimestamp: segment.endTime
-									},
-									distance: segment.activity.distanceMeters,
-									startLocation: {
-										latitudeE7: Math.round(parseFloat(segment.activity.start.latLng.split('°,')[0]) * 1e7),
-										longitudeE7: Math.round(parseFloat(segment.activity.start.latLng.split('°,')[1]) * 1e7)
-									},
-									endLocation: {
-										latitudeE7: Math.round(parseFloat(segment.activity.end.latLng.split('°,')[0]) * 1e7),
-										longitudeE7: Math.round(parseFloat(segment.activity.end.latLng.split('°,')[1]) * 1e7)
-									},
-									simplifiedRawPath: {
-										distanceMeters: segment.activity.distanceMeters,
-										points: []
-									}
-								};
-								// Add simplified raw path if timelinePath exists
-								// Find the associated timelinePath points for this activitySegment
-								for (let i = timelinePathObjectsPointer; i < processedTimelinePathObjects.length; i++) {
-									const point = processedTimelinePathObjects[i];
-
-									if (point.time >= activitySegment.duration.startTimestamp && point.time <= activitySegment.duration.endTimestamp) {
-										activitySegment.simplifiedRawPath.points.push(point)
-									};
-									if (point.time > activitySegment.duration.endTimestamp) {
-										timelinePathObjectsPointer = i;
-										break;
-									}
-								};
-								return {
-									activitySegment: activitySegment
-								};
-							}
-						}).filter(Boolean); // Remove any undefined entries
-
-						// Group by year and month
-						processedTimelineObjects.forEach(item => {
-							const timestamp = item.placeVisit ?
-								item.placeVisit.duration.startTimestamp :
-								item.activitySegment.duration.startTimestamp;
-							const date = new Date(timestamp);
-							const key = `${date.getFullYear()}_${date.toLocaleString('default', { month: 'long' }).toUpperCase()}`;
-
-							if (!processedData[key]) {
-								processedData[key] = {
-									timelineObjects: []
-								};
-							}
-							processedData[key].timelineObjects.push(item);
-
-							// Collect unique activity types
-							if (item.activitySegment) {
-								activityTypes.add(item.activitySegment.activityType);
-							}
-						});
-
-						timelineData = processedData;
-					}
-					// Fallback for original Google Takeout format
-					else if (data.timelineObjects) {
-						data.timelineObjects.forEach(item => {
-							const timestamp = item.placeVisit ?
-								item.placeVisit.duration.startTimestamp :
-								item.activitySegment.duration.startTimestamp;
-							const date = new Date(timestamp);
-							const key = `${date.getFullYear()}_${date.toLocaleString('default', {
-								month: 'long'
-							}).toUpperCase()}`;
-
-							if (!timelineData[key]) {
-								timelineData[key] = {
-									timelineObjects: []
-								};
-							}
-							timelineData[key].timelineObjects.push(item);
-
-							// Collect unique activity types
-							if (item.activitySegment) {
-								activityTypes.add(item.activitySegment.activityType);
-							}
-						});
-					}
-
-					console.log('Timeline.json loaded successfully');
-				} catch (err) {
-					console.error('Error parsing Timeline.json:', err);
-				}
-			} else {
-				// Fallback to original method of reading multiple JSON files (Takeout format)
-				dataSourceText = 'Google Takeout';
-				for await (const entry of dirHandle.values()) {
-					if (entry.kind === 'file' && entry.name.endsWith('.json')) {
-						const file = await entry.getFile();
-						const content = await file.text();
-						const data = JSON.parse(content);
-						const fileName = entry.name.split('.')[0]; // Assuming filename format is synaptic_MONTH.json
-						timelineData[fileName] = data;
-
-						// Collect unique activity types from each file
-						if (data.timelineObjects) {
-							data.timelineObjects.forEach(item => {
-								if (item.activitySegment) {
-									activityTypes.add(item.activitySegment.activityType);
-								}
-							});
-						}
-					} else if (entry.kind === 'directory') {
-						await readFilesFromDirectory(entry, true);
-					}
-				}
-			}
-			
-			if (!isRecursive){
-				document.getElementById('data-source-indicator').textContent = 'Data source format: ' + dataSourceText;
-			}
-			
-			populateActivityFilters();
-			document.getElementById('loading-overlay').style.display = "none";
-		}
+                 if (!isRecursive) { // Ensure UI is disabled on error during initial call
+                     setUIEnabled(false);
+                 }
+            } finally {
+                 if (!isRecursive) {
+                     document.getElementById('loading-overlay').style.display = "none";
+                 }
+            }
+        }
 
         async function initFolderPicker() {
             const folderPicker = document.getElementById('folderPicker');
             folderPicker.addEventListener('click', async () => {
                 try {
-                    const dirHandle = await window.showDirectoryPicker();
+                    const opts = { mode: 'read' };
+                    const dirHandle = await window.showDirectoryPicker(opts);
                     await readFilesFromDirectory(dirHandle);
-                    console.log('Files loaded:', Object.keys(timelineData));
-                    // Load data for the currently selected date range
-                    const startDate = new Date(document.getElementById('startDatePicker').value);
-                    const endDate = new Date(document.getElementById('endDatePicker').value);
-                    loadTimelineDataInDateRange(startDate, endDate);
                 } catch (err) {
-                    console.error('Error selecting folder:', err);
+                    if (err.name === 'AbortError') {
+                        console.log('Folder selection cancelled.');
+                    } else {
+                        console.error('Error selecting folder:', err);
+                        alert(`Could not select folder: ${err.message}`);
+                    }
+                     // Ensure loading overlay is hidden if selection fails/is cancelled
+                    document.getElementById('loading-overlay').style.display = "none";
+                    // Keep UI disabled if it failed before loading started
+                    if(Object.keys(timelineData).length === 0) setUIEnabled(false);
                 }
             });
         }
@@ -1269,21 +1847,21 @@
             initDatePicker();
             initFolderPicker();
             initLayerButton();
-            const initialStartDate = new Date();
-            const initialEndDate = new Date();
-            document.getElementById('startDatePicker').value = moment(initialStartDate).format('YYYY-MM-DD');
-            document.getElementById('endDatePicker').value = moment(initialEndDate).format('YYYY-MM-DD');
-
-            // Add keyboard navigation
-            document.addEventListener('keydown', async (e) => {
-                if (e.key === 'ArrowLeft') {
-                    document.getElementById("prevDayBtn").click();
-                } else if (e.key === 'ArrowRight') {
-                    document.getElementById("nextDayBtn").click();
+            initFitMapButton();
+            initSummaryView(); // Initialize Summary View Listeners
+            setUIEnabled(false); // Start with UI disabled
+            document.addEventListener('keydown', (e) => {
+                if (!uiEnabled) return;
+                // Allow arrow keys if focus is not on an input/button element
+                if (!e.target.matches('input, button')) {
+                     if (e.key === 'ArrowLeft') {
+                        document.getElementById("prevDayBtn").click();
+                     } else if (e.key === 'ArrowRight') {
+                        document.getElementById("nextDayBtn").click();
+                    }
                 }
             });
         };
     </script>
 </body>
-
 </html>
