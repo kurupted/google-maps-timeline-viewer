@@ -1,25 +1,28 @@
+
 <!DOCTYPE html>
 <html lang="en">
 	<!-- -----
 
 	 Be sure to set your API key in place of "YOUR_API_KEY"
 
-	 Version: April 1, 2025
+	 Version: April 2, 2025
 	 Full details here:
 	 https://github.com/kurupted/google-maps-timeline-viewer/
 
 	----  -->
-<head>
+	
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Maps Timeline Viewer</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <style>
+        /* --- General Styles --- */
         body, html {
             height: 100%;
             margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: #f8f9fa;
             overflow: hidden; /* Prevent body scroll */
         }
@@ -35,6 +38,8 @@
             height: 100%;
             position: relative;
         }
+
+        /* --- Sidebar Styles --- */
         #sidebar {
             width: 350px;
             background-color: #ffffff;
@@ -46,6 +51,7 @@
             position: relative; /* Ensure sidebar stays in flow */
             z-index: 60; /* Keep sidebar above summary view background if needed */
         }
+
         /* --- Control Sections (Non-scrolling) --- */
         #controls-container,
         #layerOptions,
@@ -58,9 +64,9 @@
             background-color: #ffffff; /* Ensure background */
         }
         #controls-container {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .control-btn {
             flex-grow:1;
@@ -84,6 +90,8 @@
             cursor: not-allowed;
             color: #6c757d;
         }
+
+        /* --- Layer Options --- */
         #layerOptions {
             display: none; /* Initially hidden */
         }
@@ -127,11 +135,13 @@
             margin-left: 20px;
             padding-top: 5px;
         }
+
+        /* --- Date Picker --- */
         #datePickerContainer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
         }
         #startDatePicker, #endDatePicker {
             flex: 1;
@@ -152,24 +162,25 @@
             font-size: 10px;
         }
         #prevDayBtn, #nextDayBtn {
-          background: #f8f9fa;
-          border: 1px solid #ced4da;
-          border-radius: 4px;
-          padding: 2px 4px;
-          cursor: pointer;
-          font-size: 10px;
-          color: #495057;
-          transition: all 0.2s ease;
+            background: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 2px 4px;
+            cursor: pointer;
+            font-size: 10px;
+            color: #495057;
+            transition: all 0.2s ease;
         }
         #prevDayBtn:hover:not(:disabled), #nextDayBtn:hover:not(:disabled) {
-          background: #e9ecef;
-          color: #343a40;
+            background: #e9ecef;
+            color: #343a40;
         }
         #prevDayBtn:disabled, #nextDayBtn:disabled {
             background: #e9ecef;
             color: #adb5bd;
             cursor: not-allowed;
         }
+
         /* --- Icon Buttons --- */
         #icon-buttons-container {
             display: flex;
@@ -201,14 +212,17 @@
             color: #adb5bd;
             cursor: not-allowed;
         }
-        .icon-btn.active {
-            background-color: #e9ecef;
+        .icon-btn.active { /* Style for the active view button */
+            background-color: #dde4ed; /* A slightly different background */
+            color: #0056b3; /* A distinct color */
         }
+
+        /* --- Go Button --- */
         #go-container {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: 5px;
         }
         #goBtn {
             flex-grow: 1;
@@ -235,6 +249,7 @@
             background: #ced4da;
             box-shadow: none;
         }
+
         /* --- Timeline (Scrollable Area) --- */
         #timeline {
             flex-grow: 1; /* Allow timeline to fill remaining vertical space */
@@ -306,18 +321,20 @@
             color: #6c757d;
         }
         .place-visit-item {
-            background-color: #fffacd;
-             border-left: 4px solid #ffc107;
+            /* background-color: #fffacd; */ /* Light yellow background */
+             border-left: 4px solid #ffc107; /* Yellow border */
              padding-left: 10px;
         }
         /* Adjust Activity Segment border */
          .timeline-item:not(.place-visit-item) { /* Target activity segments */
-            border-left: 4px solid var(--activity-color, #6c757d);
+            border-left: 4px solid var(--activity-color, #6c757d); /* Use CSS variable for color */
             padding-left: 10px;
         }
         .highlighted {
-            border-color: #007bff !important;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        	border-color-top: #007bff !important;
+		border-color-right: #007bff !important;
+		border-color-bottom: #007bff !important;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.35);
         }
         .confirmed-checkmark {
             position: absolute;
@@ -330,6 +347,7 @@
         .highlighted .confirmed-checkmark{
             opacity: 0.6;
         }
+
         /* --- Bottom Sidebar Elements (Non-scrolling) --- */
         #data-source-indicator,
         #about {
@@ -349,6 +367,8 @@
              border-top: none; /* Remove double border if indicator is shown */
              padding-top: 0;
         }
+
+        /* --- Map Styles --- */
         #map {
             flex-grow: 1;
             height: 100%;
@@ -359,6 +379,29 @@
         .advanced-marker { display: flex; flex-direction: column; align-items: center; }
         .marker-icon { font-size: 24px; }
         .marker-label { font-size: 12px; white-space: nowrap; }
+
+        /* --- Info Window Photo Placeholder --- */
+        .photo-placeholder {
+            width: 200px;
+            height: 150px;
+            background-color: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 12px;
+            border-radius: 3px;
+            margin-top: 5px;
+            text-align: center; /* Center text */
+        }
+        .photo-container img {
+             max-width: 200px;
+             max-height: 150px;
+             margin-top: 5px;
+             border-radius: 3px;
+             display: block; /* Ensure img takes block space */
+        }
+
         /* --- Summary View Styles --- */
         #summaryView,
         #howToMessage {
@@ -406,31 +449,86 @@
          #summaryView h4:first-of-type {
              margin-top: 0;
          }
-        #summary-years, #summary-months {
+        #summary-selected-dates,
+        #summary-years, /* Apply flexbox to the direct container of year items */
+        #summary-months {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
-        .summary-year-item, .summary-month-item {
+        #summary-months {
+            display: none; /* Hide months initially */
+        }
+        #backToYearsBtn {
+            display: none; /* Hide back button initially */
+            margin-bottom: 15px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            color: #495057;
+        }
+        #backToYearsBtn:hover {
+            background-color: #e9ecef;
+        }
+
+        .summary-selected-item,
+        .summary-year-item,
+        .summary-month-item {
             border: 1px solid #ced4da;
             padding: 10px;
             border-radius: 5px;
             background-color: #ffffff;
-            cursor: pointer;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-            min-width: 120px; /* Ensure items have some width */
+            cursor: default; /* Default cursor for selected/year/month */
+            transition: background-color 0.2s ease, border-color 0.2s ease, width 0.3s ease, opacity 0.3s ease; /* Added opacity transition */
+            min-width: 170px; /* Ensure items have some width */
             font-size: 13px;
+            box-sizing: border-box; /* Include padding/border in width */
+            opacity: 1; /* Ensure visible by default */
+        }
+        /* Allow click cursor only for year/month items */
+        .summary-year-item, .summary-month-item {
+             cursor: pointer;
         }
         .summary-year-item:hover, .summary-month-item:hover {
              border-color: #adb5bd;
              background-color: #f1f3f4;
         }
-        .summary-year-item.selected {
+        .summary-year-item.is-selected-year { /* Style for the expanded year */
             border-color: #007bff;
             background-color: #e7f1ff;
             font-weight: bold;
+            width: 100%; /* Expand to full width */
+            cursor: default; /* No pointer cursor when expanded */
+            opacity: 1; /* Ensure selected year is fully visible */
         }
-        .summary-year-item strong, .summary-month-item strong {
+        .summary-year-item.is-selected-year:hover { /* Override hover when expanded */
+             border-color: #007bff;
+             background-color: #e7f1ff;
+        }
+
+        /* Hide non-selected years when one is expanded */
+        #summaryView.expanded-year-active #summary-years .summary-year-item:not(.is-selected-year) {
+            /* display: none; */ /* Replaced with opacity for smoother transition */
+            opacity: 0;
+            pointer-events: none; /* Prevent interaction with hidden items */
+            height: 0; /* Collapse height */
+            padding: 0; /* Remove padding */
+            margin: 0; /* Remove margin */
+            border: none; /* Remove border */
+            overflow: hidden; /* Hide content */
+        }
+        /* Show months and back button when a year is expanded */
+        #summaryView.expanded-year-active #summary-months,
+        #summaryView.expanded-year-active #backToYearsBtn {
+            display: flex; /* Or block, depending on desired layout */
+        }
+
+        .summary-selected-item strong,
+        .summary-year-item strong,
+        .summary-month-item strong {
             display: block;
             font-size: 16px;
             margin-bottom: 5px;
@@ -439,17 +537,23 @@
         .summary-month-item strong {
              color: #1a73e8;
         }
-		.summary-details {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			font-size: 12px;
-			color: #495057;
-			margin-top: 3px;
-		}
-		.summary-details span {
-			text-align: right;
-		}
+        .summary-selected-item strong { /* Specific style for selected date title */
+             color: #28a745; /* Green */
+        }
+        .summary-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #495057;
+            margin-top: 3px;
+        }
+        .summary-details span {
+            text-align: right;
+        }
+        /* Common style for activity lists */
+        .summary-selected-item ul,
+        .summary-year-item ul,
         .summary-month-item ul {
             list-style: none;
             padding: 0;
@@ -457,18 +561,38 @@
             font-size: 11px;
             color: #6c757d;
         }
-        .summary-month-item ul li {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-		}
-        .summary-month-item li {
-             margin-bottom: 2px;
+        /* Style for multi-column activity list in expanded year */
+        .summary-year-item.is-selected-year ul {
+            column-count: 3;
+            column-gap: 20px;
         }
-         .summary-month-item li span {
+        .summary-year-item.is-selected-year ul li,
+        .summary-year-item.is-selected-year .summary-details {
+            max-width: 170px;
+        }
+        @media (max-width: 600px) { /* Use 1 column on smaller screens */
+             .summary-year-item.is-selected-year ul {
+                 column-count: 1;
+             }
+        }
+
+        .summary-selected-item ul li,
+        .summary-year-item ul li,
+        .summary-month-item ul li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px; /* Consistent spacing */
+            break-inside: avoid-column; /* Prevent list items from breaking across columns */
+        }
+        /* Common style for distance values in lists */
+        .summary-selected-item li span,
+        .summary-year-item li span,
+        .summary-month-item li span {
              color: #343a40;
              font-weight: 500;
-         }
+        }
+
         /* Style to hide map when summary is shown */
         #map.hidden {
             opacity: 0;
@@ -529,15 +653,15 @@
                     </div>
             </div>
             <div id="datePickerContainer">
-                <button id="prevDayBtn" disabled><</button>
+                <button id="prevDayBtn" disabled>&lt;</button>
                 <input type="date" id="startDatePicker" disabled>
                 <span id="dateToSpan">to</span>
                 <input type="date" id="endDatePicker" disabled>
-                <button id="nextDayBtn" disabled>></button>
+                <button id="nextDayBtn" disabled>&gt;</button>
             </div>
             <div id="icon-buttons-container">
                 <div id="icon-buttons-left">
-					<button id="mapBtn" class="icon-btn" title="Show Map" disabled>🗺️</button>
+                    <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>🗺️</button>
                     <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>📊</button>
                 </div>
                 <div id="icon-buttons-right">
@@ -550,58 +674,70 @@
                 <div id="loading-spinner"></div>
                 <span>Loading data...</span>
             </div>
-            <div id="timeline"></div> 
+            <div id="timeline"></div>
             <div id="data-source-indicator">No data loaded. Use "Choose Folder".</div>
             <div id="about"><a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">View project on Github</a></div>
         </div>
-        <div id="summaryView">
-             <div id="summary-controls">
+
+        <div id="summaryView" style="display: none;">
+            <div id="summary-controls">
                 <button id="closeSummaryBtn" title="Close Summary">&times;</button>
-            </div>
-            <h4>Yearly Summary</h4>
-            <div id="summary-years">
-                <p>Calculating...</p>
-            </div>
-            <h4>Monthly Summary (<span id="summary-selected-year"></span>)</h4>
-            <div id="summary-months">
-                 <p>Select a year above.</p>
-            </div>
+             </div>
+             <h4>Selected Date(s) Summary</h4>
+             <div id="summary-selected-dates">
+                 <p>Calculating...</p>
+             </div><br>
+             <h4>Yearly Summary</h4>
+             <div id="summary-years-container">
+                 <div id="summary-years">
+                     <p>Calculating...</p>
+                 </div>
+                 <button id="backToYearsBtn">← Back to Years</button>
+             </div><br>
+             <h4>Monthly Summary <span id="summary-selected-year"></span></h4>
+             <div id="summary-months">
+                  <p>Select a year above.</p>
+             </div>
         </div>
-        <div id="map" class="hidden"></div>
+
+        <div id="map" class=""></div>
         <div id="howToMessage">
-			<h3>How to use:</h3>
-			First, complete the initial setup as explained on the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">Github project page</a>.<br><br>
-			Click "Choose Folder" on the left and navigate to the folder that contains your Timeline data.<br>
-			<h4>For Google Takeout data:</h4>
-			The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History".<br>
-			Navigate into the "Semantic Location History" folder, and then click "Select Folder" on the dialog.<br>
-			(Do not navigate into one of the yearly subfolders.)<br>
-			<h4>For On-Device exported data:</h4>
-			Simply choose the folder that contains your exported Timeline.json file.<br>
-			(On non-English systems, the filename may be different -- rename the file to Timeline.json)
-			<br><br><br><br>
-			After the data has loaded, use the date picker to choose a date or date range that contains timeline data.<br>
-		</div>
+            <h3>How to use:</h3>
+            First, complete the initial setup as explained on the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">Github project page</a>.<br><br>
+            Click "Choose Folder" on the left and navigate to the folder that contains your Timeline data.<br>
+            <h4>For Google Takeout data:</h4>
+            The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History".<br>
+            Navigate into the "Semantic Location History" folder, and then click "Select Folder" on the dialog.<br>
+            (Do not navigate into one of the yearly subfolders.)<br>
+            <h4>For On-Device exported data:</h4>
+            Simply choose the folder that contains your exported Timeline.json file.<br>
+            (On non-English systems, the filename may be different -- rename the file to Timeline.json)
+            <br><br><br><br>
+            After the data has loaded, use the date picker to choose a date or date range that contains timeline data.<br>
+        </div>
     </div>
+
     <script>
+        // --- Global Variables ---
         let map;
         let markers = [];
         let polylines = [];
         let infoWindows = [];
         let selectedPolyline = null;
-        let timelineData = {};
-        let activityTypes = new Set(); // Keep track of unique activity types
-        let placeDetailsCache = {}; // Cache for storing Place Details
-        let globalIndex = 0; // Global counter for unique data-index
-        let uiEnabled = false; // Flag to track if UI is enabled
+        let timelineData = {}; // Stores parsed timeline data, keyed by YYYY_MONTH
+        let activityTypes = new Set(); // Keep track of unique raw activity types found
+        let placeDetailsCache = {}; // Cache for storing Place Details (basic info only now)
+        let globalIndex = 0; // Global counter for unique data-index across map/timeline
+        let uiEnabled = false; // Flag to track if UI is enabled (data loaded)
 
         // Summary View Globals
-        let allYearlySummaries = null;
-        let allMonthlySummaries = null;
-        let selectedSummaryYear = null;
-        let summaryViewVisible = false;
+        let allYearlySummaries = null; // Calculated yearly summaries
+        let allMonthlySummaries = null; // Calculated monthly summaries
+        let selectedSummaryYear = null; // Track which year's months are shown
+        let summaryViewVisible = false; // Track summary view state
 
         // --- Activity Type Mapping ---
+        // Groups similar activity types for display and filtering
         const activityGroupMapping = {
             'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE'],
             'TAXI': ['IN_TAXI'],
@@ -648,22 +784,26 @@
                 rawToGroupMapping[rawType] = groupName;
             });
         }
+        // Function to get the grouped activity type from a raw type
         function getGroupedActivityType(rawType) {
             return rawToGroupMapping[rawType] || 'UNKNOWN'; // Default to UNKNOWN if not found
         }
-        // --- End Activity Type Mapping ---
 
+        // --- Map Initialization ---
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {
-                    lat: 25.034170396411103,
-                    lng: 121.56456035320929
+                    lat: 25.034170, // Default center (Taipei)
+                    lng: 121.564560
                 },
                 zoom: 12,
-                mapId: "TIMELINE_MAP"
+                mapId: "TIMELINE_MAP" // Use a Map ID for potential future styling
             });
         }
 
+        // --- UI Helper Functions ---
+
+        // Get appropriate emoji icon for an activity type (uses grouped type)
         function getActivityIcon(activityType) {
             let group = (activityType in activityGroupMapping) ? activityType : getGroupedActivityType(activityType);
             switch (group) {
@@ -684,12 +824,12 @@
                 case 'FUNICULAR': return '🚞';
                 case 'GONDOLA_LIFT': return '🚡';
                 case 'WHEELCHAIR': return '♿';
-                case 'SNOWMOBILE': return '🚜';
+                case 'SNOWMOBILE': return '🚜'; // Using tractor as placeholder
                 case 'BOATING': return '🚤';
                 case 'CATCHING_POKEMON': return '👾'; // Using alien monster
                 case 'HORSEBACK_RIDING': return '🐎';
                 case 'KAYAKING': return '🛶';
-                case 'KITESURFING': return '🏄‍♂️';
+                case 'KITESURFING': return '🪁'; // Using kite as placeholder
                 case 'PARAGLIDING': return '🪂';
                 case 'ROWING': return '🚣';
                 case 'SAILING': return '⛵';
@@ -698,7 +838,7 @@
                 case 'SKIING': return '⛷️';
                 case 'SLEDDING': return '🛷';
                 case 'SNOWBOARDING': return '🏂';
-                case 'SNOWSHOEING': return '❄️';
+                case 'SNOWSHOEING': return '❄️'; // Using snowflake
                 case 'SURFING': return '🏄';
                 case 'SWIMMING': return '🏊';
                 case 'UNKNOWN':
@@ -707,461 +847,15 @@
             }
         }
 
-        function createTimelineItem(item, index, currentDate) {
-            const timelineItem = document.createElement('div');
-            timelineItem.className = 'timeline-item';
-            timelineItem.dataset.index = index;
-            // Check if a date header needs to be added
-            const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
-            if (!existingHeader) {
-                const dateHeader = document.createElement('div');
-                dateHeader.className = 'date-header';
-                dateHeader.dataset.date = currentDate;
-                dateHeader.textContent = moment(currentDate).format('dddd, MMMM DD, YYYY');
-                const firstItemOfDay = document.querySelector(`.timeline-item[data-item-date="${currentDate}"]`);
-                if (firstItemOfDay) {
-                        document.getElementById('timeline').insertBefore(dateHeader, firstItemOfDay);
-                } else {
-                    document.getElementById('timeline').appendChild(dateHeader);
-                }
-            }
-            let startTimestamp, endTimestamp;
-            if (item.placeVisit) {
-                const placeVisit = item.placeVisit;
-                startTimestamp = placeVisit.duration.startTimestamp;
-                endTimestamp = placeVisit.duration.endTimestamp;
-                const locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown location');
-                timelineItem.classList.add('place-visit-item');
-                timelineItem.innerHTML = `
-                        <span class="timeline-icon-container">📍</span>
-                        <div class="timeline-item-details">
-                            <strong class="nametag">${locationName}</strong><br>
-                            <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
-                        </div>
-                    `;
-                timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
-            } else if (item.activitySegment) {
-                const activitySegment = item.activitySegment;
-                startTimestamp = activitySegment.duration.startTimestamp;
-                endTimestamp = activitySegment.duration.endTimestamp;
-                const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || 0;
-                const distanceKm = distanceMeters / 1000;
-                const formattedType = formatActivityType(activitySegment.activityType);
-                timelineItem.innerHTML = `
-                        <span class="timeline-icon-container">${getActivityIcon(activitySegment.activityType)}</span>
-                        <div class="timeline-item-details">
-                            <strong>${formattedType}</strong><br>
-                            <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
-                            <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
-                        </div>
-                    `;
-                const activityColor = getActivityColor(activitySegment.activityType);
-                timelineItem.style.setProperty('--activity-color', activityColor);
-            }
-            timelineItem.dataset.startTimestamp = startTimestamp;
-            timelineItem.dataset.endTimestamp = endTimestamp;
-            timelineItem.dataset.itemDate = currentDate; // Store the date context
-            if ((item.placeVisit && item.placeVisit.editConfirmationStatus === "CONFIRMED") ||
-                (item.activitySegment && item.activitySegment.editConfirmationStatus === "CONFIRMED")) {
-                const checkmark = document.createElement('span');
-                checkmark.className = 'confirmed-checkmark';
-                checkmark.textContent = '✔️';
-                timelineItem.appendChild(checkmark);
-            }
-            return timelineItem;
-        }
-
-        async function loadTimelineDataForDate(selectedDate) {
-            if (!uiEnabled) return;
-            const localSelectedDate = moment(selectedDate);
-            const year = localSelectedDate.year();
-            const month = localSelectedDate.format('MMMM').toUpperCase();
-            const dataKey = `${year}_${month}`;
-            if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
-                const selectedDateStr = localSelectedDate.format('YYYY-MM-DD');
-                const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
-                    const itemStartMoment = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
-                    const itemEndMoment = moment(item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
-                    if (!itemStartMoment.isSame(localSelectedDate, 'day') && !itemEndMoment.isSame(localSelectedDate, 'day') && !(itemStartMoment.isBefore(localSelectedDate, 'day') && itemEndMoment.isAfter(localSelectedDate, 'day'))) {
-                        return false;
-                    }
-                    if (item.placeVisit && !document.getElementById('showVisits').checked) return false;
-                    if (item.activitySegment && !document.getElementById('showActivities').checked) return false;
-                    if (item.activitySegment) {
-                        const groupedType = getGroupedActivityType(item.activitySegment.activityType);
-                        const filterCheckbox = document.getElementById(`filter-${groupedType}`);
-                        if (filterCheckbox && !filterCheckbox.checked) return false;
-                    }
-                    return true;
-                });
-                let firstLocationSet = false;
-                relevantData.sort((a, b) => {
-                    const timeA = moment(a.placeVisit ? a.placeVisit.duration.startTimestamp : a.activitySegment.duration.startTimestamp);
-                    const timeB = moment(b.placeVisit ? b.placeVisit.duration.startTimestamp : b.activitySegment.duration.startTimestamp);
-                    return timeA - timeB;
-                });
-                relevantData.forEach((item, localIndex) => {
-                    if (!firstLocationSet) {
-                        let latLng;
-                        if (item.placeVisit) {
-                            latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
-                        } else if (item.activitySegment && item.activitySegment.startLocation) {
-                            latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
-                        }
-                        if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
-                            map.setCenter(latLng);
-                            map.setZoom(15);
-                            firstLocationSet = true;
-                        }
-                    }
-                });
-                relevantData.forEach((item) => {
-                    const timelineItem = createTimelineItem(item, globalIndex, selectedDateStr);
-                    document.getElementById('timeline').appendChild(timelineItem);
-                    if (item.placeVisit) {
-                        renderPlaceVisit(item.placeVisit, globalIndex);
-                    } else if (item.activitySegment) {
-                        renderActivitySegment(item.activitySegment, globalIndex);
-                    }
-                    globalIndex++;
-                });
-            }
-        }
-
-        async function loadTimelineDataInDateRange(startDate, endDate) {
-             // Ensure map is visible when loading data range
-            if (summaryViewVisible) {
-                document.getElementById('summaryView').style.display = 'none';
-                document.getElementById('map').classList.remove('hidden');
-                summaryViewVisible = false;
-            }
-            if (!uiEnabled) return;
-            clearMap();
-            clearTimeline();
-            globalIndex = 0;
-            placeDetailsCache = {};
-            const startMoment = moment.utc(startDate).startOf('day');
-            const endMoment = moment.utc(endDate).endOf('day'); // Use end of day for comparison
-            document.getElementById('loading-overlay').style.display = "flex";
-            const promises = [];
-            let currentDate = startMoment.clone();
-            while (currentDate.isSameOrBefore(endMoment, 'day')) {
-                promises.push(loadTimelineDataForDate(currentDate.toDate())); // Pass Date object
-                currentDate.add(1, 'days');
-            }
-            try {
-                await Promise.all(promises);
-            } catch (error) {
-                console.error("Error loading data for date range:", error);
-            } finally {
-                document.getElementById('loading-overlay').style.display = "none";
-                document.getElementById('howToMessage').style.display = "none";
-                document.getElementById('map').classList.remove('hidden');
-                fitMapToData(); // Optionally fit map after loading range
-            }
-        }
-
-        function clearMap() {
-            markers.forEach(marker => marker.map = null);
-            markers = [];
-            polylines.forEach(polyline => polyline.setMap(null));
-            polylines = [];
-            infoWindows.forEach(infoWindow => infoWindow.close());
-            infoWindows = [];
-            deselectPolyline(); // Also deselect any highlighted polyline
-        }
-
-        function clearTimeline() {
-            document.getElementById('timeline').innerHTML = '';
-        }
-
-        function renderPlaceVisit(placeVisit, index) {
-            let locationName = placeVisit.location.name ||
-                               (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : null);
-            const placeId = placeVisit.location.placeId;
-            const lat = placeVisit.location.latitudeE7 / 1e7;
-            const lng = placeVisit.location.longitudeE7 / 1e7;
-            const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-            // Attempt to fetch Place Details if placeId exists
-            if (placeId) {
-                if (placeDetailsCache[placeId]) {
-                    renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index);
-                } else {
-                    fetchPlaceDetails(placeId, fallbackName, placeVisit, index);
-                }
-            } else {
-                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-                updateSidebarItem(index, fallbackName, null);
-            }
-        }
-
-        function renderBasicMarker(lat, lng, name, placeVisit, index) {
-            const position = { lat, lng };
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: position,
-                map: map,
-                title: name,
-            });
-            markers.push(marker);
-            const infoWindowContent = `
-                <h3>${name}</h3>
-                <p>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
-                <p>${moment(placeVisit.duration.startTimestamp).format("YYYY-MM-DD hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("YYYY-MM-DD hh:mm A")}</p>
-                <p><a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">View on Google Maps</a></p> `;
-            const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-            infoWindows.push(infoWindow);
-            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-            addMarkerClickListener(marker, infoWindow, index);
-            if (sidebarItem) {
-                addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
-            }
-        }
-
-        function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
-            const placeService = new google.maps.places.PlacesService(map);
-            const request = {
-                placeId: placeId,
-                fields: ["name", "formatted_address", "geometry", "icon", "icon_background_color", "photos", "url"]
-            };
-            placeService.getDetails(request, (place, status) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-                    // Cache the result
-                    placeDetailsCache[placeId] = place;
-                    // Render details
-                    renderPlaceDetails(place, placeVisit, index);
-                } else {
-                    console.warn("Error fetching place details:", status, "for placeId:", placeId, "Falling back to basic marker.");
-                    // Fallback to basic marker if details fetch fails
-                    const lat = placeVisit.location.latitudeE7 / 1e7;
-                    const lng = placeVisit.location.longitudeE7 / 1e7;
-                    renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-                    updateSidebarItem(index, fallbackName, null);
-                }
-            });
-        }
-
-        function updateSidebarItem(index, locationName, iconUrl) {
-            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-            if (sidebarItem) {
-                const nametag = sidebarItem.querySelector('.nametag');
-                if (nametag) nametag.textContent = locationName;
-                const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
-                if (iconContainer) {
-                    iconContainer.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="Icon" style="width: 20px; height: 20px; vertical-align: middle;">` : '📍';
-                }
-            }
-        }
-
-        function renderPlaceDetails(place, placeVisit, index) {
-            let locationName = place.name || placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
-            const position = place.geometry?.location || { lat: placeVisit.location.latitudeE7 / 1e7, lng: placeVisit.location.longitudeE7 / 1e7 };
-            let markerContent;
-            if (place.icon && place.icon_background_color) {
-                try {
-                    // NOTE: PinElement border thickness cannot be directly controlled via API.
-                    const pinElement = new google.maps.marker.PinElement({
-                        background: place.icon_background_color,
-                        glyph: new URL(place.icon),
-                        glyphColor: '#FFFFFF',
-                        borderColor: '#000000',
-                    });
-                    markerContent = pinElement.element;
-                } catch (e) {
-                    console.warn("Could not create PinElement, using default marker:", e);
-                    markerContent = null; // Fallback to default marker rendering below
-                }
-            }
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: position,
-                map: map,
-                content: markerContent,
-                title: locationName,
-            });
-            markers.push(marker);
-            const photoUrl = place.photos?.[0]?.getUrl({ maxWidth: 200, maxHeight: 150 });
-            const mapsLink = place.url ? `<a href="${place.url}" target="_blank">View on Google Maps</a>` : `<a href="https://www.google.com/maps?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`; // Fallback link
-            const infoWindowContent = `
-                <div style="max-width: 250px;">
-                    <h3 style="margin: 5px 0;">${locationName}</h3>
-                    <p style="margin: 3px 0; font-size: 0.9em;">${place.formatted_address || ""}</p>
-                    ${photoUrl ? `<img src="${photoUrl}" alt="${locationName}" style="max-width: 200px; max-height: 200px; margin-top: 5px; border-radius: 3px;"><br>` : ""}
-                    <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
-                    <p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
-                </div>
-            `;
-            const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-            infoWindows.push(infoWindow);
-            updateSidebarItem(index, locationName, place.icon);
-            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-            addMarkerClickListener(marker, infoWindow, index);
-            if (sidebarItem) {
-                addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
-            }
-        }
-
-        function renderActivitySegment(activitySegment, index) {
-            let path = [];
-            const startLat = activitySegment.startLocation?.latitudeE7 / 1e7;
-            const startLng = activitySegment.startLocation?.longitudeE7 / 1e7;
-            const endLat = activitySegment.endLocation?.latitudeE7 / 1e7;
-            const endLng = activitySegment.endLocation?.longitudeE7 / 1e7;
-            if (!isNaN(startLat) && !isNaN(startLng)) path.push({ lat: startLat, lng: startLng });
-            let intermediatePoints = activitySegment.simplifiedRawPath?.points || activitySegment.timelinePath?.points || activitySegment.waypointPath?.waypoints || [];
-            intermediatePoints.forEach(point => {
-                const pLat = point.latE7 / 1e7;
-                const pLng = point.lngE7 / 1e7;
-                if (!isNaN(pLat) && !isNaN(pLng)) path.push({ lat: pLat, lng: pLng });
-            });
-            if (!isNaN(endLat) && !isNaN(endLng)) {
-                 const lastPoint = path[path.length - 1];
-                 if (!lastPoint || lastPoint.lat !== endLat || lastPoint.lng !== endLng) {
-                    path.push({ lat: endLat, lng: endLng });
-                 }
-            }
-            if (path.length < 2) return;
-            const polyline = new google.maps.Polyline({
-                path: path,
-                geodesic: true,
-                strokeColor: getActivityColor(activitySegment.activityType),
-                strokeOpacity: 0.8, // Slightly less opaque
-                strokeWeight: 5,
-                map: map,
-                clickable: true,
-                zIndex: 0 // Default zIndex
-            });
-            polyline.set('originalColor', getActivityColor(activitySegment.activityType)); // Store original color
-            polylines.push(polyline);
-            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-            addPolylineClickListener(polyline, sidebarItem, path);
-            if (sidebarItem) {
-                addSidebarItemClickListener(sidebarItem, index, null, null, polyline, path);
-            }
-        }
-
-        function addMarkerClickListener(marker, infoWindow, index) {
-            marker.addListener('click', () => {
-                if (!marker.map) return;
-                infoWindows.forEach(iw => iw.close());
-                infoWindow.open({ map: map, anchor: marker });
-                highlightSidebarItem(index);
-                deselectPolyline();
-            });
-        }
-
-        function addPolylineClickListener(polyline, timelineItem, path) {
-            polyline.addListener('click', (e) => { // e is PolyMouseEvent
-                if (!polyline.getMap()) return;
-                const index = timelineItem ? timelineItem.dataset.index : null;
-                if (index !== null) highlightSidebarItem(index);
-                selectPolyline(polyline); // Select clicked polyline
-                infoWindows.forEach(iw => iw.close()); // Close info windows
-                if (timelineItem) {
-                    timelineItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-                // Optional: Fit bounds on click? Sometimes selecting is enough.
-                // const bounds = new google.maps.LatLngBounds();
-                // path.forEach(point => bounds.extend(point));
-                // map.fitBounds(bounds);
-            });
-        }
-
-        function selectPolyline(polyline) {
-            if (selectedPolyline === polyline) return; // Already selected
-            deselectPolyline(); // Deselect previous first
-            polyline.setOptions({
-                strokeWeight: 7, // Make it slightly thicker
-                icons: [{
-                    icon: {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        scale: 4,
-                        strokeColor: '#FFF', // White outline for visibility
-                        strokeWeight: 1
-                    },
-                    offset: '50%',
-                    repeat: '90px'
-                }],
-                zIndex: 1 // Bring to front
-            });
-            selectedPolyline = polyline;
-        }
-
-        function deselectPolyline() {
-            if (selectedPolyline) {
-                selectedPolyline.setOptions({
-                    icons: [],
-                    strokeWeight: 5,
-                    strokeOpacity: 0.8,
-                    zIndex: 0
-                });
-                selectedPolyline = null;
-            }
-        }
-
-        function addSidebarItemClickListener(sidebarItem, index, marker, infoWindow, polyline, path) {
-            if (!sidebarItem) return;
-            sidebarItem.addEventListener('click', () => {
-                highlightSidebarItem(index);
-                if (marker && infoWindow && marker.map) {
-                    // Center on marker and open its info window
-                    map.setCenter(marker.position);
-                    map.setZoom(Math.max(map.getZoom(), 15)); // Zoom in if necessary
-                    infoWindows.forEach(iw => iw.close());
-                    infoWindow.open({ map: map, anchor: marker });
-                    deselectPolyline(); // Deselect any selected polyline
-                } else if (polyline && path?.length > 0 && polyline.getMap()) {
-                    // Fit map to polyline bounds and select it
-                    const bounds = new google.maps.LatLngBounds();
-                    path.forEach(point => bounds.extend(point));
-                    map.fitBounds(bounds, 30); // Add some padding
-                    selectPolyline(polyline);
-                    infoWindows.forEach(iw => iw.close());
-                }
-            });
-        }
-
-        function highlightSidebarItem(index) {
-            const timelineItems = document.querySelectorAll('.timeline-item');
-            document.getElementById('layerOptions').style.display = 'none';
-            timelineItems.forEach((item) => {
-                const timeElement = item.querySelector('.timeline-item-time');
-                const startTimestamp = item.dataset.startTimestamp;
-                const endTimestamp = item.dataset.endTimestamp;
-                if (item.dataset.index === String(index)) {
-                    item.classList.add('highlighted');
-                    if (!isElementInViewport(item)) {
-                        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-                    if (timeElement && startTimestamp && endTimestamp) {
-                         timeElement.textContent = `${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}`;
-                    }
-                } else {
-                    item.classList.remove('highlighted');
-                    if (timeElement && startTimestamp && endTimestamp) {
-                         timeElement.textContent = `${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}`;
-                    }
-                }
-            });
-        }
-
-        function isElementInViewport (el) {
-            if (!el) return false;
-            const rect = el.getBoundingClientRect();
-            const timeline = document.getElementById('timeline'); // Check against timeline scroll container
-            const timelineRect = timeline.getBoundingClientRect();
-            return (
-                rect.top >= timelineRect.top &&
-                rect.bottom <= timelineRect.bottom
-            );
-        }
-
+        // Get color associated with an activity type (uses grouped type)
         function getActivityColor(activityType) {
             const group = getGroupedActivityType(activityType);
             switch (group) {
                 case 'DRIVING': case 'TAXI': return '#4285F4'; // Google Blue
-                case 'MOTORCYCLING': return '#1E90FF';
+                case 'MOTORCYCLING': return '#1E90FF'; // Dodger Blue
                 case 'CYCLING': return '#0F9D58'; // Google Green
                 case 'WALKING': return '#DB4437'; // Google Red
-                case 'RUNNING': return '#DB4437';
+                case 'RUNNING': return '#DB4437'; // Google Red
                 case 'HIKING': return '#0F9D58'; // Google Green (for nature)
                 case 'BUS': return '#9C27B0'; // Purple
                 case 'SUBWAY': case 'TRAIN': case 'TRAM': case 'FERRY': return '#673AB7'; // Deep Purple
@@ -1178,7 +872,14 @@
             }
         }
 
+        // Format activity type name for display (uses grouped type where appropriate)
         function formatActivityType(activityType) {
+            const group = getGroupedActivityType(activityType);
+            // Prefer group name if it's different and not UNKNOWN
+            if (group !== 'UNKNOWN' && group !== activityType) {
+                return group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            }
+            // Fallback to specific formatting for raw types
             switch (activityType) {
                 case 'IN_VEHICLE': return 'Driving';
                 case 'IN_PASSENGER_VEHICLE': return 'In a Vehicle';
@@ -1223,176 +924,746 @@
             }
         }
 
-        function initDatePicker() {
-            const startDatePicker = document.getElementById('startDatePicker');
-            const endDatePicker = document.getElementById('endDatePicker');
-            const prevDayBtn = document.getElementById('prevDayBtn');
-            const nextDayBtn = document.getElementById('nextDayBtn');
-            const goBtn = document.getElementById('goBtn');
-            const today = moment().format('YYYY-MM-DD');
-            startDatePicker.value = today;
-            endDatePicker.value = today;
-            const navigateDays = (days) => {
-                 if (!uiEnabled) return;
-                const startMoment = moment.utc(startDatePicker.value).add(days, 'days');
-                const endMoment = moment.utc(endDatePicker.value).add(days, 'days');
-                 if (startMoment.isAfter(endMoment)) {
-                    endMoment.add(days, 'days');
+        // --- Timeline Rendering ---
+
+        // Creates a single timeline item element for the sidebar
+        function createTimelineItem(item, index, currentDate) {
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item';
+            timelineItem.dataset.index = index; // Use the global index
+
+            // Check if a date header needs to be added for this date
+            const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
+            if (!existingHeader) {
+                const dateHeader = document.createElement('div');
+                dateHeader.className = 'date-header';
+                dateHeader.dataset.date = currentDate;
+                dateHeader.textContent = moment(currentDate).format('dddd, MMMM DD, YYYY'); // Format date nicely
+                // Insert header before the first item of the day or at the end if no items yet
+                const firstItemOfDay = document.querySelector(`.timeline-item[data-item-date="${currentDate}"]`);
+                if (firstItemOfDay) {
+                    document.getElementById('timeline').insertBefore(dateHeader, firstItemOfDay);
+                } else {
+                    document.getElementById('timeline').appendChild(dateHeader);
                 }
-                startDatePicker.value = startMoment.format('YYYY-MM-DD');
-                endDatePicker.value = endMoment.format('YYYY-MM-DD');
-                loadTimelineDataInDateRange(startMoment.toDate(), endMoment.toDate());
+            }
+
+            let startTimestamp, endTimestamp;
+
+            // Populate based on place visit or activity segment
+            if (item.placeVisit) {
+                const placeVisit = item.placeVisit;
+                startTimestamp = placeVisit.duration.startTimestamp;
+                endTimestamp = placeVisit.duration.endTimestamp;
+                const locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown location');
+                timelineItem.classList.add('place-visit-item');
+                timelineItem.innerHTML = `
+                     <span class="timeline-icon-container">📍</span>
+                     <div class="timeline-item-details">
+                         <strong class="nametag">${locationName}</strong><br>
+                         <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
+                     </div>
+                 `;
+                 timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
+            } else if (item.activitySegment) {
+                const activitySegment = item.activitySegment;
+                startTimestamp = activitySegment.duration.startTimestamp;
+                endTimestamp = activitySegment.duration.endTimestamp;
+                const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || 0;
+                const distanceKm = distanceMeters / 1000;
+                const formattedType = formatActivityType(activitySegment.activityType);
+                timelineItem.innerHTML = `
+                     <span class="timeline-icon-container">${getActivityIcon(activitySegment.activityType)}</span>
+                     <div class="timeline-item-details">
+                         <strong>${formattedType}</strong><br>
+                         <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
+                         <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
+                     </div>
+                 `;
+                 const activityColor = getActivityColor(activitySegment.activityType);
+                 timelineItem.style.setProperty('--activity-color', activityColor);
+            }
+
+            // Store timestamps and date context on the element
+            timelineItem.dataset.startTimestamp = startTimestamp;
+            timelineItem.dataset.endTimestamp = endTimestamp;
+            timelineItem.dataset.itemDate = currentDate;
+
+            // Add confirmed checkmark if applicable
+            if ((item.placeVisit && item.placeVisit.editConfirmationStatus === "CONFIRMED") ||
+                (item.activitySegment && item.activitySegment.editConfirmationStatus === "CONFIRMED")) {
+                const checkmark = document.createElement('span');
+                checkmark.className = 'confirmed-checkmark';
+                checkmark.textContent = '✔️';
+                timelineItem.appendChild(checkmark);
+            }
+
+            return timelineItem;
+        }
+
+        // Clears the timeline sidebar
+        function clearTimeline() {
+            document.getElementById('timeline').innerHTML = '';
+        }
+
+        // --- Map Rendering ---
+
+        // Clears all markers, polylines, and info windows from the map
+        function clearMap() {
+            markers.forEach(marker => marker.map = null);
+            markers = [];
+            polylines.forEach(polyline => polyline.setMap(null));
+            polylines = [];
+            infoWindows.forEach(infoWindow => infoWindow.close());
+            infoWindows = [];
+            deselectPolyline(); // Also deselect any highlighted polyline
+        }
+
+        // Renders a place visit marker (either basic or detailed)
+        function renderPlaceVisit(placeVisit, index) {
+            // Determine initial location name and details
+            let locationName = placeVisit.location.name ||
+                             (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : null);
+            const placeId = placeVisit.location.placeId;
+            const lat = placeVisit.location.latitudeE7 / 1e7;
+            const lng = placeVisit.location.longitudeE7 / 1e7;
+            const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+            // Attempt to fetch Place Details if placeId exists and not cached
+            if (placeId) {
+                if (placeDetailsCache[placeId]) {
+                    // Use cached details (basic info only now)
+                    renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index);
+                } else {
+                    // Fetch basic details (will render asynchronously)
+                    fetchPlaceDetails(placeId, fallbackName, placeVisit, index);
+                }
+            } else {
+                // No placeId, render a basic marker immediately
+                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                // Update sidebar with basic info
+                updateSidebarItem(index, fallbackName, null);
+            }
+        }
+
+        // Renders a simple marker when no Place ID is available
+        function renderBasicMarker(lat, lng, name, placeVisit, index) {
+            const position = { lat, lng };
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                position: position,
+                map: map,
+                title: name,
+                // Basic marker uses default appearance
+            });
+            markers.push(marker); // Keep track of the marker
+
+            // Create InfoWindow content (without photo initially)
+            const infoWindowContent = `
+                 <div style="max-width: 250px;">
+                     <h3 style="margin: 5px 0;">${name}</h3>
+                     <p style="margin: 3px 0; font-size: 0.9em;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
+                     <div class="photo-container" data-place-id="basic-${index}">
+                         </div>
+                     <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
+                     <p style="margin-top: 5px; font-size: 0.85em;"><a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">View on Google Maps</a></p>
+                 </div>`;
+
+            const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+            infoWindow.placeId = null; // No place ID for basic marker
+            infoWindow.photoFetched = true; // Mark as "fetched" since there's no photo to fetch
+            infoWindows.push(infoWindow);
+
+            // Add listeners
+            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+            addMarkerClickListener(marker, infoWindow, index);
+            if (sidebarItem) {
+                addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+            }
+        }
+
+        // Fetches initial place details (name, address, geometry, icon)
+        function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
+            const placeService = new google.maps.places.PlacesService(map);
+            const request = {
+                placeId: placeId,
+                fields: ["place_id", "name", "formatted_address", "geometry", "icon", "icon_background_color", "url"] // Exclude 'photos' initially
             };
-            prevDayBtn.addEventListener('click', () => navigateDays(-1));
-            nextDayBtn.addEventListener('click', () => navigateDays(1));
-            goBtn.addEventListener('click', () => {
-                if (!uiEnabled) return;
-                const startDate = moment.utc(startDatePicker.value).toDate();
-                const endDate = moment.utc(endDatePicker.value).toDate();
-                if (startDate > endDate) {
-					console.log(`${startDate} not before ${endDate}`);
-					clearMap();
-					clearTimeline();
-					globalIndex = 0;
-					placeDetailsCache = {};
-					document.getElementById('summary-years').innerHTML = '';
-					document.getElementById('summary-months').innerHTML = '';
-                    return;
-                }
-                loadTimelineDataInDateRange(startDate, endDate);
-            });
-            startDatePicker.addEventListener('change', () => { if(uiEnabled) goBtn.click(); });
-            endDatePicker.addEventListener('change', () => { if(uiEnabled) goBtn.click(); });
-        }
 
-        function populateActivityFilters() {
-            const activityFilters = document.getElementById('activityFilters');
-            activityFilters.innerHTML = '';
-            const uniqueGroupedTypes = new Set();
-            Object.values(timelineData).forEach(monthData => {
-                monthData.timelineObjects?.forEach(item => {
-                    if (item.activitySegment) {
-                        uniqueGroupedTypes.add(getGroupedActivityType(item.activitySegment.activityType));
-                    }
-                });
-            });
-            const sortedGroupedTypes = Array.from(uniqueGroupedTypes).sort((a, b) => {
-                if (a === 'UNKNOWN') return 1;
-                if (b === 'UNKNOWN') return -1;
-                return a.localeCompare(b);
-             });
-            sortedGroupedTypes.forEach(groupType => {
-                if (groupType === 'STATIONARY') return;
-                const label = document.createElement('label');
-                label.className = 'layer-option';
-                const formattedName = groupType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                label.innerHTML = `
-                    <input type="checkbox" id="filter-${groupType}" class="layer-checkbox activity-filter-checkbox" checked data-group-type="${groupType}">
-                    <span style="color:${getActivityColor(groupType)}; margin-right: 4px;">${getActivityIcon(groupType)}</span>
-                    ${formattedName}
-                `;
-                activityFilters.appendChild(label);
-                const checkbox = label.querySelector('input');
-                checkbox.addEventListener('change', () => {
-                    if (!uiEnabled) return;
-                    const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
-                    document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
-                    const startDate = new Date(document.getElementById('startDatePicker').value);
-                    const endDate = new Date(document.getElementById('endDatePicker').value);
-                    loadTimelineDataInDateRange(startDate, endDate);
-                });
-            });
-        }
-
-        function initLayerButton() {
-            const layerBtn = document.getElementById('layerBtn');
-            const layerOptions = document.getElementById('layerOptions');
-            const closeLayerBtn = document.getElementById('closeLayerBtn');
-            const showActivitiesCheckbox = document.getElementById('showActivities');
-            const showVisitsCheckbox = document.getElementById('showVisits');
-            const activityFiltersDiv = document.getElementById('activityFilters');
-            layerBtn.addEventListener('click', () => {
-                if (!uiEnabled) return;
-                layerOptions.style.display = layerOptions.style.display === 'none' ? 'block' : 'none';
-            });
-            closeLayerBtn.addEventListener('click', () => layerOptions.style.display = 'none');
-            const reloadData = () => {
-                if (!uiEnabled) return;
-                const startDate = new Date(document.getElementById('startDatePicker').value);
-                const endDate = new Date(document.getElementById('endDatePicker').value);
-                loadTimelineDataInDateRange(startDate, endDate);
-            };
-            showVisitsCheckbox.addEventListener('change', reloadData);
-            showActivitiesCheckbox.addEventListener('change', function() {
-                if (!uiEnabled) return;
-                const isChecked = this.checked;
-                activityFiltersDiv.querySelectorAll('.activity-filter-checkbox').forEach(checkbox => checkbox.checked = isChecked);
-                reloadData();
-            });
-        }
-
-        function initFitMapButton() {
-            document.getElementById('fitMapBtn').addEventListener('click', fitMapToData);
-        }
-
-        function fitMapToData() {
-            if (!uiEnabled || (markers.length === 0 && polylines.length === 0)) return;
-            const bounds = new google.maps.LatLngBounds();
-            let itemCount = 0;
-            markers.forEach(marker => {
-                if (marker.map) {
-                    bounds.extend(marker.position);
-                    itemCount++;
+            placeService.getDetails(request, (place, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                    // Cache the basic result
+                    placeDetailsCache[placeId] = place;
+                    // Render details (marker, info window content *without* photo initially)
+                    renderPlaceDetails(place, placeVisit, index);
+                } else {
+                    console.warn("Error fetching initial place details:", status, "for placeId:", placeId, "Falling back to basic marker.");
+                    // Fallback to basic marker if details fetch fails
+                    const lat = placeVisit.location.latitudeE7 / 1e7;
+                    const lng = placeVisit.location.longitudeE7 / 1e7;
+                    renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                    updateSidebarItem(index, fallbackName, null); // Update sidebar with fallback
                 }
             });
-            polylines.forEach(polyline => {
-                if (polyline.getMap()) {
-                    polyline.getPath().forEach(point => bounds.extend(point));
-                    itemCount++;
-                }
-            });
-            if (itemCount > 0) {
-                if (itemCount === 1 && markers.length === 1) {
-                     // Single marker: center and set zoom
-                     map.setCenter(bounds.getCenter());
-                     map.setZoom(15);
-                 } else if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
-                     // Multiple items at the exact same point
-                     map.setCenter(bounds.getCenter());
+        }
 
-                     map.setZoom(16); // Zoom slightly closer for identical points
-                 } else {
-                     map.fitBounds(bounds, 50); // Fit multiple items with padding
+        // Updates the corresponding sidebar item's name and icon
+        function updateSidebarItem(index, locationName, iconUrl) {
+            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+            if (sidebarItem) {
+                const nametag = sidebarItem.querySelector('.nametag');
+                if (nametag) nametag.textContent = locationName;
+
+                const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
+                if (iconContainer) {
+                    // Use icon if available, otherwise default pin
+                    iconContainer.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="Icon" style="width: 20px; height: 20px; vertical-align: middle;">` : '📍';
                 }
             }
         }
 
-        // --- Summary View Calculation ---
+		// Renders the marker and InfoWindow using fetched Place Details
+		function renderPlaceDetails(place, placeVisit, index) {
+		  // Determine name, using fallback if necessary
+		  let locationName = place.name || placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
+		  const position = place.geometry?.location || { 
+			lat: placeVisit.location.latitudeE7 / 1e7, 
+			lng: placeVisit.location.longitudeE7 / 1e7 
+		  };
+
+		  // Create marker content (PinElement if possible)
+		  let markerContent;
+		  if (place.icon && place.icon_background_color) {
+			try {
+			  const pinElement = new google.maps.marker.PinElement({
+				background: place.icon_background_color,
+				glyph: new URL(place.icon),
+				glyphColor: '#FFFFFF', // Assuming white glyph color works best
+				borderColor: '#000000', // Example border color
+			  });
+			  markerContent = pinElement.element;
+			} catch (e) {
+			  console.warn("Could not create PinElement, using default marker:", e);
+			  markerContent = null; // Fallback to default marker rendering below
+			}
+		  }
+
+		  // Create the Advanced Marker
+		  const marker = new google.maps.marker.AdvancedMarkerElement({
+			position: position,
+			map: map,
+			content: markerContent, // Use PinElement if created, otherwise default
+			title: locationName,
+		  });
+		  markers.push(marker);
+
+		  // Store the placeId for later reference
+		  const placeId = place.place_id || null;
+	  
+		  // Prepare InfoWindow content (initially with placeholder for photo)
+		  const mapsLink = place.url ? 
+			`<a href="${place.url}" target="_blank">View on Google Maps</a>` : 
+			`<a href="https://www.google.com/maps?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`; // Fallback link
+
+		  // Make sure to add a specific data-place-id attribute to the photo container
+		  const infoWindowContent = `
+		  <div style="max-width: 250px;">
+			<h3 style="margin: 5px 0;">${locationName}</h3>
+			<p style="margin: 3px 0; font-size: 0.9em;">${place.formatted_address || ""}</p>
+			<div class="photo-container" data-place-id="${placeId || 'basic-' + index}">
+			  <div class="photo-placeholder">Loading photo...</div>
+			</div>
+			<p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
+			<p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
+		  </div>`;
+
+		  const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+		  infoWindow.placeId = placeId; // Store place ID to fetch photo later
+		  infoWindow.photoFetched = false; // Flag to track if photo has been fetched
+		  infoWindows.push(infoWindow);
+
+		  // Update sidebar item appearance
+		  updateSidebarItem(index, locationName, place.icon);
+
+		  // Add listeners
+		  const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+		  console.log(`addMarkerClickListener for infoWindow with placeId: ${infoWindow.placeId}`);
+		  addMarkerClickListener(marker, infoWindow, index);
+		  if (sidebarItem) {
+			addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+		  }
+		}
+
+
+        // Renders an activity segment as a polyline on the map
+        function renderActivitySegment(activitySegment, index) {
+            let path = [];
+            const startLat = activitySegment.startLocation?.latitudeE7 / 1e7;
+            const startLng = activitySegment.startLocation?.longitudeE7 / 1e7;
+            const endLat = activitySegment.endLocation?.latitudeE7 / 1e7;
+            const endLng = activitySegment.endLocation?.longitudeE7 / 1e7;
+
+            // Add start point if valid
+            if (!isNaN(startLat) && !isNaN(startLng)) path.push({ lat: startLat, lng: startLng });
+
+            // Add intermediate points from available path sources
+            let intermediatePoints = activitySegment.simplifiedRawPath?.points || activitySegment.timelinePath?.points || activitySegment.waypointPath?.waypoints || [];
+            intermediatePoints.forEach(point => {
+                const pLat = point.latE7 / 1e7;
+                const pLng = point.lngE7 / 1e7;
+                if (!isNaN(pLat) && !isNaN(pLng)) path.push({ lat: pLat, lng: pLng });
+            });
+
+             // Add end point if valid and different from last intermediate point
+             if (!isNaN(endLat) && !isNaN(endLng)) {
+                 const lastPoint = path[path.length - 1];
+                 if (!lastPoint || lastPoint.lat !== endLat || lastPoint.lng !== endLng) {
+                     path.push({ lat: endLat, lng: endLng });
+                 }
+             }
+
+            // Only render if we have at least two points
+            if (path.length < 2) return;
+
+            const polyline = new google.maps.Polyline({
+                path: path,
+                geodesic: true,
+                strokeColor: getActivityColor(activitySegment.activityType),
+                strokeOpacity: 0.8, // Slightly less opaque for better visibility if overlapping
+                strokeWeight: 5, // Default weight
+                map: map,
+                clickable: true,
+                zIndex: 0 // Default zIndex
+            });
+            polyline.set('originalColor', getActivityColor(activitySegment.activityType)); // Store original color
+            polylines.push(polyline); // Keep track
+
+            // Add listeners
+            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+            addPolylineClickListener(polyline, sidebarItem, path);
+            if (sidebarItem) {
+                addSidebarItemClickListener(sidebarItem, index, null, null, polyline, path);
+            }
+        }
+
+        // --- Map Interaction ---
+
+        // Function to fetch photo URL and update InfoWindow content
+        function fetchPhotoAndUpdateInfoWindow(infoWindow) {
+                console.log(`fetchPhotoAndUpdateInfoWindow() ${infoWindow.placeId}`);
+            if (!infoWindow || !infoWindow.placeId || infoWindow.photoFetched) {
+                console.log("Skipping photo fetch: No placeId or photo already fetched.");
+                // If no placeId, update placeholder to "No photo available"
+                if (!infoWindow.placeId && !infoWindow.photoFetched) {
+                    const contentNode = document.createElement('div');
+                    contentNode.innerHTML = infoWindow.getContent();
+                    const photoContainer = contentNode.querySelector(`.photo-container`); // Target any photo container
+                    if (photoContainer) {
+                        photoContainer.innerHTML = '<div class="photo-placeholder">No photo available</div>';
+                        infoWindow.setContent(contentNode.innerHTML);
+                    }
+                    infoWindow.photoFetched = true; // Mark as fetched
+                }
+                return; // Don't fetch if no placeId, or already fetched
+            }
+
+            console.log(`Fetching photo for placeId: ${infoWindow.placeId}`);
+            const placeService = new google.maps.places.PlacesService(map);
+            const request = {
+                placeId: infoWindow.placeId,
+                fields: ['photos'] // Request only photos
+            };
+
+            // --- Update placeholder to show loading state (already done when creating InfoWindow) ---
+
+            placeService.getDetails(request, (place, status) => {
+                infoWindow.photoFetched = true; // Mark as fetched even if it fails
+                let photoUrl = null;
+                if (status === google.maps.places.PlacesServiceStatus.OK && place && place.photos && place.photos.length > 0) {
+                    photoUrl = place.photos[0].getUrl({ maxWidth: 200, maxHeight: 150 });
+                    console.log(`Photo URL found for ${infoWindow.placeId}: ${photoUrl}`);
+                } else {
+                    console.warn(`Photo request failed or no photo found for placeId: ${infoWindow.placeId}. Status: ${status}`);
+                }
+
+                // --- Update the InfoWindow content again with the photo or 'no photo' message ---
+                // Get the potentially updated content (e.g., if user closed/reopened quickly)
+                const contentNode = document.createElement('div');
+                contentNode.innerHTML = infoWindow.getContent(); // Get current content again
+                // Find the specific photo container using the placeId data attribute
+                const photoContainer = contentNode.querySelector(`.photo-container[data-place-id="${infoWindow.placeId}"]`);
+
+                if (photoContainer) {
+                    if (photoUrl) {
+                        photoContainer.innerHTML = `<img src="${photoUrl}" alt="Place photo">`;
+                    } else {
+                        photoContainer.innerHTML = '<div class="photo-placeholder">No photo available</div>';
+                    }
+                    // *** Crucial Step: Update the actual InfoWindow object's content ***
+                    infoWindow.setContent(contentNode.innerHTML);
+                } else {
+                    console.warn("Could not find photo container in InfoWindow content for update, placeId:", infoWindow.placeId);
+                }
+                 // --- End final content update ---
+            });
+        }
+
+	// Adds click listener to a marker to open InfoWindow and highlight sidebar
+	function addMarkerClickListener(marker, infoWindow, index) {
+	  marker.addListener('click', () => {
+	    if (!marker.map) return; // Don't do anything if marker isn't on map
+
+	    // Close other info windows
+	    infoWindows.forEach(iw => { if (iw !== infoWindow) iw.close(); });
+
+	    // Debug info
+	    console.log(`Marker clicked: Index=${index}, placeId=${infoWindow.placeId}, photoFetched=${infoWindow.photoFetched}`);
+
+	    // Fetch photo only if it hasn't been fetched yet
+	    // This call will update the content asynchronously if needed
+	    fetchPhotoAndUpdateInfoWindow(infoWindow);
+
+	    // Open this info window (content will update asynchronously if photo is fetching)
+	    infoWindow.open({ map: map, anchor: marker });
+
+	    // Highlight corresponding sidebar item
+	    highlightSidebarItem(index);
+
+	    // Deselect any selected polyline
+	    deselectPolyline();
+	  });
+	}
+
+
+        // Adds click listener to a polyline to highlight it and the sidebar item
+        function addPolylineClickListener(polyline, timelineItem, path) {
+            polyline.addListener('click', (e) => { // e is PolyMouseEvent
+                if (!polyline.getMap()) return; // Ignore clicks if not on map
+
+                const index = timelineItem ? timelineItem.dataset.index : null;
+                if (index !== null) highlightSidebarItem(index);
+
+                selectPolyline(polyline); // Select clicked polyline
+
+                infoWindows.forEach(iw => iw.close()); // Close any open info windows
+
+                // Scroll sidebar item into view
+                if (timelineItem) {
+                    timelineItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        }
+
+        // Adds click listener to a sidebar item to interact with the map
+        function addSidebarItemClickListener(sidebarItem, index, marker, infoWindow, polyline, path) {
+            if (!sidebarItem) return;
+
+            sidebarItem.addEventListener('click', () => {
+                highlightSidebarItem(index); // Highlight this item
+
+                if (marker && infoWindow && marker.map) {
+                    // --- Place Visit Click ---
+                    map.setCenter(marker.position);
+                    map.setZoom(Math.max(map.getZoom(), 15)); // Zoom in if necessary
+
+                    // Close other info windows
+                    infoWindows.forEach(iw => { if (iw !== infoWindow) iw.close(); });
+
+                    // Fetch photo only if it hasn't been fetched yet
+                    fetchPhotoAndUpdateInfoWindow(infoWindow);
+
+                    // Open this info window
+                    infoWindow.open({ map: map, anchor: marker });
+
+                    deselectPolyline(); // Deselect any polyline
+
+                } else if (polyline && path?.length > 0 && polyline.getMap()) {
+                    // --- Activity Segment Click ---
+                    const bounds = new google.maps.LatLngBounds();
+                    path.forEach(point => bounds.extend(point));
+                    map.fitBounds(bounds, 30); // Fit map to polyline bounds with padding
+
+                    selectPolyline(polyline); // Select this polyline
+
+                    infoWindows.forEach(iw => iw.close()); // Close info windows
+                }
+            });
+        }
+
+        // Highlights a specific sidebar item and scrolls it into view
+        function highlightSidebarItem(index) {
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            document.getElementById('layerOptions').style.display = 'none'; // Hide layer options when an item is clicked
+
+            timelineItems.forEach((item) => {
+                if (item.dataset.index === String(index)) {
+                    item.classList.add('highlighted');
+                    // Scroll into view if not already visible
+                    if (!isElementInViewport(item)) {
+                        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                } else {
+                    item.classList.remove('highlighted');
+                }
+            });
+        }
+
+        // Helper function to check if an element is within the timeline's viewport
+        function isElementInViewport (el) {
+            if (!el) return false;
+            const rect = el.getBoundingClientRect();
+            const timeline = document.getElementById('timeline'); // Check against timeline scroll container
+            const timelineRect = timeline.getBoundingClientRect();
+
+            return (
+                rect.top >= timelineRect.top &&
+                rect.bottom <= timelineRect.bottom
+            );
+        }
+
+        // Highlights a polyline (thicker, arrows)
+        function selectPolyline(polyline) {
+            if (selectedPolyline === polyline) return; // Already selected
+
+            deselectPolyline(); // Deselect previous first
+
+            // Enhance the selected polyline
+            polyline.setOptions({
+                strokeWeight: 7, // Make it slightly thicker
+                // Add direction arrows
+                icons: [{
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 4, // Size of the arrow
+                        strokeColor: '#FFF', // White outline for visibility
+                        strokeWeight: 1
+                    },
+                    offset: '50%', // Position in the middle of segments
+                    repeat: '90px' // Spacing between arrows
+                }],
+                zIndex: 1 // Bring to front
+            });
+            selectedPolyline = polyline;
+        }
+
+        // Restores the appearance of the previously selected polyline
+        function deselectPolyline() {
+            if (selectedPolyline) {
+                // Restore original appearance
+                selectedPolyline.setOptions({
+                    icons: [], // Remove arrows
+                    strokeWeight: 5, // Restore original weight
+                    strokeOpacity: 0.8,
+                    zIndex: 0 // Restore default zIndex
+                });
+                selectedPolyline = null;
+            }
+        }
+
+        // Adjusts map bounds to fit all currently visible markers and polylines
+        function fitMapToData() {
+            if (!uiEnabled || (markers.length === 0 && polylines.length === 0)) return;
+
+            const bounds = new google.maps.LatLngBounds();
+            let itemCount = 0;
+
+            // Extend bounds for visible markers
+            markers.forEach(marker => {
+                if (marker.map) { // Check if marker is actually on the map
+                    bounds.extend(marker.position);
+                    itemCount++;
+                }
+            });
+
+            // Extend bounds for visible polylines
+            polylines.forEach(polyline => {
+                if (polyline.getMap()) { // Check if polyline is actually on the map
+                    polyline.getPath().forEach(point => bounds.extend(point));
+                    itemCount++;
+                }
+            });
+
+            // Fit map if there are items
+            if (itemCount > 0) {
+                if (itemCount === 1 && markers.length === 1 && markers[0].map) {
+                    // Single marker: center and set zoom
+                    map.setCenter(bounds.getCenter());
+                    map.setZoom(15);
+                } else if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+                    // Multiple items at the exact same point
+                    map.setCenter(bounds.getCenter());
+                    map.setZoom(16); // Zoom slightly closer for identical points
+                } else {
+                    map.fitBounds(bounds, 50); // Fit multiple items with padding (e.g., 50px)
+                }
+            }
+            // If itemCount is 0, do nothing (map remains as is)
+        }
+
+        // --- Data Loading and Processing ---
+
+        // Loads and renders timeline data for a single date, applying filters
+        async function loadTimelineDataForDate(selectedDate) {
+            if (!uiEnabled) return;
+
+            const localSelectedDate = moment(selectedDate); // Use local time for date matching
+            const year = localSelectedDate.year();
+            const month = localSelectedDate.format('MMMM').toUpperCase(); // Use uppercase month name as key
+            const dataKey = `${year}_${month}`;
+
+            if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
+                const selectedDateStr = localSelectedDate.format('YYYY-MM-DD'); // For data attribute
+
+                const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
+                    // Get start and end times for the item
+                    const itemStartMoment = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
+                    const itemEndMoment = moment(item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
+
+                    // Check if the item overlaps with the selected date
+                    if (!itemStartMoment.isSame(localSelectedDate, 'day') &&
+                        !itemEndMoment.isSame(localSelectedDate, 'day') &&
+                        !(itemStartMoment.isBefore(localSelectedDate, 'day') && itemEndMoment.isAfter(localSelectedDate, 'day'))) {
+                        return false; // Does not overlap with the selected date
+                    }
+
+                    // Apply layer filters
+                    if (item.placeVisit && !document.getElementById('showVisits').checked) return false;
+                    if (item.activitySegment && !document.getElementById('showActivities').checked) return false;
+
+                    // Apply specific activity type filters
+                    if (item.activitySegment) {
+                        const groupedType = getGroupedActivityType(item.activitySegment.activityType);
+                        const filterCheckbox = document.getElementById(`filter-${groupedType}`);
+                        if (filterCheckbox && !filterCheckbox.checked) return false;
+                    }
+
+                    return true; // Item is relevant
+                });
+
+                // Sort data for the day chronologically
+                relevantData.sort((a, b) => {
+                    const timeA = moment(a.placeVisit ? a.placeVisit.duration.startTimestamp : a.activitySegment.duration.startTimestamp);
+                    const timeB = moment(b.placeVisit ? b.placeVisit.duration.startTimestamp : b.activitySegment.duration.startTimestamp);
+                    return timeA - timeB;
+                });
+
+                // Process and render the relevant data
+                let firstLocationSet = false;
+                relevantData.forEach((item, localIndex) => {
+                    // Center map on the first item of the day
+                    if (!firstLocationSet) {
+                        let latLng;
+                        if (item.placeVisit) {
+                            latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
+                        } else if (item.activitySegment && item.activitySegment.startLocation) {
+                            latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
+                        }
+                        if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
+                            map.setCenter(latLng);
+                            map.setZoom(15); // Reasonable zoom for a single location/start point
+                            firstLocationSet = true;
+                        }
+                    }
+
+                    // Create timeline item in sidebar
+                    const timelineItem = createTimelineItem(item, globalIndex, selectedDateStr);
+                    document.getElementById('timeline').appendChild(timelineItem);
+
+                    // Render corresponding map elements (marker or polyline)
+                    if (item.placeVisit) {
+                        renderPlaceVisit(item.placeVisit, globalIndex);
+                    } else if (item.activitySegment) {
+                        renderActivitySegment(item.activitySegment, globalIndex);
+                    }
+                    globalIndex++; // Increment global index for unique identification
+                });
+            }
+            // No else needed, if data for the month isn't loaded, nothing happens for this date.
+        }
+
+        // Loads data for a range of dates, clearing previous data first
+        async function loadTimelineDataInDateRange(startDate, endDate) {
+             // Ensure map is visible when loading data range
+             if (summaryViewVisible) {
+                 document.getElementById('summaryView').style.display = 'none';
+                 document.getElementById('map').classList.remove('hidden');
+                 summaryViewVisible = false;
+                 updateViewToggleButtons(); // Update button state
+             }
+
+            if (!uiEnabled) return;
+
+            clearMap();
+            clearTimeline();
+            globalIndex = 0; // Reset index for new range
+            placeDetailsCache = {}; // Clear place details cache for new range
+
+            const startMoment = moment.utc(startDate).startOf('day'); // Use UTC start of day
+            const endMoment = moment.utc(endDate).endOf('day'); // Use UTC end of day for comparison
+
+            document.getElementById('loading-overlay').style.display = "flex"; // Show loading spinner
+
+            const promises = [];
+            let currentDate = startMoment.clone();
+
+            // Iterate through each day in the range
+            while (currentDate.isSameOrBefore(endMoment, 'day')) {
+                // Add the promise to load data for the current date
+                promises.push(loadTimelineDataForDate(currentDate.toDate())); // Pass Date object
+                currentDate.add(1, 'days');
+            }
+
+            try {
+                // Wait for all daily data loads to complete
+                await Promise.all(promises);
+            } catch (error) {
+                console.error("Error loading data for date range:", error);
+                // Potentially show an error message to the user
+            } finally {
+                // Hide loading spinner regardless of success or failure
+                document.getElementById('loading-overlay').style.display = "none";
+                document.getElementById('howToMessage').style.display = "none"; // Hide initial message
+                document.getElementById('map').classList.remove('hidden'); // Ensure map is visible
+                fitMapToData(); // Fit map to the loaded data bounds
+            }
+        }
+
+        // --- Summary Calculation & Display ---
+
+        // Calculates yearly and monthly summaries from the loaded timelineData
         function calculateSummaries() {
             console.log("Calculating summaries...");
             const yearly = {};
             const monthly = {};
-            const kmConversion = 0.001;
+            const kmConversion = 0.001; // Meters to kilometers
+
             for (const key in timelineData) {
                 if (!timelineData[key].timelineObjects) continue;
-                const parts = key.split('_');
+
+                const parts = key.split('_'); // e.g., "2023_JANUARY"
                 if (parts.length < 2) continue;
+
                 const yearStr = parts[0];
-                const monthStr = parts[1];
+                const monthStr = parts[1]; // Uppercase month name
                 const year = parseInt(yearStr, 10);
+
+                // Convert month name to index (0-11)
                 let monthIndex = moment().month(monthStr).format("M") - 1;
-                if (monthIndex < 0) {
-                    const monthNum = parseInt(monthStr, 10);
-                    if (!isNaN(monthNum) && monthNum >= 1 && monthNum <= 12) {
-                        monthIndex = monthNum - 1;
-                    }
+                if (monthIndex < 0) continue; // Skip invalid month names
+
+                if (isNaN(year)) continue; // Skip invalid keys
+
+                // Initialize summary objects if they don't exist
+                if (!yearly[year]) {
+                    yearly[year] = { visits: 0, distanceKm: 0, distanceByActivity: {} };
                 }
-                if (isNaN(year) || monthIndex < 0 || monthIndex > 11) continue;
-                if (!yearly[year]) yearly[year] = { visits: 0, distanceKm: 0 };
-                if (!monthly[year]) monthly[year] = {};
+                if (!monthly[year]) {
+                    monthly[year] = {};
+                }
                 if (!monthly[year][monthIndex]) {
                     monthly[year][monthIndex] = { visits: 0, distanceKm: 0, distanceByActivity: {} };
                 }
+
+                // Process each item in the month's data
                 timelineData[key].timelineObjects.forEach(item => {
                     if (item.placeVisit) {
                         yearly[year].visits++;
@@ -1401,151 +1672,502 @@
                         const segment = item.activitySegment;
                         const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
                         const distanceKm = distanceMeters * kmConversion;
+
                         if (distanceKm > 0) {
-                            yearly[year].distanceKm += distanceKm;
-                            monthly[year][monthIndex].distanceKm += distanceKm;
                             const groupedType = getGroupedActivityType(segment.activityType);
+
+                            // Add to yearly summary
+                            yearly[year].distanceKm += distanceKm;
+                            yearly[year].distanceByActivity[groupedType] = (yearly[year].distanceByActivity[groupedType] || 0) + distanceKm;
+
+                            // Add to monthly summary
+                            monthly[year][monthIndex].distanceKm += distanceKm;
                             monthly[year][monthIndex].distanceByActivity[groupedType] = (monthly[year][monthIndex].distanceByActivity[groupedType] || 0) + distanceKm;
                         }
                     }
                 });
             }
+
             allYearlySummaries = yearly;
             allMonthlySummaries = monthly;
             console.log("Summaries calculated:", allYearlySummaries, allMonthlySummaries);
         }
 
-        // --- Summary View Display Functions ---
-        function displayYearSummary() {
-            const container = document.getElementById('summary-years');
-            container.innerHTML = ''; // Clear previous
-            if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
-                 container.innerHTML = '<p>No summary data available.</p>';
-                 document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
-                 document.getElementById('summary-selected-year').textContent = '';
-                 return;
+        // Calculates summary specifically for the selected date range
+        function calculateSelectedDatesSummary(startDate, endDate) {
+            const summary = { visits: 0, distanceKm: 0, distanceByActivity: {} };
+            const startMoment = moment.utc(startDate).startOf('day');
+            const endMoment = moment.utc(endDate).endOf('day');
+            const kmConversion = 0.001;
+
+            let currentDate = startMoment.clone();
+            while (currentDate.isSameOrBefore(endMoment, 'day')) {
+                const year = currentDate.year();
+                const monthKey = currentDate.format('MMMM').toUpperCase();
+                const dataKey = `${year}_${monthKey}`;
+
+                if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
+                    timelineData[dataKey].timelineObjects.forEach(item => {
+                         const itemStartMoment = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
+                         const itemEndMoment = moment(item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
+
+                         // Check if the item overlaps with the *current processing day* within the selected range
+                         if (!itemStartMoment.isSame(currentDate, 'day') &&
+                             !itemEndMoment.isSame(currentDate, 'day') &&
+                             !(itemStartMoment.isBefore(currentDate, 'day') && itemEndMoment.isAfter(currentDate, 'day'))) {
+                             return; // Skip items not overlapping this specific day
+                         }
+
+                         // Item overlaps the current day, add its stats
+                         if (item.placeVisit) {
+                             summary.visits++;
+                         } else if (item.activitySegment) {
+                             const segment = item.activitySegment;
+                             const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || 0;
+                             const distanceKm = distanceMeters * kmConversion;
+                             if (distanceKm > 0) {
+                                 summary.distanceKm += distanceKm;
+                                 const groupedType = getGroupedActivityType(segment.activityType);
+                                 summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceKm;
+                             }
+                         }
+                     });
+                }
+                currentDate.add(1, 'days');
             }
-            const sortedYears = Object.keys(allYearlySummaries).map(Number).sort((a, b) => b - a);
+            return summary;
+        }
+
+        // Displays the summary for the currently selected date range
+        function displaySelectedDatesSummary(startDate, endDate) {
+            const container = document.getElementById('summary-selected-dates');
+            container.innerHTML = ''; // Clear previous
+
+            const summaryData = calculateSelectedDatesSummary(startDate, endDate);
+
+            const startStr = moment(startDate).format('MMM DD, YYYY');
+            const endStr = moment(endDate).format('MMM DD, YYYY');
+            const title = startStr === endStr ? startStr : `${startStr} to ${endStr}`;
+
+            const item = document.createElement('div');
+            item.className = 'summary-selected-item'; // Use a specific class
+
+            let activityHtml = '<ul>';
+            const sortedActivities = Object.keys(summaryData.distanceByActivity).sort((a, b) => summaryData.distanceByActivity[b] - summaryData.distanceByActivity[a]);
+
+            if (sortedActivities.length > 0) {
+                sortedActivities.forEach(activityGroup => {
+                    const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const icon = getActivityIcon(activityGroup);
+                    activityHtml += `<li>${icon} ${formattedName}: <span>${summaryData.distanceByActivity[activityGroup].toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></li>`;
+                });
+            } else if (summaryData.distanceKm > 0) {
+                 activityHtml += '<li>No distance breakdown available</li>';
+            } else {
+                 activityHtml += '<li>No distance recorded</li>';
+            }
+            activityHtml += '</ul>';
+
+            item.innerHTML = `
+                 <strong>${title}</strong>
+                 <div class="summary-details">Visits: <span>${summaryData.visits.toLocaleString()}</span></div>
+                 <div class="summary-details">Total Dist: <span>${summaryData.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
+                 ${activityHtml}
+             `;
+            container.appendChild(item);
+        }
+
+        // Displays the yearly summary items
+        function displayYearSummary() {
+            const yearContainer = document.getElementById('summary-years'); // Target the inner div
+            const summaryView = document.getElementById('summaryView');
+            yearContainer.innerHTML = ''; // Clear previous years
+
+            if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
+                yearContainer.innerHTML = '<p>No summary data available.</p>';
+                document.getElementById('summary-months').style.display = 'none';
+                document.getElementById('summary-selected-year').textContent = '';
+                document.getElementById('backToYearsBtn').style.display = 'none';
+                summaryView.classList.remove('expanded-year-active');
+                return;
+            }
+
+            const sortedYears = Object.keys(allYearlySummaries).map(Number).sort((a, b) => b - a); // Sort descending
+
             sortedYears.forEach(year => {
                 const data = allYearlySummaries[year];
                 const item = document.createElement('div');
                 item.className = 'summary-year-item';
                 item.dataset.year = year;
-                item.innerHTML = `
-                    <strong>${year}</strong>
-                    <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
-                    <div class="summary-details">Distance: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
-                `;
-                item.addEventListener('click', () => {
-                    displayMonthSummary(year);
-                    container.querySelectorAll('.summary-year-item.selected').forEach(el => el.classList.remove('selected'));
-                    item.classList.add('selected');
-                });
-                container.appendChild(item);
-            });
-            if (sortedYears.length > 0) {
-                const initialYear = selectedSummaryYear && allYearlySummaries[selectedSummaryYear] ? selectedSummaryYear : sortedYears[0];
-                displayMonthSummary(initialYear);
-                container.querySelector(`.summary-year-item[data-year="${initialYear}"]`)?.classList.add('selected');
-            } else {
-                 document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
-                 document.getElementById('summary-selected-year').textContent = '';
-            }
-        }
 
-        function displayMonthSummary(year) {
-            selectedSummaryYear = year;
-            document.getElementById('summary-selected-year').textContent = year;
-            const container = document.getElementById('summary-months');
-            container.innerHTML = '';
-            if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
-                container.innerHTML = `<p>No monthly data available for ${year}.</p>`;
-                return;
-            }
-            const sortedMonths = Object.keys(allMonthlySummaries[year]).map(Number).sort((a, b) => a - b);
-            sortedMonths.forEach(monthIndex => {
-                const data = allMonthlySummaries[year][monthIndex];
-                const monthName = moment().month(monthIndex).format("MMMM");
-                const item = document.createElement('div');
-                item.className = 'summary-month-item';
-                item.dataset.year = year;
-                item.dataset.month = monthIndex;
+                // Generate activity breakdown HTML for the year
                 let activityHtml = '<ul>';
-                const sortedActivities = Object.keys(data.distanceByActivity).sort((a,b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
+                const sortedActivities = Object.keys(data.distanceByActivity || {}).sort((a, b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
+
                 if (sortedActivities.length > 0) {
-                     sortedActivities.forEach(activityGroup => {
+                    sortedActivities.forEach(activityGroup => {
                         const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                         const icon = getActivityIcon(activityGroup);
                         activityHtml += `<li>${icon} ${formattedName}: <span>${data.distanceByActivity[activityGroup].toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></li>`;
                     });
+                } else if (data.distanceKm > 0) {
+                     activityHtml += '<li>No distance breakdown available</li>';
                 } else {
-                    activityHtml += '<li>No distance recorded</li>';
+                     activityHtml += '<li>No distance recorded</li>';
                 }
                 activityHtml += '</ul>';
+
                 item.innerHTML = `
-                    <strong>${monthName}</strong>
-                    <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
-                    <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
-                    ${activityHtml}
-                `;
-                 item.addEventListener('click', () => navigateToMonth(year, monthIndex));
-                container.appendChild(item);
+                     <strong>${year}</strong>
+                     <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+                     <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
+                     ${activityHtml}
+                 `;
+
+                // --- Year Click Listener ---
+                item.addEventListener('click', () => {
+                    // Mark this year as selected and expand it
+                    yearContainer.querySelectorAll('.summary-year-item').forEach(el => el.classList.remove('is-selected-year'));
+                    item.classList.add('is-selected-year');
+
+                    // Add class to parent to control visibility via CSS
+                    summaryView.classList.add('expanded-year-active');
+
+                    // Show months for this year
+                    displayMonthSummary(year);
+
+                    // Scroll to the top of the summary view might be helpful
+                    summaryView.scrollTop = 0;
+                });
+                // --- End Year Click Listener ---
+
+                yearContainer.appendChild(item);
             });
+
+            // Initially, ensure the view is not in expanded mode
+            summaryView.classList.remove('expanded-year-active');
+            document.getElementById('summary-months').style.display = 'none';
+            document.getElementById('backToYearsBtn').style.display = 'none';
         }
 
-        // --- Navigation from Summary to Map ---
+        // Displays the monthly summary items for a given year
+        function displayMonthSummary(year) {
+            selectedSummaryYear = year; // Store the currently selected year
+            document.getElementById('summary-selected-year').textContent = '('+year+')'; // Update header
+            const container = document.getElementById('summary-months');
+            container.innerHTML = ''; // Clear previous months
+
+            if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
+                container.innerHTML = `<p>No monthly data available for ${year}.</p>`;
+                return;
+            }
+
+            // Sort months chronologically (0-11)
+            const sortedMonths = Object.keys(allMonthlySummaries[year]).map(Number).sort((a, b) => a - b);
+
+            sortedMonths.forEach(monthIndex => {
+                const data = allMonthlySummaries[year][monthIndex];
+                const monthName = moment().month(monthIndex).format("MMMM"); // Get month name
+                const item = document.createElement('div');
+                item.className = 'summary-month-item';
+                item.dataset.year = year;
+                item.dataset.month = monthIndex;
+
+                // Generate activity breakdown HTML
+                let activityHtml = '<ul>';
+                const sortedActivities = Object.keys(data.distanceByActivity).sort((a,b) => data.distanceByActivity[b] - data.distanceByActivity[a]); // Sort by distance desc
+
+                if (sortedActivities.length > 0) {
+                     sortedActivities.forEach(activityGroup => {
+                         const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                         const icon = getActivityIcon(activityGroup);
+                         activityHtml += `<li>${icon} ${formattedName}: <span>${data.distanceByActivity[activityGroup].toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></li>`;
+                     });
+                } else if (data.distanceKm > 0) {
+                     activityHtml += '<li>No distance breakdown available</li>';
+                } else {
+                     activityHtml += '<li>No distance recorded</li>';
+                }
+                activityHtml += '</ul>';
+
+                item.innerHTML = `
+                     <strong>${monthName}</strong>
+                     <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+                     <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
+                     ${activityHtml}
+                 `;
+
+                 // Add click listener to navigate to this month on the map
+                 item.addEventListener('click', () => navigateToMonth(year, monthIndex));
+
+                container.appendChild(item);
+            });
+             // Ensure the months container is visible (handled by CSS .expanded-year-active)
+             document.getElementById('summary-months').style.display = 'flex';
+             // Ensure the back button is visible (handled by CSS .expanded-year-active)
+             document.getElementById('backToYearsBtn').style.display = 'flex';
+             
+        }
+
+        // Navigates from the summary view to the map view for a specific month
         function navigateToMonth(year, monthIndex) {
             console.log(`Navigating to: ${year}-${String(monthIndex + 1).padStart(2, '0')}`);
+            // Calculate start and end dates for the selected month
             const startOfMonth = moment.utc({ year: year, month: monthIndex }).startOf('month').format('YYYY-MM-DD');
             const endOfMonth = moment.utc({ year: year, month: monthIndex }).endOf('month').format('YYYY-MM-DD');
+
+            // Update date pickers
             document.getElementById('startDatePicker').value = startOfMonth;
             document.getElementById('endDatePicker').value = endOfMonth;
+
+            // Switch back to map view
             document.getElementById('summaryView').style.display = 'none';
             document.getElementById('map').classList.remove('hidden');
             summaryViewVisible = false;
-            document.getElementById('goBtn').click(); // Trigger data load
+            updateViewToggleButtons(); // Update button state
+
+            // Trigger data load for the selected month
+            document.getElementById('goBtn').click();
         }
 
-        // --- Initialize Summary View ---
+        // --- UI Initialization and Event Listeners ---
+
+        // Initializes the date picker controls and listeners
+        function initDatePicker() {
+            const startDatePicker = document.getElementById('startDatePicker');
+            const endDatePicker = document.getElementById('endDatePicker');
+            const prevDayBtn = document.getElementById('prevDayBtn');
+            const nextDayBtn = document.getElementById('nextDayBtn');
+            const goBtn = document.getElementById('goBtn');
+
+            // Set initial dates to today
+            const today = moment().format('YYYY-MM-DD');
+            startDatePicker.value = today;
+            endDatePicker.value = today;
+
+            // Function to navigate days using arrow buttons
+            const navigateDays = (days) => {
+                if (!uiEnabled) return;
+                const startMoment = moment.utc(startDatePicker.value).add(days, 'days');
+                const endMoment = moment.utc(endDatePicker.value).add(days, 'days');
+
+                // Ensure start date is not after end date (can happen if range was > 1 day)
+                if (startMoment.isAfter(endMoment)) {
+                    // If moving back, adjust end date to match new start date
+                    // If moving forward, endMoment is already correct relative to original interval
+                    if (days < 0) {
+                         endMoment.add(days, 'days'); // Adjust end date as well if moving back
+                    }
+                }
+
+                startDatePicker.value = startMoment.format('YYYY-MM-DD');
+                endDatePicker.value = endMoment.format('YYYY-MM-DD');
+                loadTimelineDataInDateRange(startMoment.toDate(), endMoment.toDate());
+            };
+
+            prevDayBtn.addEventListener('click', () => navigateDays(-1));
+            nextDayBtn.addEventListener('click', () => navigateDays(1));
+
+            // GO button click handler
+            goBtn.addEventListener('click', () => {
+                if (!uiEnabled) return;
+                const startDate = moment.utc(startDatePicker.value).toDate();
+                const endDate = moment.utc(endDatePicker.value).toDate();
+
+                // Basic validation: ensure start date is not after end date
+                if (startDate > endDate) {
+                    console.warn("Start date cannot be after end date.");
+                    alert("Start date cannot be after end date."); // User feedback
+                    // Clear map/timeline and return
+                    clearMap();
+                    clearTimeline();
+                    globalIndex = 0;
+                    placeDetailsCache = {};
+                    // Clear summary data as well if needed
+                    document.getElementById('summary-selected-dates').innerHTML = '';
+                    document.getElementById('summary-years').innerHTML = '';
+                    document.getElementById('summary-months').innerHTML = '';
+                    return;
+                }
+
+                loadTimelineDataInDateRange(startDate, endDate);
+            });
+        }
+
+        // Populates the activity filter checkboxes based on loaded data
+        function populateActivityFilters() {
+            const activityFilters = document.getElementById('activityFilters');
+            activityFilters.innerHTML = ''; // Clear existing filters
+
+            // Collect unique *grouped* activity types from all loaded data
+            const uniqueGroupedTypes = new Set();
+            Object.values(timelineData).forEach(monthData => {
+                monthData.timelineObjects?.forEach(item => {
+                    if (item.activitySegment) {
+                        uniqueGroupedTypes.add(getGroupedActivityType(item.activitySegment.activityType));
+                    }
+                });
+            });
+
+            // Sort types alphabetically, putting UNKNOWN last
+            const sortedGroupedTypes = Array.from(uniqueGroupedTypes).sort((a, b) => {
+                if (a === 'UNKNOWN') return 1; // Move UNKNOWN to the end
+                if (b === 'UNKNOWN') return -1;
+                return a.localeCompare(b); // Alphabetical sort for others
+            });
+
+            // Create checkboxes for each type (excluding STATIONARY)
+            sortedGroupedTypes.forEach(groupType => {
+                if (groupType === 'STATIONARY') return; // Skip STATIONARY filter
+
+                const label = document.createElement('label');
+                label.className = 'layer-option';
+                const formattedName = groupType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                label.innerHTML = `
+                     <input type="checkbox" id="filter-${groupType}" class="layer-checkbox activity-filter-checkbox" checked data-group-type="${groupType}">
+                     <span style="color:${getActivityColor(groupType)}; margin-right: 4px;">${getActivityIcon(groupType)}</span>
+                     ${formattedName}
+                 `;
+                activityFilters.appendChild(label);
+
+                // Add event listener to reload data when filter changes
+                const checkbox = label.querySelector('input');
+                checkbox.addEventListener('change', () => {
+                    if (!uiEnabled) return;
+
+                    // Update the main "Show Activities" checkbox based on individual filters
+                    const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
+                    document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
+
+                    // Reload data with current date range and new filters
+                    const startDate = new Date(document.getElementById('startDatePicker').value);
+                    const endDate = new Date(document.getElementById('endDatePicker').value);
+                    loadTimelineDataInDateRange(startDate, endDate);
+                });
+            });
+        }
+
+        // Initializes the layer button and its options panel
+        function initLayerButton() {
+            const layerBtn = document.getElementById('layerBtn');
+            const layerOptions = document.getElementById('layerOptions');
+            const closeLayerBtn = document.getElementById('closeLayerBtn');
+            const showActivitiesCheckbox = document.getElementById('showActivities');
+            const showVisitsCheckbox = document.getElementById('showVisits');
+            const activityFiltersDiv = document.getElementById('activityFilters');
+
+            // Toggle layer options visibility
+            layerBtn.addEventListener('click', () => {
+                if (!uiEnabled) return;
+                layerOptions.style.display = layerOptions.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Close layer options
+            closeLayerBtn.addEventListener('click', () => layerOptions.style.display = 'none');
+
+            // Function to reload data based on current filters and date range
+            const reloadData = () => {
+                if (!uiEnabled) return;
+                const startDate = new Date(document.getElementById('startDatePicker').value);
+                const endDate = new Date(document.getElementById('endDatePicker').value);
+                loadTimelineDataInDateRange(startDate, endDate);
+            };
+
+            // Reload data when "Show Visits" changes
+            showVisitsCheckbox.addEventListener('change', reloadData);
+
+            // Handle "Show Activities" master checkbox change
+            showActivitiesCheckbox.addEventListener('change', function() {
+                if (!uiEnabled) return;
+                const isChecked = this.checked;
+                // Check/uncheck all individual activity filters
+                activityFiltersDiv.querySelectorAll('.activity-filter-checkbox').forEach(checkbox => checkbox.checked = isChecked);
+                // Reload data
+                reloadData();
+            });
+        }
+
+        // Initializes the "Fit Map" button
+        function initFitMapButton() {
+            document.getElementById('fitMapBtn').addEventListener('click', fitMapToData);
+        }
+
+        // Initializes the Summary View buttons and interactions
         function initSummaryView() {
              const summaryBtn = document.getElementById('summaryBtn');
              const closeSummaryBtn = document.getElementById('closeSummaryBtn');
              const summaryView = document.getElementById('summaryView');
              const mapElement = document.getElementById('map');
-             const mapBtn = document.getElementById('mapBtn');
+             const mapBtn = document.getElementById('mapBtn'); // Get map button
+             const backBtn = document.getElementById('backToYearsBtn');
+
+             // Toggle Summary View on button click
              summaryBtn.addEventListener('click', () => {
-                if (!uiEnabled) return;
-                if (!summaryViewVisible) {
-                    if (!allYearlySummaries) {
-                        calculateSummaries();
-                    }
-                    displayYearSummary();
-                    summaryView.style.display = 'block';
-                    mapElement.classList.add('hidden');
-                    summaryViewVisible = true;
-                } else {
-                    summaryView.style.display = 'none';
-                    mapElement.classList.remove('hidden');
-                    summaryViewVisible = false;
-                }
-                updateViewToggleButtons();
+                 if (!uiEnabled) return;
+
+                 if (!summaryViewVisible) {
+                     // Calculate summaries if not already done
+                     if (!allYearlySummaries) {
+                         calculateSummaries();
+                     }
+                     // Display the summary sections
+                     displaySelectedDatesSummary( // Display selected range summary
+                         new Date(document.getElementById('startDatePicker').value),
+                         new Date(document.getElementById('endDatePicker').value)
+                     );
+                     // Display years, reset expanded view state
+                     displayYearSummary();
+                     summaryView.classList.remove('expanded-year-active'); // Ensure not expanded initially
+
+                     summaryView.style.display = 'block';
+                     mapElement.classList.add('hidden');
+                     summaryViewVisible = true;
+                 }
+                 // No else needed, clicking again doesn't hide it, use close or map button
+
+                 updateViewToggleButtons(); // Update button active state
              });
+
+             // Close Summary View
              closeSummaryBtn.addEventListener('click', () => {
-                summaryView.style.display = 'none';
-                mapElement.classList.remove('hidden');
-                summaryViewVisible = false;
-                updateViewToggleButtons();
+                 summaryView.style.display = 'none';
+                 mapElement.classList.remove('hidden');
+                 summaryViewVisible = false;
+                 updateViewToggleButtons(); // Update button active state
              });
+
+             // Switch to Map View using Map button
              mapBtn.addEventListener('click', () => {
-                summaryView.style.display = 'none';
-                mapElement.classList.remove('hidden');
-                summaryViewVisible = false;
-                updateViewToggleButtons();
+                 if (!uiEnabled) return; // Only if UI is enabled
+                 if (summaryViewVisible) { // Only act if summary is currently visible
+                     summaryView.style.display = 'none';
+                     mapElement.classList.remove('hidden');
+                     summaryViewVisible = false;
+                     updateViewToggleButtons(); // Update button active state
+                 }
              });
-        }
+
+             // Back to Years button listener
+             backBtn.addEventListener('click', () => {
+                 summaryView.classList.remove('expanded-year-active');
+                 // Remove specific selected class from the year item
+                 const selectedYearItem = summaryView.querySelector('.summary-year-item.is-selected-year');
+                 if (selectedYearItem) {
+                     selectedYearItem.classList.remove('is-selected-year');
+                 }
+                 // No need to re-display years, they are just hidden/shown by CSS
+                 document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>'; // Clear months
+                 document.getElementById('summary-selected-year').textContent = ''; // Clear month header
+                 document.getElementById('backToYearsBtn').style.display = 'none';
+             });
+         }
+
+        // Updates the active state of the Map/Summary toggle buttons
         function updateViewToggleButtons() {
             const summaryBtn = document.getElementById('summaryBtn');
             const mapBtn = document.getElementById('mapBtn');
+
             if (summaryViewVisible) {
                 summaryBtn.classList.add('active');
                 mapBtn.classList.remove('active');
@@ -1555,7 +2177,7 @@
             }
         }
 
-        // --- UI Enable/Disable ---
+        // Enables or disables UI controls based on whether data is loaded
         function setUIEnabled(enabled) {
             uiEnabled = enabled;
             const elementsToToggle = [
@@ -1570,9 +2192,13 @@
                 document.getElementById('mapBtn')
             ];
             elementsToToggle.forEach(el => { if(el) el.disabled = !enabled; });
+
+            // Also enable/disable layer filter checkboxes
             const layerCheckboxes = document.querySelectorAll('#layerOptions input[type="checkbox"]');
             layerCheckboxes.forEach(cb => cb.disabled = !enabled);
+
             if (!enabled) {
+                // Reset state when UI is disabled (e.g., no data loaded)
                 document.getElementById('data-source-indicator').textContent = 'No data loaded. Use "Choose Folder".';
                 clearMap();
                 clearTimeline();
@@ -1580,164 +2206,174 @@
                 document.getElementById('summaryView').style.display = 'none'; // Hide summary view
                 document.getElementById('map').classList.remove('hidden'); // Ensure map is visible
                 summaryViewVisible = false;
-                allYearlySummaries = null;
+                updateViewToggleButtons(); // Ensure map button is active
+                allYearlySummaries = null; // Clear summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
+                document.getElementById('activityFilters').innerHTML = ''; // Clear activity filters
+                 // Reset summary view state
+                 document.getElementById('summaryView').classList.remove('expanded-year-active');
+                 document.getElementById('summary-months').style.display = 'none';
+                 document.getElementById('backToYearsBtn').style.display = 'none';
+            } else {
+                 updateViewToggleButtons(); // Ensure correct button is active when enabled
             }
         }
 
+        // Reads files from the selected directory (handles Takeout structure and single Timeline.json)
         async function readFilesFromDirectory(dirHandle, isRecursive=false) {
             let timelineJsonFile = null;
             let dataSourceText = 'Unknown';
+
+            // Reset global state ONLY on the initial, non-recursive call
             if (!isRecursive) {
                 console.log("Initial call to readFilesFromDirectory, resetting globals...");
                 globalIndex = 0;
                 timelineData = {}; // Reset main data object
                 activityTypes = new Set(); // Reset activity types
                 placeDetailsCache = {}; // Reset cache
-                allYearlySummaries = null;
+                allYearlySummaries = null; // Reset summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
-                // Show loading overlay only on initial call
+
+                // Show loading overlay and disable UI only on initial call
                 document.getElementById('loading-overlay').style.display = "flex";
-                setUIEnabled(false); // Disable UI only on initial call
+                setUIEnabled(false);
             }
+
             try {
+                // --- Step 1: Check for single Timeline.json at the current level (non-recursive only) ---
                 if (!isRecursive) {
                     for await (const entry of dirHandle.values()) {
                         if (entry.kind === 'file' && entry.name.toLowerCase() === 'timeline.json') {
                             timelineJsonFile = entry;
-                            break;
+                            break; // Found it, no need to look further at this level
                         }
                     }
                 }
+
+                // --- Step 2: Process single Timeline.json if found ---
                 if (timelineJsonFile) {
-                    // If Timeline.json is found, try parsing it (Semantic History format)
                     console.log("Found Timeline.json, attempting to parse...");
                     const file = await timelineJsonFile.getFile();
                     const content = await file.text();
                     const data = JSON.parse(content);
-                    // Create temp structure to hold processed objects grouped by key
-                    const processedData = {};
+                    const processedData = {}; // Temporary structure for grouping
 
-                    if (data.timelineObjects) { // Check for standard Takeout Timeline.json format first
+                    if (data.timelineObjects) { // Standard Takeout format
                         dataSourceText = 'Local Timeline.json (Standard Format)';
                         data.timelineObjects.forEach(item => {
                             const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
                             if (!timestamp) return;
                             const date = new Date(timestamp);
+                            if (isNaN(date.getTime())) return; // Skip invalid dates
                             const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
                             if (!processedData[key]) processedData[key] = { timelineObjects: [] };
                             processedData[key].timelineObjects.push(item);
                             if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
                         });
-                        timelineData = processedData;
-                    } else if (data.semanticSegments) { // check for Semantic History format
-                         dataSourceText = 'Local Timeline.json (Semantic Format)';
+                        timelineData = processedData; // Assign grouped data
+                        console.log('Standard Timeline.json processed successfully.');
 
-                        // Populate the timelinePath points from every timelinePath object first
-                        const allPathPoints = []; // Array to hold all path points with time
-                        data.semanticSegments.forEach(segment => {
-                            if (segment.timelinePath) {
-                                segment.timelinePath.forEach(point => {
-                                    try {
-                                        const latLngMatch = point.point?.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
-                                        const time = point.time;
-                                        if (latLngMatch && time) {
-                                            const lat = parseFloat(latLngMatch[1]);
-                                            const lng = parseFloat(latLngMatch[2]);
-                                            if (!isNaN(lat) && !isNaN(lng)) {
-                                                allPathPoints.push({
-                                                    latE7: Math.round(lat * 1e7),
-                                                    lngE7: Math.round(lng * 1e7),
-                                                    time: time
-                                                });
-                                            }
-                                        }
-                                    } catch (e) {
-                                        console.warn("Error parsing timelinePath point:", point, e);
-                                    }
-                                });
-                            }
-                        });
-                        // Sort path points by time
-                        allPathPoints.sort((a, b) => moment(a.time).valueOf() - moment(b.time).valueOf());
-                        let pathPointPointer = 0; // Pointer for efficient matching
-                        const processedTimelineObjects = data.semanticSegments.map(segment => {
-                            const startTime = segment.startTime;
-                            const endTime = segment.endTime;
-                            if (!startTime || !endTime) return null;
-                            if (segment.visit?.topCandidate?.placeLocation?.latLng && segment.visit?.topCandidate?.placeId) {
-                                const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
-                                if (!latLngMatch) return null;
-                                const lat = parseFloat(latLngMatch[1]);
-                                const lng = parseFloat(latLngMatch[2]);
-                                if (isNaN(lat) || isNaN(lng)) return null;
-                                return {
-                                    placeVisit: {
-                                        location: {
-                                            latitudeE7: Math.round(lat * 1e7),
-                                            longitudeE7: Math.round(lng * 1e7),
-                                            placeId: segment.visit.topCandidate.placeId,
-                                            semanticType: segment.visit.topCandidate.semanticType || null,
-                                            name: segment.visit.topCandidate.name || 'Unknown Location'
-                                        },
-                                        duration: { startTimestamp: startTime, endTimestamp: endTime },
-                                        editConfirmationStatus: segment.visit.editConfirmationStatus
-                                    }
-                                };
-                            } else if (segment.activity?.topCandidate?.type && segment.activity?.start?.latLng && segment.activity?.end?.latLng) {
-                                const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
-                                const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
-                                if (!startLatLngMatch || !endLatLngMatch) return null;
-                                const startLat = parseFloat(startLatLngMatch[1]);
-                                const startLng = parseFloat(startLatLngMatch[2]);
-                                const endLat = parseFloat(endLatLngMatch[1]);
-                                const endLng = parseFloat(endLatLngMatch[2]);
-                                if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) return null;
-                                const activitySegment = {
-                                    activityType: segment.activity.topCandidate.type || 'UNKNOWN',
-                                    duration: { startTimestamp: startTime, endTimestamp: endTime },
-                                    distance: segment.activity.distanceMeters,
-                                    startLocation: {
-                                        latitudeE7: Math.round(startLat * 1e7),
-                                        longitudeE7: Math.round(startLng * 1e7)
-                                    },
-                                    endLocation: {
-                                        latitudeE7: Math.round(endLat * 1e7),
-                                        longitudeE7: Math.round(endLng * 1e7)
-                                    },
-                                    editConfirmationStatus: segment.activity.editConfirmationStatus,
+                    } else if (data.semanticSegments) { // Semantic History format (less common now?)
+                        dataSourceText = 'Local Timeline.json (Semantic Format)';
+                        console.log('Processing Semantic History format...');
+                         // Populate the timelinePath points from every timelinePath object first
+                         const allPathPoints = []; // Array to hold all path points with time
+                         data.semanticSegments.forEach(segment => {
+                             if (segment.timelinePath) {
+                                 segment.timelinePath.forEach(point => {
+                                     try {
+                                         const latLngMatch = point.point?.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                         const time = point.time;
+                                         if (latLngMatch && time) {
+                                             const lat = parseFloat(latLngMatch[1]);
+                                             const lng = parseFloat(latLngMatch[2]);
+                                             if (!isNaN(lat) && !isNaN(lng)) {
+                                                 allPathPoints.push({
+                                                     latE7: Math.round(lat * 1e7),
+                                                     lngE7: Math.round(lng * 1e7),
+                                                     time: time
+                                                 });
+                                             }
+                                         }
+                                     } catch (e) {
+                                         console.warn("Error parsing timelinePath point:", point, e);
+                                     }
+                                 });
+                             }
+                         });
+                         // Sort path points by time
+                         allPathPoints.sort((a, b) => moment(a.time).valueOf() - moment(b.time).valueOf());
+                         let pathPointPointer = 0; // Pointer for efficient matching
 
-                                    simplifiedRawPath: { // Structure expected by rendering function
-                                        distanceMeters: segment.activity.distanceMeters,
-                                        points: []
-                                    }
-                                };
-                                // Efficiently find associated path points
-                                const segmentStartMoment = moment(startTime);
-                                const segmentEndMoment = moment(endTime);
-                                for (let i = pathPointPointer; i < allPathPoints.length; i++) {
-                                    const pointTime = moment(allPathPoints[i].time);
-                                    if (pointTime.isBefore(segmentStartMoment)) {
-                                        // If the point is before the segment starts, advance the pointer
-                                        pathPointPointer = i + 1;
-                                        continue;
-                                    }
-                                    if (pointTime.isAfter(segmentEndMoment)) {
-                                        // If the point is after the segment ends, we're done for this segment
-                                        break;
-                                    }
-                                    // Point is within the segment's time range
-                                    activitySegment.simplifiedRawPath.points.push(allPathPoints[i]);
-                                }
-                                return { activitySegment: activitySegment };
-                            }
+                         const processedTimelineObjects = data.semanticSegments.map(segment => {
+                             const startTime = segment.startTime;
+                             const endTime = segment.endTime;
+                             if (!startTime || !endTime) return null;
 
-                            return null; // Return null for segments that can't be processed
-                        }).filter(Boolean); // Remove null entries
-                        // Group by year and month
-                        processedTimelineObjects.forEach(item => {
+                             if (segment.visit?.topCandidate?.placeLocation?.latLng && segment.visit?.topCandidate?.placeId) {
+                                 const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                 if (!latLngMatch) return null;
+                                 const lat = parseFloat(latLngMatch[1]);
+                                 const lng = parseFloat(latLngMatch[2]);
+                                 if (isNaN(lat) || isNaN(lng)) return null;
+                                 return {
+                                     placeVisit: {
+                                         location: {
+                                             latitudeE7: Math.round(lat * 1e7),
+                                             longitudeE7: Math.round(lng * 1e7),
+                                             placeId: segment.visit.topCandidate.placeId,
+                                             semanticType: segment.visit.topCandidate.semanticType || null,
+                                             name: segment.visit.topCandidate.name || 'Unknown Location'
+                                         },
+                                         duration: { startTimestamp: startTime, endTimestamp: endTime },
+                                         editConfirmationStatus: segment.visit.editConfirmationStatus
+                                     }
+                                 };
+                             } else if (segment.activity?.topCandidate?.type && segment.activity?.start?.latLng && segment.activity?.end?.latLng) {
+                                 const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                 const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                 if (!startLatLngMatch || !endLatLngMatch) return null;
+                                 const startLat = parseFloat(startLatLngMatch[1]);
+                                 const startLng = parseFloat(startLatLngMatch[2]);
+                                 const endLat = parseFloat(endLatLngMatch[1]);
+                                 const endLng = parseFloat(endLatLngMatch[2]);
+                                 if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) return null;
+
+                                 const activitySegment = {
+                                     activityType: segment.activity.topCandidate.type || 'UNKNOWN',
+                                     duration: { startTimestamp: startTime, endTimestamp: endTime },
+                                     distance: segment.activity.distanceMeters,
+                                     startLocation: { latitudeE7: Math.round(startLat * 1e7), longitudeE7: Math.round(startLng * 1e7) },
+                                     endLocation: { latitudeE7: Math.round(endLat * 1e7), longitudeE7: Math.round(endLng * 1e7) },
+                                     editConfirmationStatus: segment.activity.editConfirmationStatus,
+                                     simplifiedRawPath: { // Structure expected by rendering function
+                                         distanceMeters: segment.activity.distanceMeters,
+                                         points: []
+                                     }
+                                 };
+                                 // Efficiently find associated path points
+                                 const segmentStartMoment = moment(startTime);
+                                 const segmentEndMoment = moment(endTime);
+                                 for (let i = pathPointPointer; i < allPathPoints.length; i++) {
+                                     const pointTime = moment(allPathPoints[i].time);
+                                     if (pointTime.isBefore(segmentStartMoment)) {
+                                         pathPointPointer = i + 1; continue; // Advance pointer past old points
+                                     }
+                                     if (pointTime.isAfter(segmentEndMoment)) {
+                                         break; // Done finding points for this segment
+                                     }
+                                     // Point is within the segment's time range
+                                     activitySegment.simplifiedRawPath.points.push(allPathPoints[i]);
+                                 }
+                                 return { activitySegment: activitySegment };
+                             }
+                             return null; // Return null for segments that can't be processed
+                         }).filter(Boolean); // Remove null entries
+
+                         // Group by year and month
+                         processedTimelineObjects.forEach(item => {
                              const timestamp = item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp;
                              const date = new Date(timestamp);
                              if (isNaN(date.getTime())) return;
@@ -1746,118 +2382,153 @@
                              processedData[key].timelineObjects.push(item);
                              if (item.activitySegment) activityTypes.add(item.activitySegment.activityType);
                          });
-                         timelineData = processedData;
-                    } else {
-                            throw new Error("Timeline data does not contain known data structure (timelineObjects or semanticSegments).");
-                    }
-                    console.log('Timeline data loaded successfully');
-                } else {
-                    // Fallback to original method of reading multiple JSON files (Takeout Month files format)
-                    dataSourceText = 'Google Takeout (Monthly Files)';
+                         timelineData = processedData; // Assign grouped data
+                         console.log('Semantic Timeline.json processed successfully.');
 
+                    } else {
+                        throw new Error("Timeline.json does not contain known data structure (timelineObjects or semanticSegments).");
+                    }
+                } else {
+                    // --- Step 3: Fallback to recursive directory reading (Takeout Monthly Files) ---
+                    dataSourceText = 'Google Takeout (Monthly Files)';
+                    console.log("Timeline.json not found at top level, scanning for YYYY_MONTH.json files...");
                     let fileFoundInThisLevel = false; // Track if files are found at the current level/recursion
+
                     for await (const entry of dirHandle.values()) {
                         if (entry.kind === 'file' && entry.name.endsWith('.json') && /^\d{4}_\w+\.json$/i.test(entry.name)) {
-                            // Process monthly file directly
+                            // Process monthly file directly (YYYY_MONTH.json)
                             fileFoundInThisLevel = true; // Mark that we found a file here
                             console.log(`Processing ${entry.name}`);
                             const file = await entry.getFile();
                             const content = await file.text();
                             try {
                                 const data = JSON.parse(content);
-                                const fileNameKey = entry.name.split('.')[0].toUpperCase();
+                                const fileNameKey = entry.name.split('.')[0].toUpperCase(); // Use YYYY_MONTH as key
                                 if (data.timelineObjects) {
                                     // Directly add to the global timelineData object
                                     timelineData[fileNameKey] = data;
+                                    // Collect activity types
                                     data.timelineObjects.forEach(item => {
                                         if (item.activitySegment?.activityType) {
                                             activityTypes.add(item.activitySegment.activityType);
                                         }
                                     });
                                 } else {
-                                    console.warn(`Skipping file ${entry.name}: Does not contain 'timelineObjects'. File keys:`, Object.keys(data));
+                                    console.warn(`Skipping file ${entry.name}: Does not contain 'timelineObjects'.`);
                                 }
                             } catch (parseError) {
                                 console.warn(`Skipping file ${entry.name} due to JSON parsing error:`, parseError.message);
                             }
                         } else if (entry.kind === 'directory') {
-                            // Make recursive call for subdirectories
-                             console.log(`Recursively checking directory: ${entry.name}`);
+                            // Make recursive call for subdirectories (e.g., year folders)
+                            console.log(`Recursively checking directory: ${entry.name}`);
+                            // Await the recursive call to ensure all subfolders are processed before proceeding
                             await readFilesFromDirectory(entry, true);
                         }
                     }
-                     // Check if files were found ONLY on the initial call if no Timeline.json was processed
-                    if (!isRecursive && !timelineJsonFile && Object.keys(timelineData).length === 0) {
-                        throw new Error("No valid timeline data files found in the selected folder or subfolders.");
-                    }
+
+                     // Check if *any* valid files were found ONLY on the initial call if no Timeline.json was processed
+                     if (!isRecursive && !timelineJsonFile && Object.keys(timelineData).length === 0) {
+                         throw new Error("No valid timeline data files (Timeline.json or YYYY_MONTH.json) found in the selected folder or subfolders.");
+                     }
                 }
+
+                // --- Step 4: Post Loading (only on initial call) ---
                 if (!isRecursive) {
-                    // --- Post Loading ---
                     if (Object.keys(timelineData).length > 0) {
-                    document.getElementById('data-source-indicator').textContent = 'Data source: ' + dataSourceText;
-                    populateActivityFilters();
-                    setUIEnabled(true);
-                    const startDate = new Date(document.getElementById('startDatePicker').value);
-                    const endDate = new Date(document.getElementById('endDatePicker').value);
-                        await loadTimelineDataInDateRange(startDate, endDate); // Await initial load
+                        console.log("Data loading complete. Enabling UI.");
+                        document.getElementById('data-source-indicator').textContent = 'Data source: ' + dataSourceText;
+                        populateActivityFilters(); // Populate filters based on loaded data
+                        setUIEnabled(true); // Enable UI elements
+
+                        // Perform initial data load for the default date range
+                        const startDate = new Date(document.getElementById('startDatePicker').value);
+                        const endDate = new Date(document.getElementById('endDatePicker').value);
+                         await loadTimelineDataInDateRange(startDate, endDate); // Await initial load
+
                     } else {
+                        // No data was successfully loaded
                         document.getElementById('data-source-indicator').textContent = 'No valid timeline data found.';
                         setUIEnabled(false); // Keep UI disabled
+                        alert("No valid timeline data could be loaded from the selected folder.");
                     }
                 }
+
             } catch (err) {
                 console.error('Error processing directory:', err);
-                alert(`Error processing folder: ${err.message}`);
-
-                 if (!isRecursive) { // Ensure UI is disabled on error during initial call
+                 if (!isRecursive) { // Show error and disable UI on initial call failure
+                     alert(`Error processing folder: ${err.message}`);
                      setUIEnabled(false);
                  }
+                 // Don't re-throw if recursive, allow parent to handle
             } finally {
+                 // Hide loading overlay ONLY on the initial, non-recursive call completion
                  if (!isRecursive) {
                      document.getElementById('loading-overlay').style.display = "none";
                  }
             }
         }
 
+        // Initializes the "Choose Folder" button
         async function initFolderPicker() {
             const folderPicker = document.getElementById('folderPicker');
             folderPicker.addEventListener('click', async () => {
                 try {
-                    const opts = { mode: 'read' };
+                    // Options for directory picker
+                    const opts = { mode: 'read' }; // Request read access
+                    // Show the directory picker dialog
                     const dirHandle = await window.showDirectoryPicker(opts);
-                    await readFilesFromDirectory(dirHandle);
+                    // Start processing the selected directory
+                    await readFilesFromDirectory(dirHandle); // Pass the handle to the processing function
                 } catch (err) {
+                    // Handle errors, including user cancellation
                     if (err.name === 'AbortError') {
-                        console.log('Folder selection cancelled.');
+                        console.log('Folder selection cancelled by user.');
                     } else {
                         console.error('Error selecting folder:', err);
                         alert(`Could not select folder: ${err.message}`);
                     }
-                     // Ensure loading overlay is hidden if selection fails/is cancelled
-                    document.getElementById('loading-overlay').style.display = "none";
-                    // Keep UI disabled if it failed before loading started
-                    if(Object.keys(timelineData).length === 0) setUIEnabled(false);
+                     // Ensure loading overlay is hidden if selection fails/is cancelled before processing starts
+                     document.getElementById('loading-overlay').style.display = "none";
+                     // Keep UI disabled if it failed before any data was loaded
+                     if(Object.keys(timelineData).length === 0) setUIEnabled(false);
                 }
             });
         }
 
+        // --- Window Load ---
         window.onload = () => {
+            // Replace with your actual API key
+            if (document.querySelector('script[src*="YOUR_API_KEY"]')) {
+                alert("Please replace 'YOUR_API_KEY' in the HTML script tag with your actual Google Maps API Key.");
+                return; // Stop execution if key is placeholder
+            }
+
             initMap();
             initDatePicker();
             initFolderPicker();
             initLayerButton();
             initFitMapButton();
-            initSummaryView(); // Initialize Summary View Listeners
+            initSummaryView(); // Initialize Summary View Listeners & Buttons
             setUIEnabled(false); // Start with UI disabled
+
+            // Add global key listeners for date navigation
             document.addEventListener('keydown', (e) => {
-                if (!uiEnabled) return;
-                // Allow arrow keys if focus is not on an input/button element
-                if (!e.target.matches('input, button')) {
-                     if (e.key === 'ArrowLeft') {
-                        document.getElementById("prevDayBtn").click();
-                     } else if (e.key === 'ArrowRight') {
-                        document.getElementById("nextDayBtn").click();
-                    }
+                if (!uiEnabled) return; // Only act if UI is enabled
+
+                // Check if the event target is an input field to avoid interference
+                const targetTagName = e.target.tagName.toLowerCase();
+                if (targetTagName === 'input' || targetTagName === 'textarea' || targetTagName === 'select') {
+                    return; // Don't navigate if typing in an input
+                }
+
+                // Navigate using arrow keys
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault(); // Prevent default browser behavior (like scrolling)
+                    document.getElementById("prevDayBtn").click();
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault(); // Prevent default browser behavior
+                    document.getElementById("nextDayBtn").click();
                 }
             });
         };
