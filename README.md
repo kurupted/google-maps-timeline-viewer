@@ -19,6 +19,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - Direction of travel arrows when clicking a path
 - View multiple days at once
 - Toggle layers on and off, eg to view only places without the travel paths
+- Summary of activities by year/month
   
 #
 
