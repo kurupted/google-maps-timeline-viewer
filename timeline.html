@@ -951,7 +951,26 @@
             let startTimestamp, endTimestamp;
 
             // Populate based on place visit or activity segment
-            if (item.placeVisit) {
+            if (item.visit) {
+                const placeVisit = item.visit;
+                startTimestamp = item.startTime;
+                endTimestamp = item.endTime;
+                let locationName = placeVisit.location?.name ||
+                (placeVisit.location?.semanticType === "TYPE_HOME" ? "Home" :
+		 (placeVisit.topCandidate.semanticType === "TYPE_HOME" ? "Home" :
+		  (placeVisit.topCandidate.semanticType)));
+
+                timelineItem.classList.add('place-visit-item');
+                timelineItem.innerHTML = `
+                     <span class="timeline-icon-container">📍</span>
+                     <div class="timeline-item-details">
+                         <strong class="nametag">${locationName}</strong><br>
+                         <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
+                     </div>
+                 `;
+                timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
+            // Populate based on place visit or activity segment
+	    } else if (item.placeVisit) {
                 const placeVisit = item.placeVisit;
                 startTimestamp = placeVisit.duration.startTimestamp;
                 endTimestamp = placeVisit.duration.endTimestamp;
@@ -1019,7 +1038,7 @@
             deselectPolyline(); // Also deselect any highlighted polyline
         }
 
-        // Renders a place visit marker (either basic or detailed)
+              // Renders a place visit marker (either basic or detailed)
         function renderPlaceVisit(placeVisit, index) {
             // Determine initial location name and details
             let locationName = placeVisit.location.name ||
@@ -1027,6 +1046,35 @@
             const placeId = placeVisit.location.placeId;
             const lat = placeVisit.location.latitudeE7 / 1e7;
             const lng = placeVisit.location.longitudeE7 / 1e7;
+            const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+            // Attempt to fetch Place Details if placeId exists and not cached
+            if (placeId) {
+                if (placeDetailsCache[placeId]) {
+                    // Use cached details (basic info only now)
+                    renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index);
+                } else {
+                    // Fetch basic details (will render asynchronously)
+                    fetchPlaceDetails(placeId, fallbackName, placeVisit, index);
+                }
+            } else {
+                // No placeId, render a basic marker immediately
+                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                // Update sidebar with basic info
+                updateSidebarItem(index, fallbackName, null);
+            }
+        }
+
+
+        // Renders a place visit marker (either basic or detailed)
+        function renderVisit(placeVisit, index) {
+            // Determine initial location name and details
+            let locationName = placeVisit.location?.name ||
+                (placeVisit.location?.semanticType === "TYPE_HOME" ? "Home" :
+                 placeVisit.topCandidate.semanticType ? placeVisit.topCandidate.semanticType :null);
+            const placeId = placeVisit.topCandidate.placeID;
+            const lat = placeVisit.latLng.lat;
+            const lng = placeVisit.latLng.lng;
             const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
             // Attempt to fetch Place Details if placeId exists and not cached
@@ -1098,8 +1146,8 @@
                 } else {
                     console.warn("Error fetching initial place details:", status, "for placeId:", placeId, "Falling back to basic marker.");
                     // Fallback to basic marker if details fetch fails
-                    const lat = placeVisit.location.latitudeE7 / 1e7;
-                    const lng = placeVisit.location.longitudeE7 / 1e7;
+                    const lat = placeVisit.latLng ? placeVisit.latLng.lat : placeVisit.location.latitudeE7 / 1e7;
+                    const lng = placeVisit.latLng ? placeVisit.latLng.lng : placeVisit.location.longitudeE7 / 1e7;
                     renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
                     updateSidebarItem(index, fallbackName, null); // Update sidebar with fallback
                 }
@@ -1515,8 +1563,8 @@
 
                 const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
                     // Get start and end times for the item
-                    const itemStartMoment = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
-                    const itemEndMoment = moment(item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
+                    const itemStartMoment = moment(item.startTime? item.startTime: item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
+                    const itemEndMoment = moment(item.endTime ? item.endTime : item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
 
                     // Check if the item overlaps with the selected date
                     if (!itemStartMoment.isSame(localSelectedDate, 'day') &&
@@ -1527,6 +1575,7 @@
 
                     // Apply layer filters
                     if (item.placeVisit && !document.getElementById('showVisits').checked) return false;
+                    if (item.visit && !document.getElementById('showVisits').checked) return false;
                     if (item.activitySegment && !document.getElementById('showActivities').checked) return false;
 
                     // Apply specific activity type filters
@@ -1541,8 +1590,8 @@
 
                 // Sort data for the day chronologically
                 relevantData.sort((a, b) => {
-                    const timeA = moment(a.placeVisit ? a.placeVisit.duration.startTimestamp : a.activitySegment.duration.startTimestamp);
-                    const timeB = moment(b.placeVisit ? b.placeVisit.duration.startTimestamp : b.activitySegment.duration.startTimestamp);
+                    const timeA = moment(a.startTime ? a.startTime :a.placeVisit ? a.placeVisit.duration.startTimestamp : a.activitySegment.duration.startTimestamp);
+                    const timeB = moment(b.startTime ? b.startTime : b.placeVisit ? b.placeVisit.duration.startTimestamp : b.activitySegment.duration.startTimestamp);
                     return timeA - timeB;
                 });
 
@@ -1552,7 +1601,13 @@
                     // Center map on the first item of the day
                     if (!firstLocationSet) {
                         let latLng;
-                        if (item.placeVisit) {
+                        if (item.visit) {
+                            const geo = item.visit.topCandidate?.placeLocation.split(":")[1];
+                            const ll = geo.split(",");
+
+                            const latLng = { lat: Number(ll[0]), lng: Number(ll[1]) };
+                            item.visit["latLng"] = latLng;
+                        } else if (item.placeVisit) {
                             latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
                         } else if (item.activitySegment && item.activitySegment.startLocation) {
                             latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
@@ -1569,7 +1624,10 @@
                     document.getElementById('timeline').appendChild(timelineItem);
 
                     // Render corresponding map elements (marker or polyline)
-                    if (item.placeVisit) {
+                    if (item.visit) {
+                        item.visit["duration"] = { startTimetamp: item.startTime, endTimestamp: item.endTime };
+                        renderVisit(item.visit, globalIndex);
+                    } else if (item.placeVisit) {
                         renderPlaceVisit(item.placeVisit, globalIndex);
                     } else if (item.activitySegment) {
                         renderActivitySegment(item.activitySegment, globalIndex);
@@ -1665,7 +1723,7 @@
 
                 // Process each item in the month's data
                 timelineData[key].timelineObjects.forEach(item => {
-                    if (item.placeVisit) {
+                    if (item.placeVisit || item.visit) {
                         yearly[year].visits++;
                         monthly[year][monthIndex].visits++;
                     } else if (item.activitySegment) {
@@ -1708,8 +1766,8 @@
 
                 if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
                     timelineData[dataKey].timelineObjects.forEach(item => {
-                         const itemStartMoment = moment(item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
-                         const itemEndMoment = moment(item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
+                         const itemStartMoment = moment(item.startTime ? item.startTime : item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
+                        const itemEndMoment = moment(item.endTime ? item.endTime : item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
 
                          // Check if the item overlaps with the *current processing day* within the selected range
                          if (!itemStartMoment.isSame(currentDate, 'day') &&
@@ -1719,7 +1777,7 @@
                          }
 
                          // Item overlaps the current day, add its stats
-                         if (item.placeVisit) {
+                         if (item.placeVisit || item.visit ) {
                              summary.visits++;
                          } else if (item.activitySegment) {
                              const segment = item.activitySegment;
@@ -2259,8 +2317,24 @@
                     const content = await file.text();
                     const data = JSON.parse(content);
                     const processedData = {}; // Temporary structure for grouping
+                    if (Array.isArray(data)) { // Standard Takeout format
+                        dataSourceText = 'Local Timeline.json (iOS Download Format - 2025)';
+                        data.forEach(item => {
+                            const timestamp = item.startTime;
 
-                    if (data.timelineObjects) { // Standard Takeout format
+                        item["placeVisit"] = {};
+                            if (!timestamp) return;
+                            const date = new Date(timestamp);
+                            if (isNaN(date.getTime())) return; // Skip invalid dates
+                            const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
+                            if (!processedData[key]) processedData[key] = { timelineObjects: [] };
+                            processedData[key].timelineObjects.push(item);
+                            if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
+                        });
+                        timelineData = processedData; // Assign grouped data
+                        console.log('iOS Download Format - 2025  Timeline.json processed successfully.');
+
+                    } else if (data.timelineObjects) { // Standard Takeout format
                         dataSourceText = 'Local Timeline.json (Standard Format)';
                         data.timelineObjects.forEach(item => {
                             const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;

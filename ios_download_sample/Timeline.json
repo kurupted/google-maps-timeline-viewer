@@ -1,0 +1,16 @@
+[
+    {
+        "endTime" : "2024-07-09T07:23:31.083-07:00",
+        "startTime" : "2024-07-08T21:11:52.406-07:00",
+        "visit" : {
+            "hierarchyLevel" : "0",
+            "topCandidate" : {
+                "probability" : "0.925600",
+                "semanticType" : "Home",
+                "placeID" : "ChIJo7vGnLd_j4ARTqQH7E8PoZc",
+                "placeLocation" : "geo:37.760191,-122.390931"
+            },
+            "probability" : "0.930000"
+        }
+    }
+]
