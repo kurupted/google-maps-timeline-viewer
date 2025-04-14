@@ -5,7 +5,7 @@
 
 	 Be sure to set your API key in place of "YOUR_API_KEY"
 
-	 Version: April 2, 2025
+	 Version: April 14, 2025
 	 Full details here:
 	 https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -1038,7 +1038,7 @@
             deselectPolyline(); // Also deselect any highlighted polyline
         }
 
-              // Renders a place visit marker (either basic or detailed)
+        // Renders a place visit marker (either basic or detailed)
         function renderPlaceVisit(placeVisit, index) {
             // Determine initial location name and details
             let locationName = placeVisit.location.name ||
@@ -1066,7 +1066,7 @@
         }
 
 
-        // Renders a place visit marker (either basic or detailed)
+        // Renders a place visit marker (either basic or detailed -- for iOS)
         function renderVisit(placeVisit, index) {
             // Determine initial location name and details
             let locationName = placeVisit.location?.name ||
@@ -2317,8 +2317,8 @@
                     const content = await file.text();
                     const data = JSON.parse(content);
                     const processedData = {}; // Temporary structure for grouping
-                    if (Array.isArray(data)) { // Standard Takeout format
-                        dataSourceText = 'Local Timeline.json (iOS Download Format - 2025)';
+                    if (Array.isArray(data)) {
+                        dataSourceText = 'Local Timeline.json (iOS Format)';
                         data.forEach(item => {
                             const timestamp = item.startTime;
 
@@ -2334,8 +2334,8 @@
                         timelineData = processedData; // Assign grouped data
                         console.log('iOS Download Format - 2025  Timeline.json processed successfully.');
 
-                    } else if (data.timelineObjects) { // Standard Takeout format
-                        dataSourceText = 'Local Timeline.json (Standard Format)';
+                    } else if (data.timelineObjects) {
+                        dataSourceText = 'Local Timeline.json (Android Format)';
                         data.timelineObjects.forEach(item => {
                             const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
                             if (!timestamp) return;
@@ -2349,7 +2349,7 @@
                         timelineData = processedData; // Assign grouped data
                         console.log('Standard Timeline.json processed successfully.');
 
-                    } else if (data.semanticSegments) { // Semantic History format (less common now?)
+                    } else if (data.semanticSegments) {
                         dataSourceText = 'Local Timeline.json (Semantic Format)';
                         console.log('Processing Semantic History format...');
                          // Populate the timelinePath points from every timelinePath object first
