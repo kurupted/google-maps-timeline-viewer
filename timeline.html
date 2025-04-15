@@ -2326,7 +2326,7 @@
                     const data = JSON.parse(content);
                     const processedData = {}; // Temporary structure for grouping
                     if (Array.isArray(data)) {
-                        dataSourceText = 'Local Timeline.json (iOS)';
+                        dataSourceText = 'Local Timeline.json (iOS Format)';
                         data.forEach(item => {
                             const timestamp = item.startTime;
 
@@ -2340,10 +2340,10 @@
                             if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
                         });
                         timelineData = processedData; // Assign grouped data
-                        console.log('iOS Download Format - 2025  Timeline.json processed successfully.');
+                        console.log('iOS Format Timeline.json processed successfully.');
 
                     } else if (data.timelineObjects) {
-                        dataSourceText = 'Local Timeline.json (Android)';
+                        dataSourceText = 'Local Timeline.json (Standard Format)';
                         data.timelineObjects.forEach(item => {
                             const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
                             if (!timestamp) return;
@@ -2355,9 +2355,9 @@
                             if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
                         });
                         timelineData = processedData; // Assign grouped data
-                        console.log('Standard Timeline.json processed successfully.');
+                        console.log('Standard Format Timeline.json processed successfully.');
 
-                    } else if (data.semanticSegments) { // Semantic History format (less common now?)
+                    } else if (data.semanticSegments) { // Semantic History format
                         dataSourceText = 'Local Timeline.json (Semantic Format)';
                         console.log('Processing Semantic History format...');
                          // Populate the timelinePath points from every timelinePath object first
