@@ -741,7 +741,7 @@
             'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE', 'DRIVE'],
             'TAXI': ['IN_TAXI'],
             'MOTORCYCLING': ['MOTORCYCLING'],
-            'CYCLING': ['ON_BICYCLE', 'CYCLING'],
+            'CYCLING': ['ON_BICYCLE', 'CYCLING', 'BICYCLE'],
             'WALKING': ['ON_FOOT', 'WALKING', 'WALKING_NORDIC', 'WALK'],
             'HIKING': ['HIKING'],
             'RUNNING': ['RUNNING'],
@@ -875,18 +875,13 @@
 
         // Format activity type name for display (uses grouped type where appropriate)
         function formatActivityType(activityType) {
-            const group = getGroupedActivityType(activityType);
-            // Prefer group name if it's different and not UNKNOWN
-            if (group !== 'UNKNOWN' && group !== activityType) {
-                return group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            }
             // Fallback to specific formatting for raw types
             switch (activityType) {
 				case 'IN_VEHICLE': case 'DRIVE': return 'Driving';
                 case 'IN_PASSENGER_VEHICLE': return 'In a Vehicle';
                 case 'IN_TAXI': return 'In a Taxi';
                 case 'MOTORCYCLING': return 'Motorcycling';
-                case 'ON_BICYCLE': case 'CYCLING': return 'Biking';
+                case 'ON_BICYCLE': case 'CYCLING': case 'BICYCLE': return 'Biking';
                 case 'ON_FOOT': case 'WALKING': case 'WALK': return 'Walking';
                 case 'WALKING_NORDIC': return 'Nordic Walking';
                 case 'HIKING': return 'Hiking';
@@ -921,7 +916,14 @@
                 case 'SWIMMING': return 'Swimming';
                 case 'UNKNOWN': case 'UNKNOWN_ACTIVITY_TYPE': return 'Unknown Activity';
                 case 'TILTING': return 'Device Tilt';
-                default: return activityType ? activityType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity';
+                default:
+					 const group = getGroupedActivityType(activityType);
+					// Use group name if it's not UNKNOWN
+					if (group !== 'UNKNOWN' && group !== activityType) {
+						return group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+					}else{
+						return activityType ? activityType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity';
+					}
             }
         }
 
@@ -932,6 +934,18 @@
             const timelineItem = document.createElement('div');
             timelineItem.className = 'timeline-item';
             timelineItem.dataset.index = index; // Use the global index
+            
+			// --- DEBUG START: Add raw data ---
+			/*try {
+				// Select the relevant part of the item (visit or activity)
+				const rawData = item;
+				const jsonString = JSON.stringify(rawData);
+				timelineItem.dataset.rawJson = escapeHtml(jsonString); // Add as data attribute
+			} catch (e) {
+				console.error("Error stringifying or escaping raw data for item:", item, e);
+				timelineItem.dataset.rawJson = escapeHtml('{"error": "Could not serialize data"}'); // Add error indicator
+			}*/
+			// --- DEBUG END: Add raw data ---
 
             // Check if a date header needs to be added for this date
             const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
@@ -1021,6 +1035,7 @@
 
             return timelineItem;
         }
+        
 
         // Clears the timeline sidebar
         function clearTimeline() {
@@ -1550,6 +1565,21 @@
             }
             // If itemCount is 0, do nothing (map remains as is)
         }
+        
+        
+        // Helper function to escape HTML special characters for attributes. Used w debug
+		function escapeHtml(unsafe) {
+			if (!unsafe) return '';
+			// Ensure it's a string before replacing
+			const str = String(unsafe);
+			return str
+				 .replace(/&/g, "&amp;")
+				 .replace(/</g, "&lt;")
+				 .replace(/>/g, "&gt;")
+				 .replace(/"/g, "&quot;")
+				 .replace(/'/g, "&#039;");
+		 }
+		 
 
         // --- Data Loading and Processing ---
 
