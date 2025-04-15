@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 	<!-- -----
 
 	 Be sure to set your API key in place of "YOUR_API_KEY"
 
-	 Version: April 14, 2025
+	 Version: April 16, 2025
 	 Full details here:
 	 https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -739,11 +738,11 @@
         // --- Activity Type Mapping ---
         // Groups similar activity types for display and filtering
         const activityGroupMapping = {
-            'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE'],
+            'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE', 'DRIVE'],
             'TAXI': ['IN_TAXI'],
             'MOTORCYCLING': ['MOTORCYCLING'],
             'CYCLING': ['ON_BICYCLE', 'CYCLING'],
-            'WALKING': ['ON_FOOT', 'WALKING', 'WALKING_NORDIC'],
+            'WALKING': ['ON_FOOT', 'WALKING', 'WALKING_NORDIC', 'WALK'],
             'HIKING': ['HIKING'],
             'RUNNING': ['RUNNING'],
             'BUS': ['IN_BUS'],
@@ -807,7 +806,8 @@
         function getActivityIcon(activityType) {
             let group = (activityType in activityGroupMapping) ? activityType : getGroupedActivityType(activityType);
             switch (group) {
-                case 'DRIVING': case 'TAXI': return '🚗';
+                case 'DRIVING': return '🚗';
+                case 'TAXI': return '🚕';
                 case 'MOTORCYCLING': return '🏍️';
                 case 'CYCLING': return '🚴';
                 case 'WALKING': return '🚶';
@@ -851,7 +851,8 @@
         function getActivityColor(activityType) {
             const group = getGroupedActivityType(activityType);
             switch (group) {
-                case 'DRIVING': case 'TAXI': return '#4285F4'; // Google Blue
+                case 'DRIVING': return '#4285F4'; // Google Blue
+                case 'TAXI': return '#FFEB3B'; // Yellow
                 case 'MOTORCYCLING': return '#1E90FF'; // Dodger Blue
                 case 'CYCLING': return '#0F9D58'; // Google Green
                 case 'WALKING': return '#DB4437'; // Google Red
@@ -881,12 +882,12 @@
             }
             // Fallback to specific formatting for raw types
             switch (activityType) {
-                case 'IN_VEHICLE': return 'Driving';
+				case 'IN_VEHICLE': case 'DRIVE': return 'Driving';
                 case 'IN_PASSENGER_VEHICLE': return 'In a Vehicle';
                 case 'IN_TAXI': return 'In a Taxi';
                 case 'MOTORCYCLING': return 'Motorcycling';
                 case 'ON_BICYCLE': case 'CYCLING': return 'Biking';
-                case 'ON_FOOT': case 'WALKING': return 'Walking';
+                case 'ON_FOOT': case 'WALKING': case 'WALK': return 'Walking';
                 case 'WALKING_NORDIC': return 'Nordic Walking';
                 case 'HIKING': return 'Hiking';
                 case 'RUNNING': return 'Running';
@@ -988,18 +989,19 @@
                 const activitySegment = item.activitySegment;
                 startTimestamp = activitySegment.duration.startTimestamp;
                 endTimestamp = activitySegment.duration.endTimestamp;
-                const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || 0;
+                const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || (activitySegment.waypointPath && activitySegment.waypointPath.distanceMeters) || 0;
                 const distanceKm = distanceMeters / 1000;
-                const formattedType = formatActivityType(activitySegment.activityType);
+                const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
+                const formattedType = formatActivityType(activityType);
                 timelineItem.innerHTML = `
-                     <span class="timeline-icon-container">${getActivityIcon(activitySegment.activityType)}</span>
+                     <span class="timeline-icon-container">${getActivityIcon(activityType)}</span>
                      <div class="timeline-item-details">
                          <strong>${formattedType}</strong><br>
                          <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
                          <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
                      </div>
                  `;
-                 const activityColor = getActivityColor(activitySegment.activityType);
+                 const activityColor = getActivityColor(activityType);
                  timelineItem.style.setProperty('--activity-color', activityColor);
             }
 
@@ -1038,7 +1040,7 @@
             deselectPolyline(); // Also deselect any highlighted polyline
         }
 
-        // Renders a place visit marker (either basic or detailed)
+              // Renders a place visit marker (either basic or detailed)
         function renderPlaceVisit(placeVisit, index) {
             // Determine initial location name and details
             let locationName = placeVisit.location.name ||
@@ -1066,7 +1068,7 @@
         }
 
 
-        // Renders a place visit marker (either basic or detailed -- for iOS)
+        // Renders a place visit marker (either basic or detailed)
         function renderVisit(placeVisit, index) {
             // Determine initial location name and details
             let locationName = placeVisit.location?.name ||
@@ -1271,18 +1273,20 @@
 
             // Only render if we have at least two points
             if (path.length < 2) return;
+            
+            const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
 
             const polyline = new google.maps.Polyline({
                 path: path,
                 geodesic: true,
-                strokeColor: getActivityColor(activitySegment.activityType),
+                strokeColor: getActivityColor(activityType),
                 strokeOpacity: 0.8, // Slightly less opaque for better visibility if overlapping
                 strokeWeight: 5, // Default weight
                 map: map,
                 clickable: true,
                 zIndex: 0 // Default zIndex
             });
-            polyline.set('originalColor', getActivityColor(activitySegment.activityType)); // Store original color
+            polyline.set('originalColor', getActivityColor(activityType)); // Store original color
             polylines.push(polyline); // Keep track
 
             // Add listeners
@@ -1580,7 +1584,8 @@
 
                     // Apply specific activity type filters
                     if (item.activitySegment) {
-                        const groupedType = getGroupedActivityType(item.activitySegment.activityType);
+						const activityType = item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN';
+                        const groupedType = getGroupedActivityType(activityType);
                         const filterCheckbox = document.getElementById(`filter-${groupedType}`);
                         if (filterCheckbox && !filterCheckbox.checked) return false;
                     }
@@ -1732,7 +1737,8 @@
                         const distanceKm = distanceMeters * kmConversion;
 
                         if (distanceKm > 0) {
-                            const groupedType = getGroupedActivityType(segment.activityType);
+							const activityType = segment.activityType || (segment.activities && segment.activities.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
+                            const groupedType = getGroupedActivityType(activityType);
 
                             // Add to yearly summary
                             yearly[year].distanceKm += distanceKm;
@@ -1785,7 +1791,8 @@
                              const distanceKm = distanceMeters * kmConversion;
                              if (distanceKm > 0) {
                                  summary.distanceKm += distanceKm;
-                                 const groupedType = getGroupedActivityType(segment.activityType);
+                                 const activityType = segment.activityType || (segment.activities && segment.activities.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
+                                 const groupedType = getGroupedActivityType(activityType);
                                  summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceKm;
                              }
                          }
@@ -2062,7 +2069,8 @@
             Object.values(timelineData).forEach(monthData => {
                 monthData.timelineObjects?.forEach(item => {
                     if (item.activitySegment) {
-                        uniqueGroupedTypes.add(getGroupedActivityType(item.activitySegment.activityType));
+						const activityType = item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN';
+                        uniqueGroupedTypes.add(getGroupedActivityType(activityType));
                     }
                 });
             });
@@ -2318,7 +2326,7 @@
                     const data = JSON.parse(content);
                     const processedData = {}; // Temporary structure for grouping
                     if (Array.isArray(data)) {
-                        dataSourceText = 'Local Timeline.json (iOS Format)';
+                        dataSourceText = 'Local Timeline.json (iOS)';
                         data.forEach(item => {
                             const timestamp = item.startTime;
 
@@ -2335,7 +2343,7 @@
                         console.log('iOS Download Format - 2025  Timeline.json processed successfully.');
 
                     } else if (data.timelineObjects) {
-                        dataSourceText = 'Local Timeline.json (Android Format)';
+                        dataSourceText = 'Local Timeline.json (Android)';
                         data.timelineObjects.forEach(item => {
                             const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
                             if (!timestamp) return;
@@ -2349,7 +2357,7 @@
                         timelineData = processedData; // Assign grouped data
                         console.log('Standard Timeline.json processed successfully.');
 
-                    } else if (data.semanticSegments) {
+                    } else if (data.semanticSegments) { // Semantic History format (less common now?)
                         dataSourceText = 'Local Timeline.json (Semantic Format)';
                         console.log('Processing Semantic History format...');
                          // Populate the timelinePath points from every timelinePath object first
@@ -2462,6 +2470,7 @@
                     } else {
                         throw new Error("Timeline.json does not contain known data structure (timelineObjects or semanticSegments).");
                     }
+                    
                 } else {
                     // --- Step 3: Fallback to recursive directory reading (Takeout Monthly Files) ---
                     dataSourceText = 'Google Takeout (Monthly Files)';
@@ -2483,9 +2492,8 @@
                                     timelineData[fileNameKey] = data;
                                     // Collect activity types
                                     data.timelineObjects.forEach(item => {
-                                        if (item.activitySegment?.activityType) {
-                                            activityTypes.add(item.activitySegment.activityType);
-                                        }
+										const activityType = item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN';
+                                        activityTypes.add(item.activitySegment.activityType);
                                     });
                                 } else {
                                     console.warn(`Skipping file ${entry.name}: Does not contain 'timelineObjects'.`);
