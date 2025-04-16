@@ -1,0 +1,44 @@
+[
+    {
+    "startTime": "2024-01-10T09:00:00Z",
+    "endTime": "2024-01-10T10:30:00Z",
+    "visit" : {
+      "hierarchyLevel" : "0",
+      "topCandidate" : {
+        "probability" : "0.925600",
+        "semanticType" : "Store",
+        "placeID" : "ChIJmQJIxlVYwokRLgeuocVOGVU",
+        "placeLocation" : "geo:40.7588951,-73.9851310"
+      },
+      "probability" : "0.930000"
+    }
+  },
+    {
+    "startTime": "2024-01-10T10:30:00Z",
+    "endTime": "2024-01-10T10:55:00Z",
+    "activity" : {
+      "end" : "geo:37.762797,-122.391964",
+      "topCandidate" : {
+        "type" : "walking",
+        "probability" : "0.000000"
+      },
+      "distanceMeters" : "354.000000",
+      "start" : "geo:37.761598,-122.391533"
+    }
+  },
+    {
+    "startTime": "2024-01-10T10:55:00Z",
+    "endTime": "2024-01-10T13:00:00Z",
+
+    "visit" : {
+      "hierarchyLevel" : "0",
+      "topCandidate" : {
+        "probability" : "0.430418",
+        "semanticType" : "Unknown",
+        "placeID" : "ChIJhRwB-yFawokR5Phil-QQ3zM",
+          "placeLocation" : "geo:40.7505801,-73.9935863"
+      },
+      "probability" : "0.820000"
+    }
+  }
+]

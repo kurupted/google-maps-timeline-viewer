@@ -984,8 +984,10 @@
                      </div>
                  `;
                 timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
-            // Populate based on place visit or activity segment
-	    } else if (item.placeVisit) {
+
+            } else if (item.activity) {
+                // Populate based on place visit or activity segment
+            } else if (item.placeVisit) {
                 const placeVisit = item.placeVisit;
                 startTimestamp = placeVisit.duration.startTimestamp;
                 endTimestamp = placeVisit.duration.endTimestamp;
@@ -1639,9 +1641,10 @@
                         if (item.visit) {
                             const geo = item.visit.topCandidate?.placeLocation.split(":")[1];
                             const ll = geo.split(",");
-
-                            const latLng = { lat: Number(ll[0]), lng: Number(ll[1]) };
+                            latLng  = { lat: Number(ll[0]), lng: Number(ll[1]) };
                             item.visit["latLng"] = latLng;
+                        } else if (item.activity) {
+                            //no op
                         } else if (item.placeVisit) {
                             latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
                         } else if (item.activitySegment && item.activitySegment.startLocation) {
@@ -1661,7 +1664,13 @@
                     // Render corresponding map elements (marker or polyline)
                     if (item.visit) {
                         item.visit["duration"] = { startTimetamp: item.startTime, endTimestamp: item.endTime };
+                            const geo = item.visit.topCandidate?.placeLocation.split(":")[1];
+                            const ll = geo.split(",");
+                            latLng  = { lat: Number(ll[0]), lng: Number(ll[1]) };
+                            item.visit["latLng"] = latLng;
                         renderVisit(item.visit, globalIndex);
+                    } else if (item.activity) {
+                        //no-op, skip
                     } else if (item.placeVisit) {
                         renderPlaceVisit(item.placeVisit, globalIndex);
                     } else if (item.activitySegment) {
