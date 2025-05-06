@@ -63,7 +63,8 @@ Setup procedure:
     - Search for the following APIs and enable them:
         - **Maps JavaScript API**
         - **Maps Embed API**
-        - **Places API**
+        - **Places API (New)**
+    - You'll need to enable Billing to use the APIs. With normal use, you shouldn't incur any charges. See bottom of this doc for more info.
 
 4. **Create API Key:**
     - Go to **APIs & Services > Credentials**.
@@ -93,3 +94,10 @@ Setup procedure:
         - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
         - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
     - Use the date picker to choose a date that contains timeline data.
+
+## Note on API Usage & Billing
+- You can find the free usage limits, and over-the-limit pricing here: https://developers.google.com/maps/billing-and-pricing/pricing#places-pricing
+- Depending on what information is requested during the API call, it will fall into tiers, eg Essentials or Pro. Details here:
+  https://developers.google.com/maps/billing-and-pricing/sku-details#place-details-pro-sku
+- At this time, the monthly free limits are 1,000 Place Photos, 5,000 Pro-level requests, and 10,000 Essentials-level requests.
+  
