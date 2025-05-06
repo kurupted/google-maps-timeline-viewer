@@ -10,7 +10,7 @@
 	 
 	----  -->
 	
-	<head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Maps Timeline Viewer</title>
@@ -1854,7 +1854,6 @@
             clearTimeline();
             globalIndex = 0; // Reset index for new range
             placeDetailsCache = {}; // Clear place details cache for new range
-            placeApiCallCount = 0; // Reset API counter for new range load
             updateApiCallDisplay(); // Update display to 0
 
             const startMoment = moment.utc(startDate).startOf('day'); // Use UTC start of day
@@ -2265,7 +2264,6 @@
                     clearTimeline();
                     globalIndex = 0;
                     placeDetailsCache = {};
-                    placeApiCallCount = 0; // Reset counter
                     updateApiCallDisplay();
                     // Clear summary data as well if needed
                     document.getElementById('summary-selected-dates').innerHTML = '';
@@ -2495,7 +2493,6 @@
                 allYearlySummaries = null; // Clear summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
-                placeApiCallCount = 0;
                 updateApiCallDisplay();
                 document.getElementById('activityFilters').innerHTML = ''; // Clear activity filters
                  // Reset summary view state
@@ -2522,7 +2519,6 @@
                 allYearlySummaries = null; // Reset summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
-                placeApiCallCount = 0;
                 updateApiCallDisplay();
                 // Show loading overlay and disable UI only on initial call
                 document.getElementById('loading-overlay').style.display = "flex";
