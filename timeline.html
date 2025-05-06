@@ -1,20 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+
 	<!-- -----
-
 	 Be sure to set your API key in place of "YOUR_API_KEY"
-
-	 Version: April 16, 2025
+	 
+	 Version: May 6, 2025
 	 Full details here:
 	 https://github.com/kurupted/google-maps-timeline-viewer/
-
+	 
 	----  -->
 	
-    <head>
+	<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Maps Timeline Viewer</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=marker,places"></script>
+    
+    <!-- Google Maps importLibrary loader -->
+	<script>
+	(g => {
+	  var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
+	  b = b[c] || (b[c] = {});
+	  var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, 
+		  u = () => h || (h = new Promise(async (f, n) => {
+			await (a = m.createElement("script"));
+			e.set("libraries", [...r] + "");
+			for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+			e.set("callback", c + ".maps." + q);
+			a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+			d[q] = f;
+			a.onerror = () => h = n(Error(p + " could not load."));
+			a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+			m.head.append(a);
+		  }));
+	  d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
+	})
+	({ key: "YOUR_API_KEY",
+		v: "beta",
+		libraries: "places" });
+	</script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <style>
         /* --- General Styles --- */
@@ -349,7 +373,7 @@
 
         /* --- Bottom Sidebar Elements (Non-scrolling) --- */
         #data-source-indicator,
-        #about {
+        #about-container {
             font-size: 11px;
             padding: 8px 12px;
             color: #6c757d;
@@ -361,11 +385,22 @@
         #data-source-indicator {
             /* margin-top: auto; Let timeline push it down */
         }
-        #about {
+        #about-container {
              margin-top: auto; /* Pushes About link to the very bottom */
              border-top: none; /* Remove double border if indicator is shown */
              padding-top: 0;
+             display: flex;
+             justify-content: space-between;
+             align-items: center; /* Vertically align items */
         }
+        #about-container a {
+            margin-right: 10px;
+        }
+        #api-call-counter {
+            font-weight: bold;
+            color: #343a40;
+        }
+
 
         /* --- Map Styles --- */
         #map {
@@ -636,6 +671,7 @@
                 <button id="layerBtn" class="control-btn" disabled>Layers</button>
                 <button id="fitMapBtn" class="control-btn" disabled>Fit Map</button>
             </div>
+
             <div id="layerOptions" style="display: none;">
                 <div id="layerOptionsHeader">
                     <h4>View Options</h4>
@@ -651,6 +687,7 @@
                         <!-- Activity filters will be populated here -->
                     </div>
             </div>
+
             <div id="datePickerContainer">
                 <button id="prevDayBtn" disabled>&lt;</button>
                 <input type="date" id="startDatePicker" disabled>
@@ -658,6 +695,7 @@
                 <input type="date" id="endDatePicker" disabled>
                 <button id="nextDayBtn" disabled>&gt;</button>
             </div>
+
             <div id="icon-buttons-container">
                 <div id="icon-buttons-left">
                     <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>🗺️</button>
@@ -666,16 +704,24 @@
                 <div id="icon-buttons-right">
                     </div>
             </div>
+
             <div id="go-container">
                 <button id="goBtn" class="control-btn" disabled>GO</button>
             </div>
+
             <div id="loading-overlay">
                 <div id="loading-spinner"></div>
                 <span>Loading data...</span>
             </div>
+
             <div id="timeline"></div>
+
             <div id="data-source-indicator">No data loaded. Use "Choose Folder".</div>
-            <div id="about"><a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">View project on Github</a></div>
+
+            <div id="about-container">
+                 <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">View project on Github</a>
+                 <span id="api-call-counter">API Calls: 0</span>
+            </div>
         </div>
 
         <div id="summaryView" style="display: none;">
@@ -700,6 +746,7 @@
         </div>
 
         <div id="map" class=""></div>
+
         <div id="howToMessage">
             <h3>How to use:</h3>
             First, complete the initial setup as explained on the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">Github project page</a>.<br><br>
@@ -725,9 +772,10 @@
         let selectedPolyline = null;
         let timelineData = {}; // Stores parsed timeline data, keyed by YYYY_MONTH
         let activityTypes = new Set(); // Keep track of unique raw activity types found
-        let placeDetailsCache = {}; // Cache for storing Place Details (basic info only now)
+        let placeDetailsCache = {}; // Cache for storing Place Details results
         let globalIndex = 0; // Global counter for unique data-index across map/timeline
         let uiEnabled = false; // Flag to track if UI is enabled (data loaded)
+        let placeApiCallCount = 0; // Counter for Place API calls
 
         // Summary View Globals
         let allYearlySummaries = null; // Calculated yearly summaries
@@ -789,16 +837,34 @@
         }
 
         // --- Map Initialization ---
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: {
-                    lat: 25.034170, // Default center (Taipei)
-                    lng: 121.564560
-                },
-                zoom: 12,
-                mapId: "TIMELINE_MAP" // Use a Map ID for potential future styling
-            });
-        }
+		let AdvancedMarkerElement;
+		let Place;
+		let GoogleMap; // Renamed to avoid conflict with built-in Map
+
+		async function initMap() {
+		  try {
+			// First import the maps library
+			const { Map } = await google.maps.importLibrary("maps");
+			GoogleMap = Map;
+			map = new GoogleMap(document.getElementById('map'), {
+			  center: { lat: 25.034170, lng: 121.564560 },
+			  zoom: 12,
+			  mapId: "TIMELINE_MAP"
+			});
+			
+			// Then import other libraries we need
+			const markerModule = await google.maps.importLibrary("marker");
+			AdvancedMarkerElement = markerModule.AdvancedMarkerElement;
+			
+			const placesModule = await google.maps.importLibrary("places");
+			Place = placesModule.Place;
+			
+			console.log("Map and libraries loaded successfully");
+		  } catch (error) {
+			console.error("Error initializing map libraries:", error);
+			alert("Failed to load Google Maps libraries. Please check your API key.");
+		  }
+		}
 
         // --- UI Helper Functions ---
 
@@ -927,6 +993,19 @@
             }
         }
 
+        // --- API Call Counter ---
+        function incrementApiCallCount() {
+            placeApiCallCount++;
+            updateApiCallDisplay();
+        }
+
+        function updateApiCallDisplay() {
+            const counterElement = document.getElementById('api-call-counter');
+            if (counterElement) {
+                counterElement.textContent = `API Calls: ${placeApiCallCount}`;
+            }
+        }
+
         // --- Timeline Rendering ---
 
         // Creates a single timeline item element for the sidebar
@@ -934,7 +1013,6 @@
             const timelineItem = document.createElement('div');
             timelineItem.className = 'timeline-item';
             timelineItem.dataset.index = index; // Use the global index
-            
 			// --- DEBUG START: Add raw data ---
 			/*try {
 				// Select the relevant part of the item (visit or activity)
@@ -966,14 +1044,15 @@
             let startTimestamp, endTimestamp;
 
             // Populate based on place visit or activity segment
-            if (item.visit) {
+            if (item.visit) { // Handle iOS 'visit' structure
                 const placeVisit = item.visit;
                 startTimestamp = item.startTime;
                 endTimestamp = item.endTime;
+                // Attempt to derive a name, prioritizing explicit name, then semantic type
                 let locationName = placeVisit.location?.name ||
-                (placeVisit.location?.semanticType === "TYPE_HOME" ? "Home" :
-		 (placeVisit.topCandidate.semanticType === "TYPE_HOME" ? "Home" :
-		  (placeVisit.topCandidate.semanticType)));
+                                   (placeVisit.location?.semanticType === "TYPE_HOME" ? "Home" :
+                                   (placeVisit.topCandidate?.semanticType === "TYPE_HOME" ? "Home" :
+                                   (placeVisit.topCandidate?.name || placeVisit.topCandidate?.semanticType || 'Unknown Location')));
 
                 timelineItem.classList.add('place-visit-item');
                 timelineItem.innerHTML = `
@@ -984,8 +1063,8 @@
                      </div>
                  `;
                 timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
-            // Populate based on place visit or activity segment
-	    } else if (item.placeVisit) {
+
+            } else if (item.placeVisit) { // Handle standard 'placeVisit' structure
                 const placeVisit = item.placeVisit;
                 startTimestamp = placeVisit.duration.startTimestamp;
                 endTimestamp = placeVisit.duration.endTimestamp;
@@ -999,7 +1078,8 @@
                      </div>
                  `;
                  timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
-            } else if (item.activitySegment) {
+
+            } else if (item.activitySegment) { // Handle 'activitySegment'
                 const activitySegment = item.activitySegment;
                 startTimestamp = activitySegment.duration.startTimestamp;
                 endTimestamp = activitySegment.duration.endTimestamp;
@@ -1026,7 +1106,8 @@
 
             // Add confirmed checkmark if applicable
             if ((item.placeVisit && item.placeVisit.editConfirmationStatus === "CONFIRMED") ||
-                (item.activitySegment && item.activitySegment.editConfirmationStatus === "CONFIRMED")) {
+                (item.activitySegment && item.activitySegment.editConfirmationStatus === "CONFIRMED") ||
+                (item.visit && item.visit.editConfirmationStatus === "CONFIRMED")) { // Added check for iOS format
                 const checkmark = document.createElement('span');
                 checkmark.className = 'confirmed-checkmark';
                 checkmark.textContent = '✔️';
@@ -1035,7 +1116,7 @@
 
             return timelineItem;
         }
-        
+
 
         // Clears the timeline sidebar
         function clearTimeline() {
@@ -1055,124 +1136,153 @@
             deselectPolyline(); // Also deselect any highlighted polyline
         }
 
-              // Renders a place visit marker (either basic or detailed)
-        function renderPlaceVisit(placeVisit, index) {
-            // Determine initial location name and details
-            let locationName = placeVisit.location.name ||
-                             (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : null);
-            const placeId = placeVisit.location.placeId;
-            const lat = placeVisit.location.latitudeE7 / 1e7;
-            const lng = placeVisit.location.longitudeE7 / 1e7;
+        // Renders a place visit marker (handles both standard and iOS formats)
+        function renderPlaceVisit(placeVisitData, index) {
+            let locationName, placeId, lat, lng, startTimestamp, endTimestamp, originalVisitData;
+
+            // Adapt based on data structure (standard vs. iOS)
+            if (placeVisitData.location && placeVisitData.duration) { // Standard format
+                locationName = placeVisitData.location.name ||
+                               (placeVisitData.location.semanticType === "TYPE_HOME" ? "Home" : null);
+                placeId = placeVisitData.location.placeId;
+                lat = placeVisitData.location.latitudeE7 / 1e7;
+                lng = placeVisitData.location.longitudeE7 / 1e7;
+                startTimestamp = placeVisitData.duration.startTimestamp;
+                endTimestamp = placeVisitData.duration.endTimestamp;
+                originalVisitData = placeVisitData; // Keep original structure
+            } else if (placeVisitData.startTime && placeVisitData.endTime && placeVisitData.visit) { // iOS format (wrapped)
+                 const visit = placeVisitData.visit;
+                 // Try to get name/id/coords from various possible locations in iOS format
+                 locationName = visit.location?.name ||
+                                (visit.location?.semanticType === "TYPE_HOME" ? "Home" :
+                                (visit.topCandidate?.name ||
+                                (visit.topCandidate?.semanticType === "TYPE_HOME" ? "Home" : visit.topCandidate?.semanticType)));
+                 placeId = visit.topCandidate?.placeID || visit.location?.placeId; // Check both potential IDs
+                 lat = visit.latLng?.lat || visit.location?.latitudeE7 / 1e7; // Use pre-calculated or calculate
+                 lng = visit.latLng?.lng || visit.location?.longitudeE7 / 1e7; // Use pre-calculated or calculate
+                 startTimestamp = placeVisitData.startTime;
+                 endTimestamp = placeVisitData.endTime;
+                 // Create a pseudo-standard structure for consistency downstream
+                 originalVisitData = {
+                     location: { name: locationName, placeId: placeId, latitudeE7: lat * 1e7, longitudeE7: lng * 1e7 },
+                     duration: { startTimestamp: startTimestamp, endTimestamp: endTimestamp }
+                 };
+            } else {
+                 console.warn("Unrecognized place visit structure:", placeVisitData);
+                 return; // Cannot process this item
+            }
+
             const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
             // Attempt to fetch Place Details if placeId exists and not cached
-            if (placeId) {
+            if (placeId && !isNaN(lat) && !isNaN(lng)) {
                 if (placeDetailsCache[placeId]) {
-                    // Use cached details (basic info only now)
-                    renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index);
+                    // Use cached details
+                    console.log(`Using cached details for placeId: ${placeId}`);
+                    renderPlaceDetails(placeDetailsCache[placeId], originalVisitData, index);
                 } else {
-                    // Fetch basic details (will render asynchronously)
-                    fetchPlaceDetails(placeId, fallbackName, placeVisit, index);
+                    // Fetch details using the new API
+                    console.log(`Fetching details for placeId: ${placeId}`);
+                    fetchPlaceDetails(placeId, fallbackName, originalVisitData, index);
                 }
-            } else {
-                // No placeId, render a basic marker immediately
-                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+            } else if (!isNaN(lat) && !isNaN(lng)) {
+                // No placeId or invalid coords, render a basic marker immediately
+                console.log(`Rendering basic marker for: ${fallbackName}`);
+                renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
                 // Update sidebar with basic info
                 updateSidebarItem(index, fallbackName, null);
+            } else {
+                 console.warn(`Skipping marker render due to invalid coordinates for: ${fallbackName}`);
             }
         }
 
 
-        // Renders a place visit marker (either basic or detailed)
-        function renderVisit(placeVisit, index) {
-            // Determine initial location name and details
-            let locationName = placeVisit.location?.name ||
-                (placeVisit.location?.semanticType === "TYPE_HOME" ? "Home" :
-                 placeVisit.topCandidate.semanticType ? placeVisit.topCandidate.semanticType :null);
-            const placeId = placeVisit.topCandidate.placeID;
-            const lat = placeVisit.latLng.lat;
-            const lng = placeVisit.latLng.lng;
-            const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-
-            // Attempt to fetch Place Details if placeId exists and not cached
-            if (placeId) {
-                if (placeDetailsCache[placeId]) {
-                    // Use cached details (basic info only now)
-                    renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index);
-                } else {
-                    // Fetch basic details (will render asynchronously)
-                    fetchPlaceDetails(placeId, fallbackName, placeVisit, index);
-                }
-            } else {
-                // No placeId, render a basic marker immediately
-                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-                // Update sidebar with basic info
-                updateSidebarItem(index, fallbackName, null);
-            }
-        }
-
-        // Renders a simple marker when no Place ID is available
+        // Renders a simple marker when no Place ID is available or fetch fails
         function renderBasicMarker(lat, lng, name, placeVisit, index) {
             const position = { lat, lng };
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: position,
-                map: map,
-                title: name,
-                // Basic marker uses default appearance
-            });
-            markers.push(marker); // Keep track of the marker
+
+            // Check if marker library is loaded
+            if (!google.maps.marker || !google.maps.marker.AdvancedMarkerElement) {
+                console.error("AdvancedMarkerElement class not loaded.");
+                return;
+            }
+            const marker = new AdvancedMarkerElement({
+                    position: position,
+                    map: map,
+                    title: name,
+                    // Basic marker uses default appearance (red pin)
+                });
+                markers.push(marker); // Keep track of the marker
 
             // Create InfoWindow content (without photo initially)
-            const infoWindowContent = `
-                 <div style="max-width: 250px;">
-                     <h3 style="margin: 5px 0;">${name}</h3>
-                     <p style="margin: 3px 0; font-size: 0.9em;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
-                     <div class="photo-container" data-place-id="basic-${index}">
+                const infoWindowContent = `
+                     <div style="max-width: 250px;">
+                         <h3 style="margin: 5px 0;">${name}</h3>
+                         <p style="margin: 3px 0; font-size: 0.9em;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
+                         <div class="photo-container" data-place-id="basic-${index}">
+                              <div class="photo-placeholder">No photo available</div>
                          </div>
-                     <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
-                     <p style="margin-top: 5px; font-size: 0.85em;"><a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">View on Google Maps</a></p>
-                 </div>`;
+                         <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
+                     <p style="margin-top: 5px; font-size: 0.85em;"><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">View on Google Maps</a></p>
+                     </div>`;
 
-            const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-            infoWindow.placeId = null; // No place ID for basic marker
+                const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+                infoWindow.placeId = null; // No place ID for basic marker
             infoWindow.photoFetched = true; // Mark as "fetched" since there's no photo to fetch
-            infoWindows.push(infoWindow);
+                infoWindows.push(infoWindow);
 
-            // Add listeners
-            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-            addMarkerClickListener(marker, infoWindow, index);
-            if (sidebarItem) {
-                addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+                // Add listeners
+                const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+                addMarkerClickListener(marker, infoWindow, index);
+                if (sidebarItem) {
+                    addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+                }
+        }
+
+        // Fetches place details using the new Place.fetchFields method
+        async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
+			
+            // Define the fields to fetch (excluding 'photos')
+            const fields = [
+                'id',                   // Basic identifier
+                'displayName',          // New name field
+                'formattedAddress',     // New address field
+                'location',             // New geometry field (lat/lng)
+                'svgIconMaskURI',          // New icon URL field
+                'iconBackgroundColor',  // New icon background color field
+                'googleMapsURI'
+            ];
+
+            try {
+                const place = new Place({
+				  id: placeId,
+				  requestedLanguage: "en", // optional
+				});
+
+				await place.fetchFields({
+				  fields: fields
+				});
+                incrementApiCallCount(); // Increment API counter for basic details
+
+                //console.log("Place details fetched successfully:", place);
+                // Cache the result
+                placeDetailsCache[placeId] = place;
+                // Render the marker and info window with the fetched details
+                renderPlaceDetails(place, placeVisit, index);
+
+            } catch (error) {
+                console.warn(`Error fetching place details with fetchFields for placeId ${placeId}:`, error);
+                // Fallback to basic marker if details fetch fails
+                const lat = placeVisit.location.latitudeE7 / 1e7;
+                const lng = placeVisit.location.longitudeE7 / 1e7;
+                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                updateSidebarItem(index, fallbackName, null); // Update sidebar with fallback name
             }
         }
 
-        // Fetches initial place details (name, address, geometry, icon)
-        function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
-            const placeService = new google.maps.places.PlacesService(map);
-            const request = {
-                placeId: placeId,
-                fields: ["place_id", "name", "formatted_address", "geometry", "icon", "icon_background_color", "url"] // Exclude 'photos' initially
-            };
-
-            placeService.getDetails(request, (place, status) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-                    // Cache the basic result
-                    placeDetailsCache[placeId] = place;
-                    // Render details (marker, info window content *without* photo initially)
-                    renderPlaceDetails(place, placeVisit, index);
-                } else {
-                    console.warn("Error fetching initial place details:", status, "for placeId:", placeId, "Falling back to basic marker.");
-                    // Fallback to basic marker if details fetch fails
-                    const lat = placeVisit.latLng ? placeVisit.latLng.lat : placeVisit.location.latitudeE7 / 1e7;
-                    const lng = placeVisit.latLng ? placeVisit.latLng.lng : placeVisit.location.longitudeE7 / 1e7;
-                    renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-                    updateSidebarItem(index, fallbackName, null); // Update sidebar with fallback
-                }
-            });
-        }
 
         // Updates the corresponding sidebar item's name and icon
-        function updateSidebarItem(index, locationName, iconUrl) {
+        function updateSidebarItem(index, locationName, svgIconMaskURI) {
             const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
             if (sidebarItem) {
                 const nametag = sidebarItem.querySelector('.nametag');
@@ -1181,81 +1291,106 @@
                 const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
                 if (iconContainer) {
                     // Use icon if available, otherwise default pin
-                    iconContainer.innerHTML = iconUrl ? `<img src="${iconUrl}" alt="Icon" style="width: 20px; height: 20px; vertical-align: middle;">` : '📍';
+                    iconContainer.innerHTML = svgIconMaskURI ? `<img src="${svgIconMaskURI}" alt="Icon" style="width: 20px; height: 20px; vertical-align: middle; border-radius: 50%;">` : '📍';
                 }
             }
         }
 
-		// Renders the marker and InfoWindow using fetched Place Details
-		function renderPlaceDetails(place, placeVisit, index) {
-		  // Determine name, using fallback if necessary
-		  let locationName = place.name || placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
-		  const position = place.geometry?.location || { 
-			lat: placeVisit.location.latitudeE7 / 1e7, 
-			lng: placeVisit.location.longitudeE7 / 1e7 
-		  };
+		// Renders the marker and InfoWindow using fetched Place Details (new API)
+		async function renderPlaceDetails(place, placeVisit, index) {
+            // Use new field names from the Place object
+            const locationName = place.displayName || placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
+            const position = place.location; // Directly use the LatLngLiteral
+            const placeId = place.id; // Use place.id
 
-		  // Create marker content (PinElement if possible)
-		  let markerContent;
-		  if (place.icon && place.icon_background_color) {
+            // --- Create Marker ---
+            const PinElement = google.maps.marker.PinElement;
+            if (!AdvancedMarkerElement || !PinElement) {
+                 console.error("Marker library classes (AdvancedMarkerElement, PinElement) not loaded.");
+                 return;
+            }
+
+            let markerContent;
+            // Use PinElement if icon data is available
+            if (place.svgIconMaskURI && place.iconBackgroundColor) {
+                try {
+                    const pinGlyph = document.createElement('img');
+                    pinGlyph.src = place.svgIconMaskURI;
+                    pinGlyph.style.width = '18px';
+                    pinGlyph.style.height = '18px';
+
+                    const pinElement = new PinElement({
+                        background: place.iconBackgroundColor,
+                        glyph: pinGlyph, // Use the img element as glyph
+                        // glyphColor: '#FFFFFF', // Glyph color might not be needed if using image
+                        borderColor: '#505050', // Example border color
+                        scale: 1.0
+                    });
+                    markerContent = pinElement.element;
+                } catch (e) {
+                    console.warn("Could not create PinElement with image glyph, using default marker:", e);
+                    markerContent = null; // Fallback to default marker rendering below
+                }
+            } else {
+                 markerContent = null; // Use default marker if no icon data
+            }
+
+            // Create the Advanced Marker
+            const marker = new AdvancedMarkerElement({
+                position: position,
+                map: map,
+                content: markerContent, // Use PinElement if created, otherwise default
+                title: locationName,
+            });
+            markers.push(marker);
+
+            // --- Prepare InfoWindow content ---
+			let mapsLink;
 			try {
-			  const pinElement = new google.maps.marker.PinElement({
-				background: place.icon_background_color,
-				glyph: new URL(place.icon),
-				glyphColor: '#FFFFFF', // Assuming white glyph color works best
-				borderColor: '#000000', // Example border color
-			  });
-			  markerContent = pinElement.element;
+				if (place.googleMapsURI) {
+					mapsLink = `<a href="${place.googleMapsURI}" target="_blank">View on Google Maps</a>`;
+				} else if (position && typeof position.lat === 'function' && typeof position.lng === 'function') {
+					mapsLink = `<a href="https://maps.google.com/?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`;
+				} else if (position && 'lat' in position && 'lng' in position) {
+					mapsLink = `<a href="https://maps.google.com/?q=${position.lat},${position.lng}" target="_blank">View on Google Maps</a>`;
+				} else {
+					throw new Error("No valid location for fallback maps link");
+				}
 			} catch (e) {
-			  console.warn("Could not create PinElement, using default marker:", e);
-			  markerContent = null; // Fallback to default marker rendering below
+				console.warn("Could not create link, 1:", place);
+				console.warn("Could not create link, 2:", e);
 			}
-		  }
 
-		  // Create the Advanced Marker
-		  const marker = new google.maps.marker.AdvancedMarkerElement({
-			position: position,
-			map: map,
-			content: markerContent, // Use PinElement if created, otherwise default
-			title: locationName,
-		  });
-		  markers.push(marker);
+            // Always start with the placeholder
+            const photoHtml = `<div class="photo-placeholder">Loading photo...</div>`;
 
-		  // Store the placeId for later reference
-		  const placeId = place.place_id || null;
-	  
-		  // Prepare InfoWindow content (initially with placeholder for photo)
-		  const mapsLink = place.url ? 
-			`<a href="${place.url}" target="_blank">View on Google Maps</a>` : 
-			`<a href="https://www.google.com/maps?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`; // Fallback link
 
-		  // Make sure to add a specific data-place-id attribute to the photo container
-		  const infoWindowContent = `
-		  <div style="max-width: 250px;">
-			<h3 style="margin: 5px 0;">${locationName}</h3>
-			<p style="margin: 3px 0; font-size: 0.9em;">${place.formatted_address || ""}</p>
-			<div class="photo-container" data-place-id="${placeId || 'basic-' + index}">
-			  <div class="photo-placeholder">Loading photo...</div>
-			</div>
-			<p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
-			<p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
-		  </div>`;
+            // Use new field names in content
+            const infoWindowContent = `
+            <div style="max-width: 250px;">
+                <h3 style="margin: 5px 0;">${locationName}</h3>
+                <p style="margin: 3px 0; font-size: 0.9em;">${place.formattedAddress || ""}</p>
+                <div class="photo-container" data-place-id="${placeId}">
+                   ${photoHtml}
+                </div>
+                <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
+                <p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
+            </div>`;
 
-		  const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-		  infoWindow.placeId = placeId; // Store place ID to fetch photo later
-		  infoWindow.photoFetched = false; // Flag to track if photo has been fetched
-		  infoWindows.push(infoWindow);
+            const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+            infoWindow.placeId = placeId; // Store place ID
+            infoWindow.photoFetched = false; // Mark photo as NOT fetched initially
+            infoWindows.push(infoWindow);
 
-		  // Update sidebar item appearance
-		  updateSidebarItem(index, locationName, place.icon);
+            // Update sidebar item appearance using new svgIconMaskURI
+            updateSidebarItem(index, locationName, place.svgIconMaskURI);
 
-		  // Add listeners
-		  const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-		  console.log(`addMarkerClickListener for infoWindow with placeId: ${infoWindow.placeId}`);
-		  addMarkerClickListener(marker, infoWindow, index);
-		  if (sidebarItem) {
-			addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
-		  }
+            // Add listeners
+            const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+            addMarkerClickListener(marker, infoWindow, index);
+            if (sidebarItem) {
+                addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+            }
 		}
 
 
@@ -1273,8 +1408,9 @@
             // Add intermediate points from available path sources
             let intermediatePoints = activitySegment.simplifiedRawPath?.points || activitySegment.timelinePath?.points || activitySegment.waypointPath?.waypoints || [];
             intermediatePoints.forEach(point => {
-                const pLat = point.latE7 / 1e7;
-                const pLng = point.lngE7 / 1e7;
+                // Handle different point structures (E7 vs direct lat/lng) if necessary
+                const pLat = point.latE7 !== undefined ? point.latE7 / 1e7 : point.lat;
+                const pLng = point.lngE7 !== undefined ? point.lngE7 / 1e7 : point.lng;
                 if (!isNaN(pLat) && !isNaN(pLng)) path.push({ lat: pLat, lng: pLng });
             });
 
@@ -1287,8 +1423,11 @@
              }
 
             // Only render if we have at least two points
-            if (path.length < 2) return;
-            
+            if (path.length < 2) {
+                 console.log(`Skipping polyline render for index ${index}: Not enough points (${path.length})`);
+                 return;
+            }
+
             const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
 
             const polyline = new google.maps.Polyline({
@@ -1314,91 +1453,107 @@
 
         // --- Map Interaction ---
 
-        // Function to fetch photo URL and update InfoWindow content
-        function fetchPhotoAndUpdateInfoWindow(infoWindow) {
-                console.log(`fetchPhotoAndUpdateInfoWindow() ${infoWindow.placeId}`);
+        // Fetches *only* the photo for an InfoWindow if not already fetched
+        async function fetchPhotoForInfoWindow(infoWindow) {
+  
+            // Skip if no placeId or photo already fetched/failed
             if (!infoWindow || !infoWindow.placeId || infoWindow.photoFetched) {
-                console.log("Skipping photo fetch: No placeId or photo already fetched.");
-                // If no placeId, update placeholder to "No photo available"
-                if (!infoWindow.placeId && !infoWindow.photoFetched) {
-                    const contentNode = document.createElement('div');
-                    contentNode.innerHTML = infoWindow.getContent();
-                    const photoContainer = contentNode.querySelector(`.photo-container`); // Target any photo container
-                    if (photoContainer) {
-                        photoContainer.innerHTML = '<div class="photo-placeholder">No photo available</div>';
-                        infoWindow.setContent(contentNode.innerHTML);
-                    }
-                    infoWindow.photoFetched = true; // Mark as fetched
+                console.log(`Skipping photo fetch for placeId: ${infoWindow?.placeId}. Reason: No placeId or photo already fetched/failed.`);
+                // Ensure placeholder shows 'No photo available' if there's no placeId and it hasn't been marked fetched yet
+                if (infoWindow && !infoWindow.placeId && !infoWindow.photoFetched) {
+                     try {
+                        const contentNode = document.createElement('div');
+                        contentNode.innerHTML = infoWindow.getContent();
+                        const photoContainer = contentNode.querySelector(`.photo-container`);
+                        if (photoContainer) {
+                            photoContainer.innerHTML = '<div class="photo-placeholder">No photo available</div>';
+                            infoWindow.setContent(contentNode.innerHTML);
+                        }
+                        infoWindow.photoFetched = true; // Mark as fetched (or known unavailable)
+                     } catch (e) { console.error("Error updating basic marker infowindow content:", e); }
                 }
-                return; // Don't fetch if no placeId, or already fetched
+                return;
             }
-
             console.log(`Fetching photo for placeId: ${infoWindow.placeId}`);
-            const placeService = new google.maps.places.PlacesService(map);
-            const request = {
-                placeId: infoWindow.placeId,
-                fields: ['photos'] // Request only photos
-            };
-
-            // --- Update placeholder to show loading state (already done when creating InfoWindow) ---
-
-            placeService.getDetails(request, (place, status) => {
-                infoWindow.photoFetched = true; // Mark as fetched even if it fails
-                let photoUrl = null;
-                if (status === google.maps.places.PlacesServiceStatus.OK && place && place.photos && place.photos.length > 0) {
-                    photoUrl = place.photos[0].getUrl({ maxWidth: 200, maxHeight: 150 });
-                    console.log(`Photo URL found for ${infoWindow.placeId}: ${photoUrl}`);
-                } else {
-                    console.warn(`Photo request failed or no photo found for placeId: ${infoWindow.placeId}. Status: ${status}`);
-                }
-
-                // --- Update the InfoWindow content again with the photo or 'no photo' message ---
-                // Get the potentially updated content (e.g., if user closed/reopened quickly)
-                const contentNode = document.createElement('div');
-                contentNode.innerHTML = infoWindow.getContent(); // Get current content again
-                // Find the specific photo container using the placeId data attribute
-                const photoContainer = contentNode.querySelector(`.photo-container[data-place-id="${infoWindow.placeId}"]`);
-
-                if (photoContainer) {
-                    if (photoUrl) {
-                        photoContainer.innerHTML = `<img src="${photoUrl}" alt="Place photo">`;
-                    } else {
-                        photoContainer.innerHTML = '<div class="photo-placeholder">No photo available</div>';
+            const fields = ['photos']; // Request only photos
+            try {
+                incrementApiCallCount(); // Increment counter for photo fetch
+				const place = new Place({
+				  id: infoWindow.placeId,
+				  requestedLanguage: "en", // optional
+				});
+				await place.fetchFields({
+				  fields: fields
+				});
+                
+                let photoHtml;
+                if (place.photos && place.photos.length > 0) {
+                    try {
+                        const photoUri = place.photos[0].getURI({ maxWidth: 200, maxHeight: 150 });
+                        photoHtml = `<img src="${photoUri}" alt="Place photo">`;
+                        console.log(`Photo found for ${infoWindow.placeId}`);
+                    } catch (e) {
+                        console.warn("Error getting photo URI:", e);
+                        photoHtml = '<div class="photo-placeholder">Error loading photo</div>';
                     }
+                } else {
+                    photoHtml = '<div class="photo-placeholder">No photo available</div>';
+                    console.log(`No photo found for ${infoWindow.placeId}`);
+                }
+                // Update the InfoWindow content with the photo or 'no photo' message
+                const contentNode = document.createElement('div');
+                // IMPORTANT: Get the *current* content in case it was closed/reopened quickly
+                contentNode.innerHTML = infoWindow.getContent();
+                const photoContainer = contentNode.querySelector(`.photo-container[data-place-id="${infoWindow.placeId}"]`);
+                if (photoContainer) {
+                    photoContainer.innerHTML = photoHtml;
                     // *** Crucial Step: Update the actual InfoWindow object's content ***
                     infoWindow.setContent(contentNode.innerHTML);
                 } else {
                     console.warn("Could not find photo container in InfoWindow content for update, placeId:", infoWindow.placeId);
                 }
-                 // --- End final content update ---
-            });
+            } catch (error) {
+                console.warn(`Error fetching photos for placeId ${infoWindow.placeId}:`, error);
+                // Update placeholder to show error
+                try {
+                    const contentNode = document.createElement('div');
+                    contentNode.innerHTML = infoWindow.getContent();
+                    const photoContainer = contentNode.querySelector(`.photo-container[data-place-id="${infoWindow.placeId}"]`);
+                    if (photoContainer) {
+                        photoContainer.innerHTML = '<div class="photo-placeholder">Error loading photo</div>';
+                        infoWindow.setContent(contentNode.innerHTML);
+                    }
+                } catch (e) { console.error("Error updating infowindow content after photo fetch error:", e); }
+            } finally {
+                // Mark as fetched regardless of success or failure to prevent re-fetching
+                infoWindow.photoFetched = true;
+            }
         }
 
-	// Adds click listener to a marker to open InfoWindow and highlight sidebar
-	function addMarkerClickListener(marker, infoWindow, index) {
-	  marker.addListener('click', () => {
-	    if (!marker.map) return; // Don't do anything if marker isn't on map
+	    // Adds click listener to a marker to open InfoWindow and highlight sidebar
+        function addMarkerClickListener(marker, infoWindow, index) {
+          marker.addListener('click', async () => {
+            if (!marker.map) return; // Don't do anything if marker isn't on map
 
-	    // Close other info windows
-	    infoWindows.forEach(iw => { if (iw !== infoWindow) iw.close(); });
+            // Close other info windows
+            infoWindows.forEach(iw => { if (iw !== infoWindow) iw.close(); });
 
-	    // Debug info
-	    console.log(`Marker clicked: Index=${index}, placeId=${infoWindow.placeId}, photoFetched=${infoWindow.photoFetched}`);
+            // Debug info
+            console.log(`Marker clicked: Index=${index}, placeId=${infoWindow.placeId}, photoFetched=${infoWindow.photoFetched}`);
 
-	    // Fetch photo only if it hasn't been fetched yet
-	    // This call will update the content asynchronously if needed
-	    fetchPhotoAndUpdateInfoWindow(infoWindow);
+            // Fetch photo only if it hasn't been fetched yet
+            await fetchPhotoForInfoWindow(infoWindow); // Wait for photo fetch/update
+            // Open this info window (content will be updated if photo was fetched)
 
-	    // Open this info window (content will update asynchronously if photo is fetching)
-	    infoWindow.open({ map: map, anchor: marker });
+            infoWindow.open({ map: map, anchor: marker });
 
-	    // Highlight corresponding sidebar item
-	    highlightSidebarItem(index);
+            // Highlight corresponding sidebar item
+            highlightSidebarItem(index);
 
-	    // Deselect any selected polyline
-	    deselectPolyline();
-	  });
-	}
+            // Deselect any selected polyline
+            deselectPolyline();
+          });
+        }
 
 
         // Adds click listener to a polyline to highlight it and the sidebar item
@@ -1424,7 +1579,7 @@
         function addSidebarItemClickListener(sidebarItem, index, marker, infoWindow, polyline, path) {
             if (!sidebarItem) return;
 
-            sidebarItem.addEventListener('click', () => {
+            sidebarItem.addEventListener('click', async () => {
                 highlightSidebarItem(index); // Highlight this item
 
                 if (marker && infoWindow && marker.map) {
@@ -1436,7 +1591,7 @@
                     infoWindows.forEach(iw => { if (iw !== infoWindow) iw.close(); });
 
                     // Fetch photo only if it hasn't been fetched yet
-                    fetchPhotoAndUpdateInfoWindow(infoWindow);
+                    await fetchPhotoForInfoWindow(infoWindow); // Wait for photo fetch/update
 
                     // Open this info window
                     infoWindow.open({ map: map, anchor: marker });
@@ -1495,14 +1650,14 @@
 
             // Enhance the selected polyline
             polyline.setOptions({
-                strokeWeight: 7, // Make it slightly thicker
+                strokeWeight: 7,
                 // Add direction arrows
                 icons: [{
                     icon: {
                         path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        scale: 4, // Size of the arrow
-                        strokeColor: '#FFF', // White outline for visibility
-                        strokeWeight: 1
+                        scale: 5, // Size of the arrow
+                        strokeColor: '#000',
+                        strokeWeight: 2
                     },
                     offset: '50%', // Position in the middle of segments
                     repeat: '90px' // Spacing between arrows
@@ -1535,7 +1690,7 @@
 
             // Extend bounds for visible markers
             markers.forEach(marker => {
-                if (marker.map) { // Check if marker is actually on the map
+                if (marker.map && marker.position) { // Check if marker is actually on the map and has position
                     bounds.extend(marker.position);
                     itemCount++;
                 }
@@ -1551,7 +1706,7 @@
 
             // Fit map if there are items
             if (itemCount > 0) {
-                if (itemCount === 1 && markers.length === 1 && markers[0].map) {
+                if (itemCount === 1 && markers.length === 1 && markers[0].map && markers[0].position) {
                     // Single marker: center and set zoom
                     map.setCenter(bounds.getCenter());
                     map.setZoom(15);
@@ -1565,8 +1720,8 @@
             }
             // If itemCount is 0, do nothing (map remains as is)
         }
-        
-        
+
+
         // Helper function to escape HTML special characters for attributes. Used w debug
 		function escapeHtml(unsafe) {
 			if (!unsafe) return '';
@@ -1579,7 +1734,7 @@
 				 .replace(/"/g, "&quot;")
 				 .replace(/'/g, "&#039;");
 		 }
-		 
+
 
         // --- Data Loading and Processing ---
 
@@ -1596,9 +1751,24 @@
                 const selectedDateStr = localSelectedDate.format('YYYY-MM-DD'); // For data attribute
 
                 const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
-                    // Get start and end times for the item
-                    const itemStartMoment = moment(item.startTime? item.startTime: item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
-                    const itemEndMoment = moment(item.endTime ? item.endTime : item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
+                    // Determine start/end times consistently across formats
+                    let itemStartTime, itemEndTime;
+                    if (item.placeVisit) { // Standard format
+                        itemStartTime = item.placeVisit.duration?.startTimestamp;
+                        itemEndTime = item.placeVisit.duration?.endTimestamp;
+                    } else if (item.activitySegment) { // Standard format
+                        itemStartTime = item.activitySegment.duration?.startTimestamp;
+                        itemEndTime = item.activitySegment.duration?.endTimestamp;
+                    } else if (item.visit) { // iOS format (check start/end Time at top level)
+                        itemStartTime = item.startTime;
+                        itemEndTime = item.endTime;
+                    }
+
+                    // Skip if timestamps are missing
+                    if (!itemStartTime || !itemEndTime) return false;
+
+                    const itemStartMoment = moment(itemStartTime);
+                    const itemEndMoment = moment(itemEndTime);
 
                     // Check if the item overlaps with the selected date
                     if (!itemStartMoment.isSame(localSelectedDate, 'day') &&
@@ -1608,8 +1778,7 @@
                     }
 
                     // Apply layer filters
-                    if (item.placeVisit && !document.getElementById('showVisits').checked) return false;
-                    if (item.visit && !document.getElementById('showVisits').checked) return false;
+                    if ((item.placeVisit || item.visit) && !document.getElementById('showVisits').checked) return false; // Check both visit types
                     if (item.activitySegment && !document.getElementById('showActivities').checked) return false;
 
                     // Apply specific activity type filters
@@ -1625,8 +1794,9 @@
 
                 // Sort data for the day chronologically
                 relevantData.sort((a, b) => {
-                    const timeA = moment(a.startTime ? a.startTime :a.placeVisit ? a.placeVisit.duration.startTimestamp : a.activitySegment.duration.startTimestamp);
-                    const timeB = moment(b.startTime ? b.startTime : b.placeVisit ? b.placeVisit.duration.startTimestamp : b.activitySegment.duration.startTimestamp);
+                    // Determine start times consistently
+                    const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
+                    const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
                     return timeA - timeB;
                 });
 
@@ -1636,14 +1806,10 @@
                     // Center map on the first item of the day
                     if (!firstLocationSet) {
                         let latLng;
-                        if (item.visit) {
-                            const geo = item.visit.topCandidate?.placeLocation.split(":")[1];
-                            const ll = geo.split(",");
-
-                            const latLng = { lat: Number(ll[0]), lng: Number(ll[1]) };
-                            item.visit["latLng"] = latLng;
-                        } else if (item.placeVisit) {
+                        if (item.placeVisit) {
                             latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
+                        } else if (item.visit && item.visit.latLng) { // Use pre-calculated latLng for iOS format if available
+                            latLng = item.visit.latLng;
                         } else if (item.activitySegment && item.activitySegment.startLocation) {
                             latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
                         }
@@ -1659,11 +1825,9 @@
                     document.getElementById('timeline').appendChild(timelineItem);
 
                     // Render corresponding map elements (marker or polyline)
-                    if (item.visit) {
-                        item.visit["duration"] = { startTimetamp: item.startTime, endTimestamp: item.endTime };
-                        renderVisit(item.visit, globalIndex);
-                    } else if (item.placeVisit) {
-                        renderPlaceVisit(item.placeVisit, globalIndex);
+                    if (item.placeVisit || item.visit) { // Handle both visit types
+                         // Pass the correct object structure to renderPlaceVisit
+                        renderPlaceVisit(item.placeVisit ? item.placeVisit : item, globalIndex);
                     } else if (item.activitySegment) {
                         renderActivitySegment(item.activitySegment, globalIndex);
                     }
@@ -1672,6 +1836,7 @@
             }
             // No else needed, if data for the month isn't loaded, nothing happens for this date.
         }
+
 
         // Loads data for a range of dates, clearing previous data first
         async function loadTimelineDataInDateRange(startDate, endDate) {
@@ -1689,6 +1854,8 @@
             clearTimeline();
             globalIndex = 0; // Reset index for new range
             placeDetailsCache = {}; // Clear place details cache for new range
+            placeApiCallCount = 0; // Reset API counter for new range load
+            updateApiCallDisplay(); // Update display to 0
 
             const startMoment = moment.utc(startDate).startOf('day'); // Use UTC start of day
             const endMoment = moment.utc(endDate).endOf('day'); // Use UTC end of day for comparison
@@ -1701,12 +1868,13 @@
             // Iterate through each day in the range
             while (currentDate.isSameOrBefore(endMoment, 'day')) {
                 // Add the promise to load data for the current date
-                promises.push(loadTimelineDataForDate(currentDate.toDate())); // Pass Date object
+                // No need to await here, just push the async function call
+                promises.push(loadTimelineDataForDate(currentDate.toDate()));
                 currentDate.add(1, 'days');
             }
 
             try {
-                // Wait for all daily data loads to complete
+                // Wait for all daily data loads (including async rendering) to complete
                 await Promise.all(promises);
             } catch (error) {
                 console.error("Error loading data for date range:", error);
@@ -1717,6 +1885,7 @@
                 document.getElementById('howToMessage').style.display = "none"; // Hide initial message
                 document.getElementById('map').classList.remove('hidden'); // Ensure map is visible
                 fitMapToData(); // Fit map to the loaded data bounds
+                console.log(`Finished loading range. Total API Calls: ${placeApiCallCount}`);
             }
         }
 
@@ -1758,7 +1927,7 @@
 
                 // Process each item in the month's data
                 timelineData[key].timelineObjects.forEach(item => {
-                    if (item.placeVisit || item.visit) {
+                    if (item.placeVisit || item.visit) { // Count both visit types
                         yearly[year].visits++;
                         monthly[year][monthIndex].visits++;
                     } else if (item.activitySegment) {
@@ -1802,8 +1971,22 @@
 
                 if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
                     timelineData[dataKey].timelineObjects.forEach(item => {
-                         const itemStartMoment = moment(item.startTime ? item.startTime : item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp);
-                        const itemEndMoment = moment(item.endTime ? item.endTime : item.placeVisit ? item.placeVisit.duration.endTimestamp : item.activitySegment.duration.endTimestamp);
+                         // Determine start/end times consistently
+                         let itemStartTime, itemEndTime;
+                         if (item.placeVisit) {
+                             itemStartTime = item.placeVisit.duration?.startTimestamp;
+                             itemEndTime = item.placeVisit.duration?.endTimestamp;
+                         } else if (item.activitySegment) {
+                             itemStartTime = item.activitySegment.duration?.startTimestamp;
+                             itemEndTime = item.activitySegment.duration?.endTimestamp;
+                         } else if (item.visit) {
+                             itemStartTime = item.startTime;
+                             itemEndTime = item.endTime;
+                         }
+                         if (!itemStartTime || !itemEndTime) return; // Skip if no time
+
+                         const itemStartMoment = moment(itemStartTime);
+                         const itemEndMoment = moment(itemEndTime);
 
                          // Check if the item overlaps with the *current processing day* within the selected range
                          if (!itemStartMoment.isSame(currentDate, 'day') &&
@@ -1813,11 +1996,11 @@
                          }
 
                          // Item overlaps the current day, add its stats
-                         if (item.placeVisit || item.visit ) {
+                         if (item.placeVisit || item.visit ) { // Count both visit types
                              summary.visits++;
                          } else if (item.activitySegment) {
                              const segment = item.activitySegment;
-                             const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || 0;
+                             const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
                              const distanceKm = distanceMeters * kmConversion;
                              if (distanceKm > 0) {
                                  summary.distanceKm += distanceKm;
@@ -2001,7 +2184,7 @@
              document.getElementById('summary-months').style.display = 'flex';
              // Ensure the back button is visible (handled by CSS .expanded-year-active)
              document.getElementById('backToYearsBtn').style.display = 'flex';
-             
+
         }
 
         // Navigates from the summary view to the map view for a specific month
@@ -2047,17 +2230,21 @@
                 const endMoment = moment.utc(endDatePicker.value).add(days, 'days');
 
                 // Ensure start date is not after end date (can happen if range was > 1 day)
-                if (startMoment.isAfter(endMoment)) {
-                    // If moving back, adjust end date to match new start date
-                    // If moving forward, endMoment is already correct relative to original interval
-                    if (days < 0) {
-                         endMoment.add(days, 'days'); // Adjust end date as well if moving back
-                    }
-                }
+                // If moving back, the end date should also move back by the same amount
+                // If moving forward, the end date should also move forward by the same amount
+                // The difference between start and end should remain constant.
+                const originalStart = moment.utc(startDatePicker.value);
+                const originalEnd = moment.utc(endDatePicker.value);
+                const diffDays = originalEnd.diff(originalStart, 'days');
 
-                startDatePicker.value = startMoment.format('YYYY-MM-DD');
-                endDatePicker.value = endMoment.format('YYYY-MM-DD');
-                loadTimelineDataInDateRange(startMoment.toDate(), endMoment.toDate());
+                const newStart = moment.utc(startDatePicker.value).add(days, 'days');
+                const newEnd = newStart.clone().add(diffDays, 'days'); // Maintain original range duration
+
+                startDatePicker.value = newStart.format('YYYY-MM-DD');
+                endDatePicker.value = newEnd.format('YYYY-MM-DD');
+
+                // Load data for the new range
+                loadTimelineDataInDateRange(newStart.toDate(), newEnd.toDate());
             };
 
             prevDayBtn.addEventListener('click', () => navigateDays(-1));
@@ -2078,6 +2265,8 @@
                     clearTimeline();
                     globalIndex = 0;
                     placeDetailsCache = {};
+                    placeApiCallCount = 0; // Reset counter
+                    updateApiCallDisplay();
                     // Clear summary data as well if needed
                     document.getElementById('summary-selected-dates').innerHTML = '';
                     document.getElementById('summary-years').innerHTML = '';
@@ -2306,6 +2495,8 @@
                 allYearlySummaries = null; // Clear summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
+                placeApiCallCount = 0;
+                updateApiCallDisplay();
                 document.getElementById('activityFilters').innerHTML = ''; // Clear activity filters
                  // Reset summary view state
                  document.getElementById('summaryView').classList.remove('expanded-year-active');
@@ -2331,7 +2522,8 @@
                 allYearlySummaries = null; // Reset summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
-
+                placeApiCallCount = 0;
+                updateApiCallDisplay();
                 // Show loading overlay and disable UI only on initial call
                 document.getElementById('loading-overlay').style.display = "flex";
                 setUIEnabled(false);
@@ -2355,25 +2547,49 @@
                     const content = await file.text();
                     const data = JSON.parse(content);
                     const processedData = {}; // Temporary structure for grouping
+
+                    // --- Handle iOS JSON Array Format ---
                     if (Array.isArray(data)) {
                         dataSourceText = 'Local Timeline.json (iOS Format)';
+                        console.log('Processing iOS Format Timeline.json...');
                         data.forEach(item => {
-                            const timestamp = item.startTime;
+                            // Basic validation for essential fields
+                            if (!item || !item.startTime || !item.endTime || !item.visit) return;
 
-                        item["placeVisit"] = {};
-                            if (!timestamp) return;
-                            const date = new Date(timestamp);
+                            const startTimestamp = item.startTime;
+                            const date = new Date(startTimestamp);
                             if (isNaN(date.getTime())) return; // Skip invalid dates
+
+                            // Pre-calculate lat/lng if possible for map centering
+                            try {
+                                if (item.visit.centerLatE7 && item.visit.centerLngE7) {
+                                    item.visit.latLng = {
+                                        lat: item.visit.centerLatE7 / 1e7,
+                                        lng: item.visit.centerLngE7 / 1e7
+                                    };
+                                } else if (item.visit.location?.latitudeE7 && item.visit.location?.longitudeE7) {
+                                     item.visit.latLng = {
+                                        lat: item.visit.location.latitudeE7 / 1e7,
+                                        lng: item.visit.location.longitudeE7 / 1e7
+                                    };
+                                }
+                            } catch (e) { console.warn("Could not pre-calculate lat/lng for iOS item:", item, e); }
+
                             const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
                             if (!processedData[key]) processedData[key] = { timelineObjects: [] };
+                            // Store the original item structure, render function will adapt
                             processedData[key].timelineObjects.push(item);
+
+                            // Collect activity types if present (though less common in this format)
                             if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
                         });
                         timelineData = processedData; // Assign grouped data
                         console.log('iOS Format Timeline.json processed successfully.');
 
+                    // --- Handle Standard Timeline Object Format ---
                     } else if (data.timelineObjects) {
                         dataSourceText = 'Local Timeline.json (Standard Format)';
+                        console.log('Processing Standard Format Timeline.json...');
                         data.timelineObjects.forEach(item => {
                             const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
                             if (!timestamp) return;
@@ -2387,7 +2603,8 @@
                         timelineData = processedData; // Assign grouped data
                         console.log('Standard Format Timeline.json processed successfully.');
 
-                    } else if (data.semanticSegments) { // Semantic History format
+                    // --- Handle Semantic History Format ---
+                    } else if (data.semanticSegments) {
                         dataSourceText = 'Local Timeline.json (Semantic Format)';
                         console.log('Processing Semantic History format...');
                          // Populate the timelinePath points from every timelinePath object first
@@ -2405,7 +2622,7 @@
                                                  allPathPoints.push({
                                                      latE7: Math.round(lat * 1e7),
                                                      lngE7: Math.round(lng * 1e7),
-                                                     time: time
+                                                     time: time // Keep original timestamp string
                                                  });
                                              }
                                          }
@@ -2424,6 +2641,7 @@
                              const endTime = segment.endTime;
                              if (!startTime || !endTime) return null;
 
+                             // Process Place Visit Segment
                              if (segment.visit?.topCandidate?.placeLocation?.latLng && segment.visit?.topCandidate?.placeId) {
                                  const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
                                  if (!latLngMatch) return null;
@@ -2431,7 +2649,7 @@
                                  const lng = parseFloat(latLngMatch[2]);
                                  if (isNaN(lat) || isNaN(lng)) return null;
                                  return {
-                                     placeVisit: {
+                                     placeVisit: { // Create standard placeVisit structure
                                          location: {
                                              latitudeE7: Math.round(lat * 1e7),
                                              longitudeE7: Math.round(lng * 1e7),
@@ -2443,6 +2661,7 @@
                                          editConfirmationStatus: segment.visit.editConfirmationStatus
                                      }
                                  };
+                             // Process Activity Segment
                              } else if (segment.activity?.topCandidate?.type && segment.activity?.start?.latLng && segment.activity?.end?.latLng) {
                                  const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
                                  const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
@@ -2453,15 +2672,15 @@
                                  const endLng = parseFloat(endLatLngMatch[2]);
                                  if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) return null;
 
-                                 const activitySegment = {
+                                 const activitySegment = { // Create standard activitySegment structure
                                      activityType: segment.activity.topCandidate.type || 'UNKNOWN',
                                      duration: { startTimestamp: startTime, endTimestamp: endTime },
-                                     distance: segment.activity.distanceMeters,
+                                     distance: segment.activity.distanceMeters, // Use provided distance
                                      startLocation: { latitudeE7: Math.round(startLat * 1e7), longitudeE7: Math.round(startLng * 1e7) },
                                      endLocation: { latitudeE7: Math.round(endLat * 1e7), longitudeE7: Math.round(endLng * 1e7) },
                                      editConfirmationStatus: segment.activity.editConfirmationStatus,
                                      simplifiedRawPath: { // Structure expected by rendering function
-                                         distanceMeters: segment.activity.distanceMeters,
+                                         distanceMeters: segment.activity.distanceMeters, // Include distance here too
                                          points: []
                                      }
                                  };
@@ -2477,7 +2696,11 @@
                                          break; // Done finding points for this segment
                                      }
                                      // Point is within the segment's time range
-                                     activitySegment.simplifiedRawPath.points.push(allPathPoints[i]);
+                                     activitySegment.simplifiedRawPath.points.push({ // Ensure E7 format for points
+                                         latE7: allPathPoints[i].latE7,
+                                         lngE7: allPathPoints[i].lngE7,
+                                         // timestampMs: pointTime.valueOf() // Optional: add timestamp if needed later
+                                     });
                                  }
                                  return { activitySegment: activitySegment };
                              }
@@ -2498,9 +2721,9 @@
                          console.log('Semantic Timeline.json processed successfully.');
 
                     } else {
-                        throw new Error("Timeline.json does not contain known data structure (timelineObjects or semanticSegments).");
+                        throw new Error("Timeline.json does not contain known data structure (timelineObjects, semanticSegments, or iOS array).");
                     }
-                    
+
                 } else {
                     // --- Step 3: Fallback to recursive directory reading (Takeout Monthly Files) ---
                     dataSourceText = 'Google Takeout (Monthly Files)';
@@ -2522,8 +2745,9 @@
                                     timelineData[fileNameKey] = data;
                                     // Collect activity types
                                     data.timelineObjects.forEach(item => {
-										const activityType = item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN';
-                                        activityTypes.add(item.activitySegment.activityType);
+                                        if (item.activitySegment?.activityType) {
+                                            activityTypes.add(item.activitySegment.activityType);
+                                        }
                                     });
                                 } else {
                                     console.warn(`Skipping file ${entry.name}: Does not contain 'timelineObjects'.`);
@@ -2584,65 +2808,81 @@
         // Initializes the "Choose Folder" button
         async function initFolderPicker() {
             const folderPicker = document.getElementById('folderPicker');
-            folderPicker.addEventListener('click', async () => {
-                try {
-                    // Options for directory picker
-                    const opts = { mode: 'read' }; // Request read access
-                    // Show the directory picker dialog
-                    const dirHandle = await window.showDirectoryPicker(opts);
-                    // Start processing the selected directory
-                    await readFilesFromDirectory(dirHandle); // Pass the handle to the processing function
-                } catch (err) {
-                    // Handle errors, including user cancellation
-                    if (err.name === 'AbortError') {
-                        console.log('Folder selection cancelled by user.');
-                    } else {
-                        console.error('Error selecting folder:', err);
-                        alert(`Could not select folder: ${err.message}`);
+            // Check if showDirectoryPicker is supported
+            if ('showDirectoryPicker' in window) {
+                folderPicker.addEventListener('click', async () => {
+                    try {
+                        // Options for directory picker
+                        const opts = { mode: 'read' }; // Request read access
+                        // Show the directory picker dialog
+                        const dirHandle = await window.showDirectoryPicker(opts);
+                        // Start processing the selected directory
+                        await readFilesFromDirectory(dirHandle); // Pass the handle to the processing function
+                    } catch (err) {
+                        // Handle errors, including user cancellation
+                        if (err.name === 'AbortError') {
+                            console.log('Folder selection cancelled by user.');
+                        } else {
+                            console.error('Error selecting folder:', err);
+                            alert(`Could not select folder: ${err.message}`);
+                        }
+                         // Ensure loading overlay is hidden if selection fails/is cancelled before processing starts
+                         document.getElementById('loading-overlay').style.display = "none";
+                         // Keep UI disabled if it failed before any data was loaded
+                         if(Object.keys(timelineData).length === 0) setUIEnabled(false);
                     }
-                     // Ensure loading overlay is hidden if selection fails/is cancelled before processing starts
-                     document.getElementById('loading-overlay').style.display = "none";
-                     // Keep UI disabled if it failed before any data was loaded
-                     if(Object.keys(timelineData).length === 0) setUIEnabled(false);
-                }
-            });
+                });
+            } else {
+                 // Fallback or message for unsupported browsers
+                 folderPicker.disabled = true;
+                 folderPicker.textContent = 'Folder Picker Not Supported';
+                 console.warn('window.showDirectoryPicker is not supported in this browser.');
+                 alert('Your browser does not support the File System Access API needed to select folders. Please try a different browser (like Chrome or Edge).');
+            }
         }
 
         // --- Window Load ---
-        window.onload = () => {
+        window.onload = async () => { // Make onload async
             // Replace with your actual API key
-            if (document.querySelector('script[src*="YOUR_API_KEY"]')) {
+            const apiKeyScript = document.querySelector('script[src*="YOUR_API_KEY"]');
+            if (apiKeyScript && apiKeyScript.src.includes("YOUR_API_KEY")) { // Check if placeholder is still there
                 alert("Please replace 'YOUR_API_KEY' in the HTML script tag with your actual Google Maps API Key.");
                 return; // Stop execution if key is placeholder
             }
 
-            initMap();
-            initDatePicker();
-            initFolderPicker();
-            initLayerButton();
-            initFitMapButton();
-            initSummaryView(); // Initialize Summary View Listeners & Buttons
-            setUIEnabled(false); // Start with UI disabled
+            try {
+                initMap();
+                initDatePicker();
+                initFolderPicker(); // This now checks for browser support
+                initLayerButton();
+                initFitMapButton();
+                initSummaryView(); // Initialize Summary View Listeners & Buttons
+                setUIEnabled(false); // Start with UI disabled
+                updateApiCallDisplay(); // Initialize counter display
 
-            // Add global key listeners for date navigation
-            document.addEventListener('keydown', (e) => {
-                if (!uiEnabled) return; // Only act if UI is enabled
+                // Add global key listeners for date navigation
+                document.addEventListener('keydown', (e) => {
+                    if (!uiEnabled) return; // Only act if UI is enabled
 
-                // Check if the event target is an input field to avoid interference
-                const targetTagName = e.target.tagName.toLowerCase();
-                if (targetTagName === 'input' || targetTagName === 'textarea' || targetTagName === 'select') {
-                    return; // Don't navigate if typing in an input
-                }
+                    // Check if the event target is an input field to avoid interference
+                    const targetTagName = e.target.tagName.toLowerCase();
+                    if (targetTagName === 'input' || targetTagName === 'textarea' || targetTagName === 'select') {
+                        return; // Don't navigate if typing in an input
+                    }
 
-                // Navigate using arrow keys
-                if (e.key === 'ArrowLeft') {
-                    e.preventDefault(); // Prevent default browser behavior (like scrolling)
-                    document.getElementById("prevDayBtn").click();
-                } else if (e.key === 'ArrowRight') {
-                    e.preventDefault(); // Prevent default browser behavior
-                    document.getElementById("nextDayBtn").click();
-                }
-            });
+                    // Navigate using arrow keys
+                    if (e.key === 'ArrowLeft') {
+                        e.preventDefault(); // Prevent default browser behavior (like scrolling)
+                        document.getElementById("prevDayBtn").click();
+                    } else if (e.key === 'ArrowRight') {
+                        e.preventDefault(); // Prevent default browser behavior
+                        document.getElementById("nextDayBtn").click();
+                    }
+                });
+            } catch (error) {
+                 console.error("Error during initialization:", error);
+                 alert("An error occurred during map initialization. Please check your API key and network connection.");
+            }
         };
     </script>
 </body>
