@@ -77,7 +77,7 @@ Setup procedure:
 
 ##  Final Set Up
 1. **Download The Google Maps Timeline Viewer:**
-    - Save this project's `timeline.html` file anywhere you like, eg My Documents. (Click the timeline.html file, then click on "Raw" in the top-right of the content area. Copy/paste to eg Notepad and save as eg "timeline.html")
+    - Save this project's [timeline.html](https://raw.githubusercontent.com/kurupted/google-maps-timeline-viewer/refs/heads/main/timeline.html) file anywhere you like, eg My Documents. (Copy/paste to eg Notepad and save as eg "timeline.html")
    
 4. **Add your API key:**
    - Open the timeline.html file in a text editor and find the code below, near the top:
