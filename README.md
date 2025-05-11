@@ -82,7 +82,8 @@ Setup procedure:
 4. **Add your API key:**
    - Open the timeline.html file in a text editor and find the code below, near the top:
      ```html
-     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+     <script>
+		  window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
      ```
    - Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, and save.
 
