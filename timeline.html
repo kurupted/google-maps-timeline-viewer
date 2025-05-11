@@ -385,34 +385,65 @@
             opacity: 0.6;
         }
 
+        
         /* --- Bottom Sidebar Elements (Non-scrolling) --- */
-        #data-source-indicator,
-        #about-container {
+        #status-bar-container { /* New container for data source and API calls */
+            display: flex;
+            justify-content: space-between; /* Align items to ends */
+            align-items: center; /* Vertically align items */
             font-size: 11px;
             padding: 8px 12px;
             color: #6c757d;
-            text-align: center;
             border-top: 1px solid #e9ecef;
             flex-shrink: 0;
             background-color: #ffffff;
         }
         #data-source-indicator {
-            /* margin-top: auto; Let timeline push it down */
-        }
-        #about-container {
-             margin-top: auto; /* Pushes About link to the very bottom */
-             border-top: none; /* Remove double border if indicator is shown */
-             padding-top: 0;
-             display: flex;
-             justify-content: space-between;
-             align-items: center; /* Vertically align items */
-        }
-        #about-container a {
-            margin-right: 10px;
+            text-align: left; /* Align text to the left */
+            flex-grow: 1; /* Allow it to take available space */
         }
         #api-call-counter {
             font-weight: bold;
             color: #343a40;
+            text-align: right;
+        }
+        #cache-controls {
+            display: inline-block;
+            padding: 0px 0px;
+            padding-top: 3px;
+            background-color: #ffffff;
+        }
+        .cache-btn {
+            padding: 4px 6px;
+            font-size: 10px;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .cache-btn:hover:not(:disabled) {
+            background-color: #dde4ed;
+        }
+        .cache-btn:disabled {
+            background-color: #f8f9fa;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        #disableApiBtn.active {
+			background-color: #f2bcb8;
+        }
+        #about-container {
+             margin-top: auto; /* Pushes About link to the very bottom */
+             font-size: 11px;
+             padding: 8px 12px;
+             padding-top: 0; /* Remove extra top padding */
+             color: #6c757d;
+             text-align: center;
+             border-top: 1px solid #e9ecef;
+             flex-shrink: 0;
+             background-color: #ffffff;
         }
 
 
@@ -734,12 +765,19 @@
 
             <div id="timeline"></div>
 
-            <div id="data-source-indicator">No data loaded. Use "Choose Folder".</div>
-
-            <div id="about-container">
-                 <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">View project on Github</a>
-                 <span id="api-call-counter">API Calls: 0</span>
+			<div id="status-bar-container">
+                <span id="data-source-indicator">No data loaded. Use "Choose Folder".</span>
+                <div style="text-align:right;">
+					<span id="api-call-counter">API Calls: 0</span>
+					<div id="cache-controls">
+						<button id="disableApiBtn" class="cache-btn">Disable API</button>
+						<button id="saveCacheBtn" class="cache-btn" disabled>Save Data</button>
+					</div>
+                </div>
             </div>
+
+            
+
         </div>
 
         <div id="summaryView" style="display: none;">
@@ -775,7 +813,8 @@
             (Do not navigate into one of the yearly subfolders.)<br>
             <h4>For On-Device exported data:</h4>
             Simply choose the folder that contains your exported Timeline.json file.<br>
-            (On non-English systems, the filename may be different -- rename the file to Timeline.json)
+            (On non-English systems, the filename may be different -- rename the file to Timeline.json)<br>
+            If you have a previously saved "TimelinePlaceCache.json" file, be sure it's in the same folder. This can speed up loading and reduce API calls.
             <br><br><br><br>
             After the data has loaded, use the date picker to choose a date or date range that contains timeline data.<br>
         </div>
@@ -794,6 +833,7 @@
         let globalIndex = 0; // Global counter for unique data-index across map/timeline
         let uiEnabled = false; // Flag to track if UI is enabled (data loaded)
         let placeApiCallCount = 0; // Counter for Place API calls
+        let apiCallsDisabled = false;
 
         // Summary View Globals
         let allYearlySummaries = null; // Calculated yearly summaries
@@ -1290,6 +1330,10 @@
                     // Use cached details
                     console.log(`Using cached details for placeId: ${placeId}`);
                     renderPlaceDetails(placeDetailsCache[placeId], originalVisitData, index);
+                } else if (apiCallsDisabled) {
+                    console.log(`API calls disabled. Rendering basic marker for placeId: ${placeId}`);
+                    renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
+                    updateSidebarItem(index, fallbackName, null); // Update sidebar with basic info
                 } else {
                     // Fetch details using the new API
                     console.log(`Fetching details for placeId: ${placeId}`);
@@ -1369,6 +1413,15 @@
 
         // Fetches place details using the new Place.fetchFields method
         async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
+        
+            if (apiCallsDisabled) {
+                console.log("API calls disabled. Skipping fetchPlaceDetails, rendering basic marker.");
+                const lat = placeVisit.location.latitudeE7 / 1e7;
+                const lng = placeVisit.location.longitudeE7 / 1e7;
+                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                updateSidebarItem(index, fallbackName, null, []);
+                return;
+            }
 			
             // Define the fields to fetch (excluding 'photos')
             const fields = [
@@ -1618,6 +1671,24 @@
 
         // Fetches *only* the photo for an InfoWindow if not already fetched
         async function fetchPhotoForInfoWindow(infoWindow) {
+        
+			// If API calls are disabled, skip photo fetch
+            if (apiCallsDisabled) {
+                console.log("API calls disabled. Skipping photo fetch.");
+                if (infoWindow && !infoWindow.photoFetched) { // Still update placeholder if not fetched
+                    try {
+                        const contentNode = document.createElement('div');
+                        contentNode.innerHTML = infoWindow.getContent();
+                        const photoContainer = contentNode.querySelector(`.photo-container`);
+                        if (photoContainer) {
+                            photoContainer.innerHTML = '<div class="photo-placeholder">Photos disabled</div>';
+                            infoWindow.setContent(contentNode.innerHTML);
+                        }
+                        infoWindow.photoFetched = true; // Mark as "fetched" (or known unavailable/disabled)
+                    } catch (e) { console.error("Error updating infowindow content when API disabled:", e); }
+                }
+                return;
+            }
   
             // Skip if no placeId or photo already fetched/failed
             if (!infoWindow || !infoWindow.placeId || infoWindow.photoFetched) {
@@ -2045,8 +2116,8 @@
             clearMap();
             clearTimeline();
             globalIndex = 0; // Reset index for new range
-            placeDetailsCache = {}; // Clear place details cache for new range
-            updateApiCallDisplay(); // Update display to 0
+            //placeDetailsCache = {}; // Clear place details cache for new range
+            updateApiCallDisplay();
 
             const startMoment = moment.utc(startDate).startOf('day'); // Use UTC start of day
             const endMoment = moment.utc(endDate).endOf('day'); // Use UTC end of day for comparison
@@ -2453,7 +2524,7 @@
 					clearMap();
 					clearTimeline();
 					globalIndex = 0;
-					placeDetailsCache = {};
+					//placeDetailsCache = {};
 					updateApiCallDisplay();
 					// Clear summary data as well if needed
 					document.getElementById('summary-selected-dates').innerHTML = '';
@@ -2682,6 +2753,44 @@
                 mapBtn.classList.add('active');
             }
         }
+        
+        function initCacheControls() {
+            const disableApiBtn = document.getElementById('disableApiBtn');
+            const saveCacheBtn = document.getElementById('saveCacheBtn');
+
+            disableApiBtn.addEventListener('click', () => {
+                apiCallsDisabled = !apiCallsDisabled;
+                disableApiBtn.textContent = apiCallsDisabled ? 'API Disabled' : 'Disable API';
+                disableApiBtn.classList.toggle('active', apiCallsDisabled);
+                console.log(`API calls ${apiCallsDisabled ? 'disabled' : 'enabled'}.`);
+                if (!apiCallsDisabled){
+					document.getElementById('goBtn').click();
+                }
+            });
+
+            saveCacheBtn.addEventListener('click', () => {
+                if (Object.keys(placeDetailsCache).length === 0) {
+                    alert("Cache is empty. Nothing to save.");
+                    return;
+                }
+                try {
+                    const jsonData = JSON.stringify(placeDetailsCache, null, 2); // Pretty print JSON
+                    const blob = new Blob([jsonData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'TimelinePlaceCache.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    console.log("Place details cache saved.");
+                } catch (error) {
+                    console.error("Error saving cache:", error);
+                    alert("Could not save cache data. See console for details.");
+                }
+            });
+        }
 
         // Enables or disables UI controls based on whether data is loaded
         function setUIEnabled(enabled) {
@@ -2695,7 +2804,8 @@
                 document.getElementById('layerBtn'),
                 document.getElementById('fitMapBtn'),
                 document.getElementById('summaryBtn'),
-                document.getElementById('mapBtn')
+                document.getElementById('mapBtn'),
+                document.getElementById('saveCacheBtn')
             ];
             elementsToToggle.forEach(el => { if(el) el.disabled = !enabled; });
 
@@ -2731,6 +2841,7 @@
         async function readFilesFromDirectory(dirHandle, isRecursive=false) {
             let timelineJsonFile = null;
             let dataSourceText = 'Unknown';
+            let placeCacheFile = null;
 
             // Reset global state ONLY on the initial, non-recursive call
             if (!isRecursive) {
@@ -2738,7 +2849,7 @@
                 globalIndex = 0;
                 timelineData = {}; // Reset main data object
                 activityTypes = new Set(); // Reset activity types
-                placeDetailsCache = {}; // Reset cache
+                //placeDetailsCache = {}; // Reset cache
                 allYearlySummaries = null; // Reset summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
@@ -2749,13 +2860,41 @@
             }
 
             try {
-                // --- Step 1: Check for single Timeline.json at the current level (non-recursive only) ---
+                // --- Step 1: Scan for Timeline.json and TimelinePlaceCache.json at current level (non-recursive) ---
                 if (!isRecursive) {
                     for await (const entry of dirHandle.values()) {
-                        if (entry.kind === 'file' && entry.name.toLowerCase() === 'timeline.json') {
-                            timelineJsonFile = entry;
-                            break; // Found it, no need to look further at this level
+                        if (entry.kind === 'file') {
+                            if (entry.name.toLowerCase() === 'timeline.json') {
+                                timelineJsonFile = entry;
+                            } else if (entry.name.toLowerCase() === 'timelineplacecache.json') {
+                                placeCacheFile = entry;
+                            }
                         }
+                        if (timelineJsonFile && placeCacheFile) break; // Found both, no need to look further
+                    }
+
+                    // Load Place Details Cache if found
+                    if (placeCacheFile) {
+                        console.log("Found TimelinePlaceCache.json, attempting to load...");
+                        try {
+                            const file = await placeCacheFile.getFile();
+                            const content = await file.text();
+                            const cachedData = JSON.parse(content);
+                            if (typeof cachedData === 'object' && cachedData !== null) {
+                                placeDetailsCache = cachedData; // Load into global cache
+                                console.log(`Successfully loaded ${Object.keys(placeDetailsCache).length} entries from TimelinePlaceCache.json.`);
+                            } else {
+                                console.warn("TimelinePlaceCache.json does not contain a valid JSON object. Ignoring.");
+                                placeDetailsCache = {};
+                            }
+                        } catch (cacheError) {
+                            console.error("Error reading or parsing TimelinePlaceCache.json:", cacheError);
+                            alert("Error loading TimelinePlaceCache.json. It might be corrupted. Proceeding without cached place data.");
+                            placeDetailsCache = {};
+                        }
+                    } else {
+                         console.log("TimelinePlaceCache.json not found. Will rely on API calls or existing session cache.");
+                         if (!isRecursive) placeDetailsCache = {};
                     }
                 }
 
@@ -3018,7 +3157,8 @@
                 if (!isRecursive) {
                     if (Object.keys(timelineData).length > 0) {
                         console.log("Data loading complete. Enabling UI.");
-                        document.getElementById('data-source-indicator').textContent = 'Data source: ' + dataSourceText;
+                        document.getElementById('data-source-indicator').innerHTML = 'Data source: ' + dataSourceText + '<br>' +
+                            (placeCacheFile ? ` (Cache: ${Object.keys(placeDetailsCache).length} entries)` : ' (No cache file loaded)');
                         populateActivityFilters(); // Populate filters based on loaded data
                         setUIEnabled(true); // Enable UI elements
 
@@ -3029,7 +3169,7 @@
 
                     } else {
                         // No data was successfully loaded
-                        document.getElementById('data-source-indicator').textContent = 'No valid timeline data found.';
+                        document.getElementById('data-source-indicator').innerHTML = 'No valid timeline data found.';
                         setUIEnabled(false); // Keep UI disabled
                         alert("No valid timeline data could be loaded from the selected folder.");
                     }
@@ -3109,6 +3249,7 @@
                 initLayerButton();
                 initFitMapButton();
                 initSummaryView(); // Initialize Summary View Listeners & Buttons
+                initCacheControls();
                 setUIEnabled(false); // Start with UI disabled
                 updateApiCallDisplay(); // Initialize counter display
 
