@@ -2,9 +2,9 @@
 <html lang="en">
 
 	<!-- -----
-	 Be sure to set your API key in place of "YOUR_API_KEY"
+	 Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 	 
-	 Version: May 6, 2025
+	 Version: May 11, 2025
 	 Full details here:
 	 https://github.com/kurupted/google-maps-timeline-viewer/
 	 
@@ -17,31 +17,36 @@
     
     <!-- Google Maps importLibrary loader -->
 	<script>
-	(g => {
-	  var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
-	  b = b[c] || (b[c] = {});
-	  var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, 
-		  u = () => h || (h = new Promise(async (f, n) => {
-			await (a = m.createElement("script"));
-			e.set("libraries", [...r] + "");
-			for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
-			e.set("callback", c + ".maps." + q);
-			a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-			d[q] = f;
-			a.onerror = () => h = n(Error(p + " could not load."));
-			a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-			m.head.append(a);
-		  }));
-	  d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
-	})
-	({ key: "YOUR_API_KEY",
-		v: "beta",
-		libraries: "places" });
+		window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
+
+		(g => {
+		  var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
+		  b = b[c] || (b[c] = {});
+		  var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, 
+			  u = () => h || (h = new Promise(async (f, n) => {
+				await (a = m.createElement("script"));
+				e.set("libraries", [...r] + "");
+				for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+				e.set("callback", c + ".maps." + q);
+				// Use the globally stored API key
+				if (g.key) { // Check if a key was passed in the config object
+					 e.set("key", g.key);
+				}
+				a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+				d[q] = f;
+				a.onerror = () => h = n(Error(p + " could not load."));
+				a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+				m.head.append(a);
+			  }));
+		  d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
+		})
+		({ key: window.GOOGLE_MAPS_API_KEY,
+			v: "beta",
+			libraries: "places" });
 	</script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <style>
-        /* --- General Styles --- */
         body, html {
             height: 100%;
             margin: 0;
@@ -220,12 +225,15 @@
         .icon-btn {
             background: none;
             border: none;
-            font-size: 18px;
-            padding: 5px;
+            font-size: 14px;
             cursor: pointer;
             color: #6c757d;
             border-radius: 4px;
             transition: background-color 0.2s ease, color 0.2s ease;
+            display: flex; /* Align icon and text */
+			align-items: center; /* Vertically center icon and text */
+			gap: 6px; /* Space between icon and text */
+			padding: 5px 8px;
         }
         .icon-btn:hover:not(:disabled) {
             background-color: #e9ecef;
@@ -317,6 +325,12 @@
             padding-right: 10px;
             padding-top: 2px;
             flex-shrink: 0;
+            font-size: 24px;
+        }
+        .timeline-icon-svg {
+			width: 24px;
+			height: 24px;
+			display: inline-block;
         }
         .timeline-item-details {
             flex-grow: 1;
@@ -344,19 +358,19 @@
             color: #6c757d;
         }
         .place-visit-item {
-            /* background-color: #fffacd; */ /* Light yellow background */
+             background-color: #FFFAF0 !important; /* Light yellow background */
              border-left: 4px solid #ffc107; /* Yellow border */
              padding-left: 10px;
         }
         /* Adjust Activity Segment border */
-         .timeline-item:not(.place-visit-item) { /* Target activity segments */
+        .timeline-item:not(.place-visit-item) { /* Target activity segments */
             border-left: 4px solid var(--activity-color, #6c757d); /* Use CSS variable for color */
             padding-left: 10px;
         }
         .highlighted {
         	border-color-top: #007bff !important;
-		border-color-right: #007bff !important;
-		border-color-bottom: #007bff !important;
+			border-color-right: #007bff !important;
+			border-color-bottom: #007bff !important;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.35);
         }
         .confirmed-checkmark {
@@ -697,9 +711,13 @@
             </div>
 
             <div id="icon-buttons-container">
-                <div id="icon-buttons-left">
-                    <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>🗺️</button>
-                    <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>📊</button>
+				<div id="icon-buttons-left">
+                    <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>
+                        <span role="img" aria-label="Map">🗺️</span> Map
+                    </button>
+                    <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>
+                        <span role="img" aria-label="Summary">📊</span> Summary
+                    </button>
                 </div>
                 <div id="icon-buttons-right">
                     </div>
@@ -835,6 +853,31 @@
         function getGroupedActivityType(rawType) {
             return rawToGroupMapping[rawType] || 'UNKNOWN'; // Default to UNKNOWN if not found
         }
+        
+        // --- Place Type to Color/Icon Mapping (for sidebar) ---
+        const placeTypeStyles = {
+            'restaurant': { color: '#FFA500', icon: '🍽️' }, // Orange
+            'cafe': { color: '#D2691E', icon: '☕' }, // Chocolate
+            'bar': { color: '#FF4500', icon: '🍹' }, // OrangeRed
+            'store': { color: '#4682B4', icon: '🛍️' }, // SteelBlue
+            'grocery_or_supermarket': { color: '#32CD32', icon: '🛒' }, // LimeGreen
+            'park': { color: '#228B22', icon: '🌳' }, // ForestGreen
+            'lodging': { color: '#800080', icon: '🏨' }, // Purple (Hotel)
+            'transit_station': { color: '#A9A9A9', icon: '🚉' }, // DarkGray
+            // Add more types as needed
+            'default': { color: '#707070', icon: '📍' } // Default
+        };
+
+        function getPlaceStyle(placeTypes) {
+            if (placeTypes && placeTypes.length > 0) {
+                for (const type of placeTypes) {
+                    if (placeTypeStyles[type]) {
+                        return placeTypeStyles[type];
+                    }
+                }
+            }
+            return placeTypeStyles['default'];
+        }
 
         // --- Map Initialization ---
 		let AdvancedMarkerElement;
@@ -862,7 +905,12 @@
 			console.log("Map and libraries loaded successfully");
 		  } catch (error) {
 			console.error("Error initializing map libraries:", error);
-			alert("Failed to load Google Maps libraries. Please check your API key.");
+			// Check if the error is due to API key issues specifically
+            if (error.message && (error.message.includes("ApiNotActivatedMapError") || error.message.includes("InvalidKeyMapError") || error.message.includes("ProjectNotLinkedToBillingError") )) {
+                 alert("Failed to load Google Maps: API Key issue. Please check your API key, ensure the Maps JavaScript API is enabled, and that your project is linked to a billing account.");
+            } else {
+                 alert("Failed to load Google Maps libraries. Please check your internet connection and API key settings.");
+            }
 		  }
 		}
 
@@ -1042,60 +1090,80 @@
             }
 
             let startTimestamp, endTimestamp;
+            let locationName = 'Unknown Location'; // Default name
+            let placeTypesForStyle = []; // For sidebar icon styling
 
             // Populate based on place visit or activity segment
             if (item.visit) { // Handle iOS 'visit' structure
-                const placeVisit = item.visit;
+                const visitData = item.visit; // This is the sub-object
                 startTimestamp = item.startTime;
                 endTimestamp = item.endTime;
-                // Attempt to derive a name, prioritizing explicit name, then semantic type
-                let locationName = placeVisit.location?.name ||
-                                   (placeVisit.location?.semanticType === "TYPE_HOME" ? "Home" :
-                                   (placeVisit.topCandidate?.semanticType === "TYPE_HOME" ? "Home" :
-                                   (placeVisit.topCandidate?.name || placeVisit.topCandidate?.semanticType || 'Unknown Location')));
+                
+                // Derive name for iOS visit, prioritizing semanticType "Home" or "Work"
+                if (visitData.topCandidate?.semanticType?.toUpperCase() === "HOME") {
+                    locationName = "Home";
+                } else if (visitData.topCandidate?.semanticType?.toUpperCase() === "WORK") {
+                    locationName = "Work";
+                } else {
+                    locationName = visitData.topCandidate?.name || visitData.topCandidate?.semanticType || 'Unknown Location';
+                }
+                // For iOS, we don't have 'types' directly in this initial object for styling,
+                // it will be fetched later if placeId exists.
+                // Default to a generic visit icon for now, will be updated by updateSidebarItem
+                const defaultPlaceStyle = getPlaceStyle([]);
 
                 timelineItem.classList.add('place-visit-item');
                 timelineItem.innerHTML = `
-                     <span class="timeline-icon-container">📍</span>
+                     <span class="timeline-icon-container" style="border-color: ${defaultPlaceStyle.color};">${defaultPlaceStyle.icon}</span>
                      <div class="timeline-item-details">
                          <strong class="nametag">${locationName}</strong><br>
                          <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
                      </div>
                  `;
-                timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
+                timelineItem.style.setProperty('--activity-color', defaultPlaceStyle.color);
 
             } else if (item.placeVisit) { // Handle standard 'placeVisit' structure
                 const placeVisit = item.placeVisit;
                 startTimestamp = placeVisit.duration.startTimestamp;
                 endTimestamp = placeVisit.duration.endTimestamp;
-                const locationName = placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown location');
+
+                if (placeVisit.location.semanticType === "TYPE_HOME" || placeVisit.location.name?.toLowerCase() === "home") {
+                    locationName = "Home";
+                } else if (placeVisit.location.semanticType === "TYPE_WORK" || placeVisit.location.name?.toLowerCase() === "work") {
+                    locationName = "Work";
+                } else {
+                    locationName = placeVisit.location.name || 'Unknown Location';
+                }
+                placeTypesForStyle = placeVisit.location.placeTypes || []; // Google Takeout might have this
+                const placeStyle = getPlaceStyle(placeTypesForStyle);
+
                 timelineItem.classList.add('place-visit-item');
                 timelineItem.innerHTML = `
-                     <span class="timeline-icon-container">📍</span>
+                     <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
                      <div class="timeline-item-details">
                          <strong class="nametag">${locationName}</strong><br>
                          <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
                      </div>
                  `;
-                 timelineItem.style.setProperty('--activity-color', '#ffc107'); // Yellow for visits
+                 timelineItem.style.setProperty('--activity-color', placeStyle.color);
 
-            } else if (item.activitySegment) { // Handle 'activitySegment'
+            } else if (item.activitySegment) { // Handle 'activitySegment' (standard and transformed iOS)
                 const activitySegment = item.activitySegment;
                 startTimestamp = activitySegment.duration.startTimestamp;
                 endTimestamp = activitySegment.duration.endTimestamp;
                 const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || (activitySegment.waypointPath && activitySegment.waypointPath.distanceMeters) || 0;
                 const distanceKm = distanceMeters / 1000;
-                const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
+                const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities[0]?.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
                 const formattedType = formatActivityType(activityType);
+                const activityColor = getActivityColor(activityType);
                 timelineItem.innerHTML = `
-                     <span class="timeline-icon-container">${getActivityIcon(activityType)}</span>
+                     <span class="timeline-icon-container" style="border-color: ${activityColor};">${getActivityIcon(activityType)}</span>
                      <div class="timeline-item-details">
                          <strong>${formattedType}</strong><br>
                          <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
                          <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
                      </div>
                  `;
-                 const activityColor = getActivityColor(activityType);
                  timelineItem.style.setProperty('--activity-color', activityColor);
             }
 
@@ -1135,44 +1203,86 @@
             infoWindows = [];
             deselectPolyline(); // Also deselect any highlighted polyline
         }
+        
+        // Helper to parse "geo:lat,lng" strings
+        function parseGeoString(geoStr) {
+            if (typeof geoStr === 'string' && geoStr.startsWith('geo:')) {
+                const parts = geoStr.substring(4).split(',');
+                if (parts.length === 2) {
+                    const lat = parseFloat(parts[0]);
+                    const lng = parseFloat(parts[1]);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        return { lat, lng };
+                    }
+                }
+            }
+            return null;
+        }
 
         // Renders a place visit marker (handles both standard and iOS formats)
-        function renderPlaceVisit(placeVisitData, index) {
-            let locationName, placeId, lat, lng, startTimestamp, endTimestamp, originalVisitData;
+        function renderPlaceVisit(itemData, index) {
+            let locationName, placeId, lat, lng, startTimestamp, endTimestamp, originalVisitData, semanticTypeStr;
 
             // Adapt based on data structure (standard vs. iOS)
-            if (placeVisitData.location && placeVisitData.duration) { // Standard format
-                locationName = placeVisitData.location.name ||
-                               (placeVisitData.location.semanticType === "TYPE_HOME" ? "Home" : null);
-                placeId = placeVisitData.location.placeId;
-                lat = placeVisitData.location.latitudeE7 / 1e7;
-                lng = placeVisitData.location.longitudeE7 / 1e7;
-                startTimestamp = placeVisitData.duration.startTimestamp;
-                endTimestamp = placeVisitData.duration.endTimestamp;
-                originalVisitData = placeVisitData; // Keep original structure
-            } else if (placeVisitData.startTime && placeVisitData.endTime && placeVisitData.visit) { // iOS format (wrapped)
-                 const visit = placeVisitData.visit;
-                 // Try to get name/id/coords from various possible locations in iOS format
-                 locationName = visit.location?.name ||
-                                (visit.location?.semanticType === "TYPE_HOME" ? "Home" :
-                                (visit.topCandidate?.name ||
-                                (visit.topCandidate?.semanticType === "TYPE_HOME" ? "Home" : visit.topCandidate?.semanticType)));
-                 placeId = visit.topCandidate?.placeID || visit.location?.placeId; // Check both potential IDs
-                 lat = visit.latLng?.lat || visit.location?.latitudeE7 / 1e7; // Use pre-calculated or calculate
-                 lng = visit.latLng?.lng || visit.location?.longitudeE7 / 1e7; // Use pre-calculated or calculate
-                 startTimestamp = placeVisitData.startTime;
-                 endTimestamp = placeVisitData.endTime;
+            if (itemData.placeVisit) { // Standard format
+                const placeVisit = itemData.placeVisit;
+                semanticTypeStr = placeVisit.location.semanticType; // e.g., "TYPE_HOME"
+                if (semanticTypeStr === "TYPE_HOME" || placeVisit.location.name?.toLowerCase() === "home") {
+                    locationName = "Home";
+                } else if (semanticTypeStr === "TYPE_WORK" || placeVisit.location.name?.toLowerCase() === "work") {
+                    locationName = "Work";
+                } else {
+                    locationName = placeVisit.location.name;
+                }
+                placeId = placeVisit.location.placeId;
+                lat = placeVisit.location.latitudeE7 / 1e7;
+                lng = placeVisit.location.longitudeE7 / 1e7;
+                startTimestamp = placeVisit.duration.startTimestamp;
+                endTimestamp = placeVisit.duration.endTimestamp;
+                originalVisitData = placeVisit; 
+            } else if (itemData.visit) { // iOS format (itemData is the raw timeline object)
+                 const visit = itemData.visit; // The 'visit' sub-object
+                 semanticTypeStr = visit.topCandidate?.semanticType; // e.g., "Home", "Work"
+                 if (semanticTypeStr?.toUpperCase() === "HOME") {
+                    locationName = "Home";
+                 } else if (semanticTypeStr?.toUpperCase() === "WORK") {
+                    locationName = "Work";
+                 } else {
+                    locationName = visit.topCandidate?.name || visit.topCandidate?.semanticType;
+                 }
+                 placeId = visit.topCandidate?.placeID;
+                 
+                 const geoCoords = parseGeoString(visit.topCandidate?.placeLocation);
+                 if (geoCoords) {
+                    lat = geoCoords.lat;
+                    lng = geoCoords.lng;
+                 } else if (visit.location?.latitudeE7 && visit.location?.longitudeE7) { // Fallback if geo: parsing fails or not present
+                    lat = visit.location.latitudeE7 / 1e7;
+                    lng = visit.location.longitudeE7 / 1e7;
+                 } else if (visit.centerLatE7 && visit.centerLngE7) { // Another fallback
+                    lat = visit.centerLatE7 / 1e7;
+                    lng = visit.centerLngE7 / 1e7;
+                 }
+
+                 startTimestamp = itemData.startTime;
+                 endTimestamp = itemData.endTime;
                  // Create a pseudo-standard structure for consistency downstream
                  originalVisitData = {
-                     location: { name: locationName, placeId: placeId, latitudeE7: lat * 1e7, longitudeE7: lng * 1e7 },
+                     location: { 
+                        name: locationName, 
+                        placeId: placeId, 
+                        latitudeE7: lat ? lat * 1e7 : undefined, 
+                        longitudeE7: lng ? lng * 1e7 : undefined,
+                        semanticType: semanticTypeStr // Store the original semantic type
+                    },
                      duration: { startTimestamp: startTimestamp, endTimestamp: endTimestamp }
                  };
             } else {
-                 console.warn("Unrecognized place visit structure:", placeVisitData);
-                 return; // Cannot process this item
+                 console.warn("Unrecognized place visit structure:", itemData);
+                 return; 
             }
 
-            const fallbackName = locationName || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            const fallbackName = locationName || (lat && lng ? `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})` : 'Unknown Location');
 
             // Attempt to fetch Place Details if placeId exists and not cached
             if (placeId && !isNaN(lat) && !isNaN(lng)) {
@@ -1206,13 +1316,31 @@
                 console.error("AdvancedMarkerElement class not loaded.");
                 return;
             }
+			
+			// Create a basic PinElement for a more consistent look with other markers
+            const PinElement = google.maps.marker.PinElement;
+            let markerContent = null;
+            if (PinElement) {
+                try {
+                    const pinElement = new PinElement({
+                        background: '#FF0000', // Red for generic
+                        borderColor: '#A00000',
+                        glyph: '', // No glyph for basic
+                        scale: 0.8 // Slightly smaller
+                    });
+                    markerContent = pinElement.element;
+                } catch(e) {
+                    console.warn("Could not create PinElement for basic marker, using default.", e);
+                }
+            }
+
             const marker = new AdvancedMarkerElement({
                     position: position,
                     map: map,
                     title: name,
-                    // Basic marker uses default appearance (red pin)
+                    content: markerContent // Use PinElement or default if null
                 });
-                markers.push(marker); // Keep track of the marker
+                markers.push(marker); 
 
             // Create InfoWindow content (without photo initially)
                 const infoWindowContent = `
@@ -1250,7 +1378,8 @@
                 'location',             // New geometry field (lat/lng)
                 'svgIconMaskURI',          // New icon URL field
                 'iconBackgroundColor',  // New icon background color field
-                'googleMapsURI'
+                'googleMapsURI',
+                'types'
             ];
 
             try {
@@ -1276,31 +1405,56 @@
                 const lat = placeVisit.location.latitudeE7 / 1e7;
                 const lng = placeVisit.location.longitudeE7 / 1e7;
                 renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-                updateSidebarItem(index, fallbackName, null); // Update sidebar with fallback name
+                updateSidebarItem(index, fallbackName, null, []); // Update sidebar with fallback name
             }
         }
 
 
         // Updates the corresponding sidebar item's name and icon
-        function updateSidebarItem(index, locationName, svgIconMaskURI) {
+        function updateSidebarItem(index, locationName, svgIconMaskURI, placeTypes) {
             const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-            if (sidebarItem) {
+            if (sidebarItem && sidebarItem.classList.contains('place-visit-item')) { // Only update place visit items
                 const nametag = sidebarItem.querySelector('.nametag');
                 if (nametag) nametag.textContent = locationName;
 
                 const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
                 if (iconContainer) {
-                    // Use icon if available, otherwise default pin
-                    iconContainer.innerHTML = svgIconMaskURI ? `<img src="${svgIconMaskURI}" alt="Icon" style="width: 20px; height: 20px; vertical-align: middle; border-radius: 50%;">` : '📍';
+                    let finalIconHtml;
+                    let finalBorderColor;
+
+                    if (svgIconMaskURI && !svgIconMaskURI.includes('generic')) {
+                        // Try to use Google's icon if available, potentially with a background color derived from types
+                        const styleFromTypes = getPlaceStyle(placeTypes);
+                        finalIconHtml = `<span class="timeline-icon-svg" style="mask: url('${svgIconMaskURI}') no-repeat center / contain; -webkit-mask: url('${svgIconMaskURI}') no-repeat center / contain; background-color: ${styleFromTypes.color}">`;
+                        finalBorderColor = styleFromTypes.color; // Use color from type for border
+                    } else {
+                        // Fallback to type-based emoji and color
+                        const placeStyle = getPlaceStyle(placeTypes);
+                        finalIconHtml = placeStyle.icon;
+                        finalBorderColor = placeStyle.color;
+                    }
+                    iconContainer.innerHTML = finalIconHtml;
+                    iconContainer.style.borderColor = finalBorderColor;
+                    sidebarItem.style.setProperty('--activity-color', finalBorderColor); // Update CSS var for the vertical line
                 }
             }
         }
 
 		// Renders the marker and InfoWindow using fetched Place Details (new API)
 		async function renderPlaceDetails(place, placeVisit, index) {
-            // Use new field names from the Place object
-            const locationName = place.displayName || placeVisit.location.name || (placeVisit.location.semanticType === "TYPE_HOME" ? "Home" : 'Unknown Location');
-            const position = place.location; // Directly use the LatLngLiteral
+            // Determine the display name, prioritizing "Home" or "Work" if applicable
+            let displayName = place.displayName;
+            const originalSemanticType = placeVisit.location.semanticType; // From original data (e.g., TYPE_HOME or "Home")
+            if (originalSemanticType) {
+                const upperSemanticType = originalSemanticType.toUpperCase();
+                if (upperSemanticType === "HOME" || upperSemanticType === "TYPE_HOME") {
+                    displayName = "Home";
+                } else if (upperSemanticType === "WORK" || upperSemanticType === "TYPE_WORK") {
+                    displayName = "Work";
+                }
+            }
+            const locationName = displayName || placeVisit.location.name || 'Unknown Location';
+            const position = place.location; 
             const placeId = place.id; // Use place.id
 
             // --- Create Marker ---
@@ -1312,27 +1466,32 @@
 
             let markerContent;
             // Use PinElement if icon data is available
-            if (place.svgIconMaskURI && place.iconBackgroundColor) {
+            if (place.svgIconMaskURI && !place.svgIconMaskURI.includes('generic') && place.iconBackgroundColor) {
                 try {
                     const pinGlyph = document.createElement('img');
                     pinGlyph.src = place.svgIconMaskURI;
                     pinGlyph.style.width = '18px';
                     pinGlyph.style.height = '18px';
+                    //pinGlyph.style.filter = 'invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(200%) contrast(100%)'; // Make glyph white
 
                     const pinElement = new PinElement({
                         background: place.iconBackgroundColor,
                         glyph: pinGlyph, // Use the img element as glyph
-                        // glyphColor: '#FFFFFF', // Glyph color might not be needed if using image
+                        glyphColor: '#FFFFFF', // Glyph color might not be needed if using image
                         borderColor: '#505050', // Example border color
                         scale: 1.0
                     });
                     markerContent = pinElement.element;
-                } catch (e) {
+				} catch (e) {
                     console.warn("Could not create PinElement with image glyph, using default marker:", e);
-                    markerContent = null; // Fallback to default marker rendering below
+                    // Fallback: create a simpler PinElement without glyph if image fails
+                    const fallbackPin = new PinElement({ background: place.iconBackgroundColor || '#4285F4', scale: 0.8 });
+                    markerContent = fallbackPin.element;
                 }
             } else {
-                 markerContent = null; // Use default marker if no icon data
+                 // Fallback if no icon URI or background color - use a generic colored pin
+                 const fallbackPin = new PinElement({ background: '#ce5140', scale: 0.9 }); // Default
+                 markerContent = fallbackPin.element;
             }
 
             // Create the Advanced Marker
@@ -1383,7 +1542,7 @@
             infoWindows.push(infoWindow);
 
             // Update sidebar item appearance using new svgIconMaskURI
-            updateSidebarItem(index, locationName, place.svgIconMaskURI);
+            updateSidebarItem(index, locationName, place.svgIconMaskURI, place.types || []);
 
             // Add listeners
             const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
@@ -1397,22 +1556,26 @@
         // Renders an activity segment as a polyline on the map
         function renderActivitySegment(activitySegment, index) {
             let path = [];
-            const startLat = activitySegment.startLocation?.latitudeE7 / 1e7;
-            const startLng = activitySegment.startLocation?.longitudeE7 / 1e7;
-            const endLat = activitySegment.endLocation?.latitudeE7 / 1e7;
-            const endLng = activitySegment.endLocation?.longitudeE7 / 1e7;
+            const startLat = activitySegment.startLocation?.latitudeE7 / 1e7 || activitySegment.startLocation?.lat; // Support direct lat/lng too
+            const startLng = activitySegment.startLocation?.longitudeE7 / 1e7 || activitySegment.startLocation?.lng;
+            const endLat = activitySegment.endLocation?.latitudeE7 / 1e7 || activitySegment.endLocation?.lat;
+            const endLng = activitySegment.endLocation?.longitudeE7 / 1e7 || activitySegment.endLocation?.lng;
 
             // Add start point if valid
             if (!isNaN(startLat) && !isNaN(startLng)) path.push({ lat: startLat, lng: startLng });
 
-            // Add intermediate points from available path sources
-            let intermediatePoints = activitySegment.simplifiedRawPath?.points || activitySegment.timelinePath?.points || activitySegment.waypointPath?.waypoints || [];
-            intermediatePoints.forEach(point => {
-                // Handle different point structures (E7 vs direct lat/lng) if necessary
-                const pLat = point.latE7 !== undefined ? point.latE7 / 1e7 : point.lat;
-                const pLng = point.lngE7 !== undefined ? point.lngE7 / 1e7 : point.lng;
-                if (!isNaN(pLat) && !isNaN(pLng)) path.push({ lat: pLat, lng: pLng });
-            });
+            // Handle intermediate points from various possible path sources
+            let intermediatePoints = activitySegment.simplifiedRawPath?.points || 
+                                     activitySegment.timelinePath?.points || 
+                                     activitySegment.waypointPath?.waypoints || 
+                                     activitySegment.path; // For directly provided path in transformed iOS data
+            if (intermediatePoints) {
+                intermediatePoints.forEach(point => {
+                    const pLat = point.latE7 !== undefined ? point.latE7 / 1e7 : point.lat;
+                    const pLng = point.lngE7 !== undefined ? point.lngE7 / 1e7 : point.lng;
+                    if (!isNaN(pLat) && !isNaN(pLng)) path.push({ lat: pLat, lng: pLng });
+                });
+            }
 
              // Add end point if valid and different from last intermediate point
              if (!isNaN(endLat) && !isNaN(endLng)) {
@@ -1428,7 +1591,7 @@
                  return;
             }
 
-            const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
+            const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities[0]?.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
 
             const polyline = new google.maps.Polyline({
                 path: path,
@@ -1570,7 +1733,7 @@
 
                 // Scroll sidebar item into view
                 if (timelineItem) {
-                    timelineItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    timelineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             });
         }
@@ -1621,7 +1784,7 @@
                     item.classList.add('highlighted');
                     // Scroll into view if not already visible
                     if (!isElementInViewport(item)) {
-                        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 } else {
                     item.classList.remove('highlighted');
@@ -1759,7 +1922,7 @@
                     } else if (item.activitySegment) { // Standard format
                         itemStartTime = item.activitySegment.duration?.startTimestamp;
                         itemEndTime = item.activitySegment.duration?.endTimestamp;
-                    } else if (item.visit) { // iOS format (check start/end Time at top level)
+                    } else if (item.visit || item.activity){ // iOS format (check start/end Time at top level)
                         itemStartTime = item.startTime;
                         itemEndTime = item.endTime;
                     }
@@ -1779,11 +1942,17 @@
 
                     // Apply layer filters
                     if ((item.placeVisit || item.visit) && !document.getElementById('showVisits').checked) return false; // Check both visit types
-                    if (item.activitySegment && !document.getElementById('showActivities').checked) return false;
-
-                    // Apply specific activity type filters
-                    if (item.activitySegment) {
-						const activityType = item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN';
+                    // Check for activitySegment OR the iOS top-level activity
+                    const currentActivitySegment = item.activitySegment || (item.activity ? item : null);
+                    if (currentActivitySegment) { // If it's an activity type
+                        if (!document.getElementById('showActivities').checked) return false;
+                        
+                        // Use activityType from activitySegment or directly from iOS item.activity.topCandidate.type
+                        const activityType = currentActivitySegment.activitySegment?.activityType || // Standard
+                                             (currentActivitySegment.activitySegment?.activities && currentActivitySegment.activitySegment.activities[0]?.activityType) || // Standard with activities array
+                                             (currentActivitySegment.activitySegment?.waypointPath && currentActivitySegment.activitySegment.waypointPath.travelMode) || // Standard waypoint
+                                             currentActivitySegment.activity?.topCandidate?.type || // iOS
+                                             'UNKNOWN';
                         const groupedType = getGroupedActivityType(activityType);
                         const filterCheckbox = document.getElementById(`filter-${groupedType}`);
                         if (filterCheckbox && !filterCheckbox.checked) return false;
@@ -1808,10 +1977,17 @@
                         let latLng;
                         if (item.placeVisit) {
                             latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
-                        } else if (item.visit && item.visit.latLng) { // Use pre-calculated latLng for iOS format if available
-                            latLng = item.visit.latLng;
-                        } else if (item.activitySegment && item.activitySegment.startLocation) {
-                            latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
+                        } else if (item.visit) { // iOS visit
+                            const geo = parseGeoString(item.visit.topCandidate?.placeLocation);
+                            if (geo) latLng = geo;
+                            else if (item.visit.centerLatE7 && item.visit.centerLngE7) latLng = {lat: item.visit.centerLatE7 / 1e7, lng: item.visit.centerLngE7 / 1e7};
+                        } else if (item.activitySegment) { // Standard activity
+                            if (item.activitySegment.startLocation) {
+                                latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
+                            }
+                        } else if (item.activity) { // iOS activity
+                            const geo = parseGeoString(item.activity.start);
+                            if (geo) latLng = geo;
                         }
                         if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
                             map.setCenter(latLng);
@@ -1825,11 +2001,16 @@
                     document.getElementById('timeline').appendChild(timelineItem);
 
                     // Render corresponding map elements (marker or polyline)
-                    if (item.placeVisit || item.visit) { // Handle both visit types
-                         // Pass the correct object structure to renderPlaceVisit
-                        renderPlaceVisit(item.placeVisit ? item.placeVisit : item, globalIndex);
-                    } else if (item.activitySegment) {
+					if (item.placeVisit || item.visit) { 
+                        renderPlaceVisit(item, globalIndex); // Pass the whole item
+                    } else if (item.activitySegment) { // Standard activity segment
                         renderActivitySegment(item.activitySegment, globalIndex);
+                    } else if (item.activity) { // Transformed iOS activity now looks like an activitySegment
+                        // This case should be handled by readFilesFromDirectory transforming iOS activities
+                        // into the { activitySegment: ... } structure.
+                        // If an item with a direct 'activity' property reaches here, it means transformation might have been missed
+                        // or the structure is unexpected. For now, we assume it's already transformed.
+                        console.warn("Direct iOS activity object encountered in loadTimelineDataForDate. Expected transformed activitySegment.", item);
                     }
                     globalIndex++; // Increment global index for unique identification
                 });
@@ -1839,7 +2020,7 @@
 
 
         // Loads data for a range of dates, clearing previous data first
-        async function loadTimelineDataInDateRange(startDate, endDate) {
+        async function loadTimelineDataInDateRange(startDate, endDate, showRangeWarning = true) {
              // Ensure map is visible when loading data range
              if (summaryViewVisible) {
                  document.getElementById('summaryView').style.display = 'none';
@@ -1849,6 +2030,17 @@
              }
 
             if (!uiEnabled) return;
+            
+			// the main check is with the GO button. other calls (like filter changes) don't need another warning
+			// this only creates a console warning atm
+			if (showRangeWarning) {
+				const startMoment = moment.utc(startDate);
+				const endMoment = moment.utc(endDate);
+				const dayDifference = endMoment.diff(startMoment, 'days');
+				if (dayDifference > 62) {
+					console.log("Date range warning check in loadTimelineDataInDateRange, difference:", dayDifference);
+				}
+			}
 
             clearMap();
             clearTimeline();
@@ -1978,7 +2170,7 @@
                          } else if (item.activitySegment) {
                              itemStartTime = item.activitySegment.duration?.startTimestamp;
                              itemEndTime = item.activitySegment.duration?.endTimestamp;
-                         } else if (item.visit) {
+                         } else if (item.visit || item.activity) { // iOS top-level
                              itemStartTime = item.startTime;
                              itemEndTime = item.endTime;
                          }
@@ -2003,7 +2195,7 @@
                              const distanceKm = distanceMeters * kmConversion;
                              if (distanceKm > 0) {
                                  summary.distanceKm += distanceKm;
-                                 const activityType = segment.activityType || (segment.activities && segment.activities.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
+                                 const activityType = segment.activityType || (segment.activities && segment.activities[0]?.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
                                  const groupedType = getGroupedActivityType(activityType);
                                  summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceKm;
                              }
@@ -2210,126 +2402,157 @@
         // --- UI Initialization and Event Listeners ---
 
         // Initializes the date picker controls and listeners
-        function initDatePicker() {
-            const startDatePicker = document.getElementById('startDatePicker');
-            const endDatePicker = document.getElementById('endDatePicker');
-            const prevDayBtn = document.getElementById('prevDayBtn');
-            const nextDayBtn = document.getElementById('nextDayBtn');
-            const goBtn = document.getElementById('goBtn');
+		function initDatePicker() {
+			const startDatePicker = document.getElementById('startDatePicker');
+			const endDatePicker = document.getElementById('endDatePicker');
+			const prevDayBtn = document.getElementById('prevDayBtn');
+			const nextDayBtn = document.getElementById('nextDayBtn');
+			const goBtn = document.getElementById('goBtn');
 
-            // Set initial dates to today
-            const today = moment().format('YYYY-MM-DD');
-            startDatePicker.value = today;
-            endDatePicker.value = today;
+			// Set initial dates to today
+			const today = moment().format('YYYY-MM-DD');
+			startDatePicker.value = today;
+			endDatePicker.value = today;
 
-            // Function to navigate days using arrow buttons
-            const navigateDays = (days) => {
-                if (!uiEnabled) return;
-                const startMoment = moment.utc(startDatePicker.value).add(days, 'days');
-                const endMoment = moment.utc(endDatePicker.value).add(days, 'days');
+			// Function to navigate days using arrow buttons
+			const navigateDays = (days) => {
+				if (!uiEnabled) return;
 
-                // Ensure start date is not after end date (can happen if range was > 1 day)
-                // If moving back, the end date should also move back by the same amount
-                // If moving forward, the end date should also move forward by the same amount
-                // The difference between start and end should remain constant.
-                const originalStart = moment.utc(startDatePicker.value);
-                const originalEnd = moment.utc(endDatePicker.value);
-                const diffDays = originalEnd.diff(originalStart, 'days');
+				// Ensure start date is not after end date (can happen if range was > 1 day)
+				// If moving back, the end date should also move back by the same amount
+				// If moving forward, the end date should also move forward by the same amount
+				// The difference between start and end should remain constant.
+				const originalStart = moment.utc(startDatePicker.value);
+				const originalEnd = moment.utc(endDatePicker.value);
+				const diffDays = originalEnd.diff(originalStart, 'days');
 
-                const newStart = moment.utc(startDatePicker.value).add(days, 'days');
-                const newEnd = newStart.clone().add(diffDays, 'days'); // Maintain original range duration
+				const newStart = moment.utc(startDatePicker.value).add(days, 'days');
+				const newEnd = newStart.clone().add(diffDays, 'days'); // Maintain original range duration
 
-                startDatePicker.value = newStart.format('YYYY-MM-DD');
-                endDatePicker.value = newEnd.format('YYYY-MM-DD');
+				startDatePicker.value = newStart.format('YYYY-MM-DD');
+				endDatePicker.value = newEnd.format('YYYY-MM-DD');
 
-                // Load data for the new range
-                loadTimelineDataInDateRange(newStart.toDate(), newEnd.toDate());
-            };
+				// Load data for the new range (without the 62-day warning for arrow navigation)
+				loadTimelineDataInDateRange(newStart.toDate(), newEnd.toDate(), false); // Pass false to skip warning
+			};
 
-            prevDayBtn.addEventListener('click', () => navigateDays(-1));
-            nextDayBtn.addEventListener('click', () => navigateDays(1));
+			prevDayBtn.addEventListener('click', () => navigateDays(-1));
+			nextDayBtn.addEventListener('click', () => navigateDays(1));
 
-            // GO button click handler
-            goBtn.addEventListener('click', () => {
-                if (!uiEnabled) return;
-                const startDate = moment.utc(startDatePicker.value).toDate();
-                const endDate = moment.utc(endDatePicker.value).toDate();
+			// GO button click handler
+			goBtn.addEventListener('click', () => {
+				if (!uiEnabled) return;
+				const startDate = moment.utc(startDatePicker.value); // Keep as moment object for diff
+				const endDate = moment.utc(endDatePicker.value);   // Keep as moment object for diff
 
-                // Basic validation: ensure start date is not after end date
-                if (startDate > endDate) {
-                    console.warn("Start date cannot be after end date.");
-                    alert("Start date cannot be after end date."); // User feedback
-                    // Clear map/timeline and return
-                    clearMap();
-                    clearTimeline();
-                    globalIndex = 0;
-                    placeDetailsCache = {};
-                    updateApiCallDisplay();
-                    // Clear summary data as well if needed
-                    document.getElementById('summary-selected-dates').innerHTML = '';
-                    document.getElementById('summary-years').innerHTML = '';
-                    document.getElementById('summary-months').innerHTML = '';
-                    return;
-                }
+				// Basic validation: ensure start date is not after end date
+				if (startDate.isAfter(endDate)) {
+					console.warn("Start date cannot be after end date.");
+					alert("Start date cannot be after end date."); // User feedback
+					// Clear map/timeline and return
+					clearMap();
+					clearTimeline();
+					globalIndex = 0;
+					placeDetailsCache = {};
+					updateApiCallDisplay();
+					// Clear summary data as well if needed
+					document.getElementById('summary-selected-dates').innerHTML = '';
+					document.getElementById('summary-years').innerHTML = '';
+					document.getElementById('summary-months').innerHTML = '';
+					return;
+				}
 
-                loadTimelineDataInDateRange(startDate, endDate);
-            });
-        }
+				// Warn if date range is more than 62 days
+				const dayDifference = endDate.diff(startDate, 'days');
+				if (dayDifference > 62) {
+					const userConfirmation = confirm(`The selected date range is ${dayDifference + 1} days. Loading this much data might cause a large number of API calls. Do you want to continue?`);
+					if (!userConfirmation) {
+						return; // User cancelled
+					}
+				}
+
+				loadTimelineDataInDateRange(startDate.toDate(), endDate.toDate(), true); // Pass true or remove for default warning behavior in loadTimelineDataInDateRange if needed
+			});
+		}
 
         // Populates the activity filter checkboxes based on loaded data
-        function populateActivityFilters() {
-            const activityFilters = document.getElementById('activityFilters');
-            activityFilters.innerHTML = ''; // Clear existing filters
+		function populateActivityFilters() {
+			const activityFilters = document.getElementById('activityFilters');
+			activityFilters.innerHTML = ''; // Clear existing filters
 
-            // Collect unique *grouped* activity types from all loaded data
-            const uniqueGroupedTypes = new Set();
-            Object.values(timelineData).forEach(monthData => {
-                monthData.timelineObjects?.forEach(item => {
-                    if (item.activitySegment) {
-						const activityType = item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN';
-                        uniqueGroupedTypes.add(getGroupedActivityType(activityType));
-                    }
-                });
-            });
+			// Collect unique *grouped* activity types from all loaded data
+			const uniqueGroupedTypes = new Set();
+			Object.values(timelineData).forEach(monthData => {
+				monthData.timelineObjects?.forEach(item => {
+					let rawActivityType = 'UNKNOWN'; // Default
 
-            // Sort types alphabetically, putting UNKNOWN last
-            const sortedGroupedTypes = Array.from(uniqueGroupedTypes).sort((a, b) => {
-                if (a === 'UNKNOWN') return 1; // Move UNKNOWN to the end
-                if (b === 'UNKNOWN') return -1;
-                return a.localeCompare(b); // Alphabetical sort for others
-            });
+					// After readFilesFromDirectory, both standard Google Takeout data and
+					// transformed iOS data should have an item.activitySegment structure.
+					if (item.activitySegment) {
+						rawActivityType = item.activitySegment.activityType ||
+										 (item.activitySegment.activities && item.activitySegment.activities[0]?.activityType) ||
+										 (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) ||
+										 'UNKNOWN'; // Default if no specific type found within activitySegment
+					}
+					// This else if block is a fallback for data that might not have been transformed as expected,
+					else if (item.activity?.topCandidate?.type) { // Check for raw iOS-like structure if no activitySegment
+						// console.warn("Encountered item.activity structure directly in populateActivityFilters. Data might not be fully transformed:", JSON.stringify(item).substring(0,200));
+						rawActivityType = item.activity.topCandidate.type;
+					}
+					let processedActivityType;
+					if (typeof rawActivityType === 'string') {
+						processedActivityType = rawActivityType.trim().toUpperCase();
+					}
 
-            // Create checkboxes for each type (excluding STATIONARY)
-            sortedGroupedTypes.forEach(groupType => {
-                if (groupType === 'STATIONARY') return; // Skip STATIONARY filter
+					// If rawActivityType was not a string, or became empty after trim, default to 'UNKNOWN'
+					if (!processedActivityType) {
+						processedActivityType = 'UNKNOWN';
+					}
 
-                const label = document.createElement('label');
-                label.className = 'layer-option';
-                const formattedName = groupType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+					const groupedType = getGroupedActivityType(processedActivityType);
 
-                label.innerHTML = `
-                     <input type="checkbox" id="filter-${groupType}" class="layer-checkbox activity-filter-checkbox" checked data-group-type="${groupType}">
-                     <span style="color:${getActivityColor(groupType)}; margin-right: 4px;">${getActivityIcon(groupType)}</span>
-                     ${formattedName}
-                 `;
-                activityFilters.appendChild(label);
+					uniqueGroupedTypes.add(groupedType);
+				});
+			});
 
-                // Add event listener to reload data when filter changes
-                const checkbox = label.querySelector('input');
-                checkbox.addEventListener('change', () => {
-                    if (!uiEnabled) return;
+			// Sort types alphabetically, putting UNKNOWN last
+			const sortedGroupedTypes = Array.from(uniqueGroupedTypes).sort((a, b) => {
+				if (a === 'UNKNOWN') return 1; // Move UNKNOWN to the end
+				if (b === 'UNKNOWN') return -1;
+				return a.localeCompare(b); // Alphabetical sort for others
+			});
 
-                    // Update the main "Show Activities" checkbox based on individual filters
-                    const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
-                    document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
+			// Create checkboxes for each type (excluding STATIONARY)
+			sortedGroupedTypes.forEach(groupType => {
+				if (groupType === 'STATIONARY') return; // Skip STATIONARY filter
 
-                    // Reload data with current date range and new filters
-                    const startDate = new Date(document.getElementById('startDatePicker').value);
-                    const endDate = new Date(document.getElementById('endDatePicker').value);
-                    loadTimelineDataInDateRange(startDate, endDate);
-                });
-            });
-        }
+				const label = document.createElement('label');
+				label.className = 'layer-option';
+				const formattedName = groupType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+				label.innerHTML = `
+					 <input type="checkbox" id="filter-${groupType}" class="layer-checkbox activity-filter-checkbox" checked data-group-type="${groupType}">
+					 <span style="color:${getActivityColor(groupType)}; margin-right: 4px;">${getActivityIcon(groupType)}</span>
+					 ${formattedName}
+				 `;
+				activityFilters.appendChild(label);
+
+				// Add event listener to reload data when filter changes
+				const checkbox = label.querySelector('input');
+				checkbox.addEventListener('change', () => {
+					if (!uiEnabled) return;
+
+					// Update the main "Show Activities" checkbox based on individual filters
+					const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
+					document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
+
+					// Reload data with current date range and new filters
+					const startDate = new Date(document.getElementById('startDatePicker').value);
+					const endDate = new Date(document.getElementById('endDatePicker').value);
+					loadTimelineDataInDateRange(startDate, endDate, false);
+				});
+			});
+		}
 
         // Initializes the layer button and its options panel
         function initLayerButton() {
@@ -2541,52 +2764,72 @@
                     console.log("Found Timeline.json, attempting to parse...");
                     const file = await timelineJsonFile.getFile();
                     const content = await file.text();
-                    const data = JSON.parse(content);
-                    const processedData = {}; // Temporary structure for grouping
+                    const jsonData = JSON.parse(content); // Renamed to jsonData to avoid conflict
+                    const processedData = {}; 
 
                     // --- Handle iOS JSON Array Format ---
-                    if (Array.isArray(data)) {
+                    if (Array.isArray(jsonData)) {
                         dataSourceText = 'Local Timeline.json (iOS Format)';
                         console.log('Processing iOS Format Timeline.json...');
-                        data.forEach(item => {
-                            // Basic validation for essential fields
-                            if (!item || !item.startTime || !item.endTime || !item.visit) return;
+                        jsonData.forEach(item => {
+                            if (!item || !item.startTime || !item.endTime) return; // Basic check
 
                             const startTimestamp = item.startTime;
                             const date = new Date(startTimestamp);
-                            if (isNaN(date.getTime())) return; // Skip invalid dates
-
-                            // Pre-calculate lat/lng if possible for map centering
-                            try {
-                                if (item.visit.centerLatE7 && item.visit.centerLngE7) {
-                                    item.visit.latLng = {
-                                        lat: item.visit.centerLatE7 / 1e7,
-                                        lng: item.visit.centerLngE7 / 1e7
-                                    };
-                                } else if (item.visit.location?.latitudeE7 && item.visit.location?.longitudeE7) {
-                                     item.visit.latLng = {
-                                        lat: item.visit.location.latitudeE7 / 1e7,
-                                        lng: item.visit.location.longitudeE7 / 1e7
-                                    };
-                                }
-                            } catch (e) { console.warn("Could not pre-calculate lat/lng for iOS item:", item, e); }
+                            if (isNaN(date.getTime())) return; 
 
                             const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
                             if (!processedData[key]) processedData[key] = { timelineObjects: [] };
-                            // Store the original item structure, render function will adapt
-                            processedData[key].timelineObjects.push(item);
 
-                            // Collect activity types if present (though less common in this format)
-                            if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
+                            let processedItem = { ...item }; // Clone item to avoid modifying original if needed elsewhere
+
+                            if (item.visit) { // iOS Visit Object
+                                // No specific transformation needed here for 'visit' itself,
+                                // downstream functions (createTimelineItem, renderPlaceVisit) will handle its structure.
+                                // Ensure lat/lng parsing happens in renderPlaceVisit for 'geo:' string
+                                if (item.visit.topCandidate?.placeLocation) {
+                                   // console.log("iOS visit with placeLocation:", item.visit.topCandidate.placeLocation);
+                                }
+                            } else if (item.activity) { // iOS Activity Object
+                                const activityData = item.activity;
+                                const transformedActivity = {
+                                    duration: { startTimestamp: item.startTime, endTimestamp: item.endTime },
+                                    activityType: activityData.topCandidate?.type?.toUpperCase() || 'UNKNOWN',
+                                    distance: activityData.distanceMeters ? parseFloat(activityData.distanceMeters) : 0,
+                                    startLocation: {},
+                                    endLocation: {},
+                                    // No direct path data in iOS spec, so simplifiedRawPath will be empty or rely on start/end
+                                    simplifiedRawPath: { points: [] } 
+                                };
+
+                                const startGeo = parseGeoString(activityData.start);
+                                if (startGeo) {
+                                    transformedActivity.startLocation = { latitudeE7: startGeo.lat * 1e7, longitudeE7: startGeo.lng * 1e7, lat: startGeo.lat, lng: startGeo.lng };
+                                    transformedActivity.simplifiedRawPath.points.push({lat: startGeo.lat, lng: startGeo.lng});
+                                }
+                                const endGeo = parseGeoString(activityData.end);
+                                if (endGeo) {
+                                    transformedActivity.endLocation = { latitudeE7: endGeo.lat * 1e7, longitudeE7: endGeo.lng * 1e7, lat: endGeo.lat, lng: endGeo.lng };
+                                    // Ensure end point is added to path if different from start
+                                    if (!startGeo || (startGeo.lat !== endGeo.lat || startGeo.lng !== endGeo.lng)) {
+                                       transformedActivity.simplifiedRawPath.points.push({lat: endGeo.lat, lng: endGeo.lng});
+                                    }
+                                }
+                                // Replace the original item with the transformed activitySegment structure
+                                processedItem = { activitySegment: transformedActivity };
+                                activityTypes.add(transformedActivity.activityType);
+                            }
+                            processedData[key].timelineObjects.push(processedItem);
                         });
-                        timelineData = processedData; // Assign grouped data
+                        timelineData = processedData; 
                         console.log('iOS Format Timeline.json processed successfully.');
 
+
                     // --- Handle Standard Timeline Object Format ---
-                    } else if (data.timelineObjects) {
+                    } else if (jsonData.timelineObjects) {
                         dataSourceText = 'Local Timeline.json (Standard Format)';
                         console.log('Processing Standard Format Timeline.json...');
-                        data.timelineObjects.forEach(item => {
+                        jsonData.timelineObjects.forEach(item => {
                             const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
                             if (!timestamp) return;
                             const date = new Date(timestamp);
@@ -2595,17 +2838,20 @@
                             if (!processedData[key]) processedData[key] = { timelineObjects: [] };
                             processedData[key].timelineObjects.push(item);
                             if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
+							else if (item.activitySegment?.activities && item.activitySegment.activities[0]?.activityType) {
+                                activityTypes.add(item.activitySegment.activities[0].activityType);
+                            }
                         });
                         timelineData = processedData; // Assign grouped data
                         console.log('Standard Format Timeline.json processed successfully.');
 
                     // --- Handle Semantic History Format ---
-                    } else if (data.semanticSegments) {
+                    } else if (jsonData.semanticSegments) {
                         dataSourceText = 'Local Timeline.json (Semantic Format)';
                         console.log('Processing Semantic History format...');
                          // Populate the timelinePath points from every timelinePath object first
                          const allPathPoints = []; // Array to hold all path points with time
-                         data.semanticSegments.forEach(segment => {
+                         jsonData.semanticSegments.forEach(segment => {
                              if (segment.timelinePath) {
                                  segment.timelinePath.forEach(point => {
                                      try {
@@ -2632,7 +2878,7 @@
                          allPathPoints.sort((a, b) => moment(a.time).valueOf() - moment(b.time).valueOf());
                          let pathPointPointer = 0; // Pointer for efficient matching
 
-                         const processedTimelineObjects = data.semanticSegments.map(segment => {
+                         const processedTimelineObjects = jsonData.semanticSegments.map(segment => {
                              const startTime = segment.startTime;
                              const endTime = segment.endTime;
                              if (!startTime || !endTime) return null;
@@ -2698,6 +2944,7 @@
                                          // timestampMs: pointTime.valueOf() // Optional: add timestamp if needed later
                                      });
                                  }
+                                 activityTypes.add(activitySegment.activityType);
                                  return { activitySegment: activitySegment };
                              }
                              return null; // Return null for segments that can't be processed
@@ -2743,7 +2990,9 @@
                                     data.timelineObjects.forEach(item => {
                                         if (item.activitySegment?.activityType) {
                                             activityTypes.add(item.activitySegment.activityType);
-                                        }
+                                        } else if (item.activitySegment?.activities && item.activitySegment.activities[0]?.activityType) {
+                                            activityTypes.add(item.activitySegment.activities[0].activityType.toUpperCase());
+										}
                                     });
                                 } else {
                                     console.warn(`Skipping file ${entry.name}: Does not contain 'timelineObjects'.`);
@@ -2838,16 +3087,23 @@
         }
 
         // --- Window Load ---
-        window.onload = async () => { // Make onload async
-            // Replace with your actual API key
-            const apiKeyScript = document.querySelector('script[src*="YOUR_API_KEY"]');
-            if (apiKeyScript && apiKeyScript.src.includes("YOUR_API_KEY")) { // Check if placeholder is still there
-                alert("Please replace 'YOUR_API_KEY' in the HTML script tag with your actual Google Maps API Key.");
-                return; // Stop execution if key is placeholder
+        window.onload = async () => { 
+            // Check if the API key placeholder is still present
+            if (window.GOOGLE_MAPS_API_KEY === "YOUR_API_KEY") {
+                alert("Please replace 'YOUR_API_KEY' in the HTML (near the top of the <script> block) with your actual Google Maps API Key.");
+                // Optionally, disable functionality or hide the map
+                document.getElementById('howToMessage').innerHTML = "<h3>Configuration Error</h3><p>Please set your Google Maps API key in the HTML file to use this tool.</p>";
+                document.getElementById('howToMessage').style.display = "block";
+                // Disable controls if API key is not set
+                setUIEnabled(false); 
+                const folderPicker = document.getElementById('folderPicker');
+                if(folderPicker) folderPicker.disabled = true; // Also disable folder picker explicitly
+                return; // Stop further execution
             }
 
+
             try {
-                initMap();
+                await initMap();
                 initDatePicker();
                 initFolderPicker(); // This now checks for browser support
                 initLayerButton();
