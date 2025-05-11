@@ -11,7 +11,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 
 
 ### Features:
-- Supports both Google Takeout data and new (as of late 2024) On-Device data file
+- Supports both Google Takeout data and On-Device data file (Android or iOS)
 - Timeline and map view
 - Place info and icons
 - Duration of visits ; distance traveled
@@ -20,6 +20,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - View multiple days at once
 - Toggle layers on and off, eg to view only places without the travel paths
 - Summary of activities by year/month
+- Place details retrieved from Google Places API can be saved locally, to reduce future API calls
   
 #
 
