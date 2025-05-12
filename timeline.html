@@ -303,7 +303,13 @@
             border-bottom: 1px solid #dee2e6;
             font-size: 14px;
             color: #192027;
+            cursor: pointer; /* Show clickable cursor */
+            transition: background-color 0.2s ease;
         }
+        #timeline .date-header:hover {
+            background-color: #bbbbbb; /* Slightly darker on hover */
+        }
+
         .timeline-item {
             display: flex;
             align-items: flex-start;
@@ -1120,6 +1126,17 @@
                 dateHeader.className = 'date-header';
                 dateHeader.dataset.date = currentDate;
                 dateHeader.textContent = moment(currentDate).format('dddd, MMMM DD, YYYY'); // Format date nicely
+                                  dateHeader.style.cursor = 'pointer'; // Make it look clickable
+                                  // Add click event to select this specific day
+                                  dateHeader.addEventListener('click', () => {
+                                      // Set both date pickers to this specific date
+                                      const formattedDate = moment(currentDate).format('YYYY-MM-DD');
+                                      document.getElementById('startDatePicker').value = formattedDate;
+                                      document.getElementById('endDatePicker').value = formattedDate;
+                                      // Load this specific day
+                                      const selectedDate = new Date(formattedDate);
+                                      loadTimelineDataInDateRange(selectedDate, selectedDate);
+                                  });
                 // Insert header before the first item of the day or at the end if no items yet
                 const firstItemOfDay = document.querySelector(`.timeline-item[data-item-date="${currentDate}"]`);
                 if (firstItemOfDay) {
