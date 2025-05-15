@@ -34,7 +34,7 @@ Setup procedure:
 
 2. **Select Data to Include:**
     - Click "Deselect all".
-    - Scroll down and select **Location History**. (The default format is JSON, which is what we want.)
+    - Scroll down and select **Timeline**. (The default format is JSON, which is what we want.)
     - Click "Next step".
 
 3. **Customize Export Format:**
