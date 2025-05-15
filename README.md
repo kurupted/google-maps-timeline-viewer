@@ -26,9 +26,12 @@ If you're like me, you have years worth of timeline data that you want to be abl
 
 Setup procedure:
 
+## Get Your Data: Option 1, On-Device data export
+1. Open the Maps app, go to your Timeline, and click ~~the export icon~~ the three dots in the top right, then "Location & privacy settings". Click where it says "Location is on", then click "Location services". Click "Timeline", then "Export Timeline data". Save the file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
+2. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
 
-
-## Get Your Data: Option 1, Google Takeout (for data prior to the change to on-device)
+   
+## Get Your Data: Option 2, Google Takeout (No longer available once you've started using on-device data)
 1. **Go to Google Takeout:**
     - Visit [Google Takeout](https://takeout.google.com/).
 
@@ -44,11 +47,8 @@ Setup procedure:
 4. **Download the Export:**
     - Once the export is ready, download the file.
     - Extract the archive to anywhere you like, eg My Documents.
+    - Ensure that the archive contained a folder called "Location History (Timeline)". If not, you'll need to use on-device data, as described above. (Note that "Timeline Edits.json" is *not* the same as the "Timeline.json" that comes from your device.)
   
-## Get Your Data: Option 2, On-Device data export
-1. Open the Maps app, go to your Timeline, and click ~~the export icon~~ the three dots in the top right, then "Location & privacy settings". Click where it says "Location is on", then click "Location services". Click "Timeline", then "Export Timeline data". Save the file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
-2. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
-   
 
 ## Obtain a Google Maps API Key
 
