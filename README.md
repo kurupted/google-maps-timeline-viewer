@@ -102,4 +102,6 @@ Setup procedure:
 - Depending on what information is requested during the API call, it will fall into tiers, eg Essentials or Pro. Details here:
   https://developers.google.com/maps/billing-and-pricing/sku-details#place-details-pro-sku
 - At this time, the monthly free limits are 1,000 Place Photos, 5,000 Pro-level requests, and 10,000 Essentials-level requests.
+- There is also an option within the Timeline Viewer to disable API calls, which will still show your activity paths and place visits, however all of the places will be labeled "Unknown Location".
+- You can also save retrieved Place data to a file, which will be loaded automatically next time, to avoid API calls that were done previously.
   
