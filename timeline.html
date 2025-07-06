@@ -2910,6 +2910,42 @@
                     if (Array.isArray(jsonData)) {
                         dataSourceText = 'Local Timeline.json (iOS Format)';
                         console.log('Processing iOS Format Timeline.json...');
+                        
+                        // --- NEW: Step 1 - Pre-process timelinePath objects ---
+			console.log("Pre-processing timelinePath objects...");
+			const allPathPoints = [];
+			jsonData.forEach(item => {
+				if (item.timelinePath && Array.isArray(item.timelinePath)) {
+					// Use moment.js to parse the start time of the path chunk
+					const pathStartTime = moment(item.startTime);
+					if (!pathStartTime.isValid()) return; // Skip if start time is invalid
+
+					item.timelinePath.forEach(point => {
+						const offsetMinutes = parseInt(point.durationMinutesOffsetFromStartTime, 10);
+						if (isNaN(offsetMinutes)) return; // Skip if offset is not a number
+
+						// The existing geo string parser works perfectly here
+						const geo = parseGeoString(point.point);
+						if (!geo) return;
+
+						// Calculate the absolute timestamp for this specific point
+						const pointTimestamp = pathStartTime.clone().add(offsetMinutes, 'minutes');
+
+						allPathPoints.push({
+							timestamp: pointTimestamp,
+							lat: geo.lat,
+							lng: geo.lng
+						});
+					});
+				}
+			});
+
+			// Sort all points by time to ensure they are in chronological order
+			allPathPoints.sort((a, b) => a.timestamp - b.timestamp);
+			console.log(`Found and processed ${allPathPoints.length} total points from timelinePath.`);
+			let pathPointPointer = 0; // An optimizer for our search loop
+
+                        
                         jsonData.forEach(item => {
                             if (!item || !item.startTime || !item.endTime) return; // Basic check
 
@@ -2941,6 +2977,32 @@
                                     simplifiedRawPath: { points: [] } 
                                 };
 
+				// --- NEW: Step 2 - Associate path points with this activity ---
+				const activityStartTime = moment(item.startTime);
+				const activityEndTime = moment(item.endTime);
+
+				// Efficiently find all points from the master list that fall within this activity's timeframe
+				for (let i = pathPointPointer; i < allPathPoints.length; i++) {
+					const point = allPathPoints[i];
+
+					// Since the list is sorted, we can advance our pointer past points that are too old
+					if (point.timestamp.isBefore(activityStartTime)) {
+						pathPointPointer = i + 1;
+						continue;
+					}
+
+					// If the point is after the activity, we can stop searching for this activity
+					if (point.timestamp.isAfter(activityEndTime)) {
+						break;
+					}
+
+					// This point belongs to the current activity, so add it to the path
+					transformedActivity.simplifiedRawPath.points.push({
+						lat: point.lat,
+						lng: point.lng
+					});
+				}
+
                                 const startGeo = parseGeoString(activityData.start);
                                 if (startGeo) {
                                     transformedActivity.startLocation = { latitudeE7: startGeo.lat * 1e7, longitudeE7: startGeo.lng * 1e7, lat: startGeo.lat, lng: startGeo.lng };
@@ -2963,7 +3025,7 @@
                         timelineData = processedData; 
                         console.log('iOS Format Timeline.json processed successfully.');
 
-
+			    
                     // --- Handle Standard Timeline Object Format ---
                     } else if (jsonData.timelineObjects) {
                         dataSourceText = 'Local Timeline.json (Standard Format)';
