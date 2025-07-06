@@ -4,7 +4,7 @@
 	<!-- -----
 	 Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 	 
-	 Version: May 11, 2025
+	 Version: July 6, 2025
 	 Full details here:
 	 https://github.com/kurupted/google-maps-timeline-viewer/
 	 
@@ -20,32 +20,34 @@
 		window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
 
 		(g => {
-		  var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
-		  b = b[c] || (b[c] = {});
-		  var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, 
-			  u = () => h || (h = new Promise(async (f, n) => {
-				await (a = m.createElement("script"));
-				e.set("libraries", [...r] + "");
-				for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
-				e.set("callback", c + ".maps." + q);
-				// Use the globally stored API key
-				if (g.key) { // Check if a key was passed in the config object
-					 e.set("key", g.key);
-				}
-				a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-				d[q] = f;
-				a.onerror = () => h = n(Error(p + " could not load."));
-				a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-				m.head.append(a);
-			  }));
-		  d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
-		})
-		({ key: window.GOOGLE_MAPS_API_KEY,
-			v: "beta",
-			libraries: "places" });
-	</script>
+          var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
+          b = b[c] || (b[c] = {});
+          var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, 
+              u = () => h || (h = new Promise(async (f, n) => {
+                await (a = m.createElement("script"));
+                e.set("libraries", [...r] + "");
+                for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+                e.set("callback", c + ".maps." + q);
+                // Use the globally stored API key
+                if (g.key) { // Check if a key was passed in the config object
+                         e.set("key", g.key);
+                }
+                a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+                d[q] = f;
+                a.onerror = () => h = n(Error(p + " could not load."));
+                a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+                m.head.append(a);
+              }));
+          d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
+        })
+        ({ key: window.GOOGLE_MAPS_API_KEY,
+           v: "beta",
+           libraries: "places" });
+    </script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+
     <style>
         body, html {
             height: 100%;
@@ -82,8 +84,8 @@
 
         /* --- Control Sections (Non-scrolling) --- */
         #controls-container,
-        #layerOptions,
         #datePickerContainer,
+        #date-range-info,
         #icon-buttons-container,
         #go-container {
             padding: 10px 12px;
@@ -118,36 +120,56 @@
             cursor: not-allowed;
             color: #6c757d;
         }
-
-        /* --- Layer Options --- */
-        #layerOptions {
-            display: none; /* Initially hidden */
+        #reloadBtn {
+			display:none; /* don't need this atm */
+            flex-grow: 0; /* Don't let it grow */
+            padding: 10px;
+            background-color: #6c757d;
         }
-         #layerOptionsHeader {
+        #reloadBtn:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
+
+
+        /* --- Settings View --- */
+        #settingsView {
+            display: none; /* Initially hidden */
+            flex-grow: 1; /* Allow to fill available space */
+            overflow-y: auto; /* Make this section scrollable */
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            background-color: #ffffff;
+        }
+         #settingsHeader {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
-        #layerOptions h4 {
-            margin-top: 0;
+        #settingsView h4 {
+            margin-top: 10px;
             margin-bottom: 10px;
             font-weight: 500;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 5px;
         }
-        #layerOptions label {
+        #settingsView h4:first-of-type {
+            margin-top: 0;
+        }
+        #settingsView label {
             display: block;
             margin-bottom: 8px;
             font-size: 14px;
         }
-        .layer-option {
+        .settings-option {
             display: flex;
             align-items: center;
             margin-bottom: 5px;
         }
-        .layer-checkbox {
+        .settings-checkbox {
             margin-right: 8px;
         }
-         #closeLayerBtn {
+         #closeSettingsBtn {
             padding: 4px 10px;
             font-size: 12px;
             cursor: pointer;
@@ -156,12 +178,20 @@
             border-radius: 4px;
             color: #495057;
         }
-        #closeLayerBtn:hover {
+        #closeSettingsBtn:hover {
             background-color: #e9ecef;
         }
         #activityFilters {
             margin-left: 20px;
             padding-top: 5px;
+        }
+        #timezone-select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom:20px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            font-size: 14px;
         }
 
         /* --- Date Picker --- */
@@ -208,6 +238,25 @@
             color: #adb5bd;
             cursor: not-allowed;
         }
+        
+        /* --- Date Range Info --- */
+        #date-range-info {
+            font-size: 11px;
+            color: #6c757d;
+            text-align: center;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            min-height: 15px; /* Reserve space */
+        }
+        #date-range-info span {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+            margin: 0 5px;
+        }
+        #date-range-info span:hover {
+            color: #0056b3;
+        }
 
         /* --- Icon Buttons --- */
         #icon-buttons-container {
@@ -231,9 +280,9 @@
             border-radius: 4px;
             transition: background-color 0.2s ease, color 0.2s ease;
             display: flex; /* Align icon and text */
-			align-items: center; /* Vertically center icon and text */
-			gap: 6px; /* Space between icon and text */
-			padding: 5px 8px;
+            align-items: center; /* Vertically center icon and text */
+            gap: 6px; /* Space between icon and text */
+            padding: 5px 8px;
         }
         .icon-btn:hover:not(:disabled) {
             background-color: #e9ecef;
@@ -328,9 +377,9 @@
             font-size: 24px;
         }
         .timeline-icon-svg {
-			width: 24px;
-			height: 24px;
-			display: inline-block;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
         }
         .timeline-item-details {
             flex-grow: 1;
@@ -339,7 +388,7 @@
              font-weight: 500;
              font-size: 15px;
              color: #343a40;
-         }
+        }
         .timeline-item-details div {
             font-size: 14px;
             line-height: 1.4;
@@ -368,9 +417,9 @@
             padding-left: 10px;
         }
         .highlighted {
-        	border-color-top: #007bff !important;
-			border-color-right: #007bff !important;
-			border-color-bottom: #007bff !important;
+            border-color-top: #007bff !important;
+            border-color-right: #007bff !important;
+            border-color-bottom: #007bff !important;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.35);
         }
         .confirmed-checkmark {
@@ -432,7 +481,7 @@
             cursor: not-allowed;
         }
         #disableApiBtn.active {
-			background-color: #f2bcb8;
+            background-color: #f2bcb8;
         }
         #about-container {
              margin-top: auto; /* Pushes About link to the very bottom */
@@ -527,7 +576,7 @@
         }
          #summaryView h4:first-of-type {
              margin-top: 0;
-         }
+        }
         #summary-selected-dates,
         #summary-years, /* Apply flexbox to the direct container of year items */
         #summary-months {
@@ -713,24 +762,9 @@
         <div id="sidebar">
             <div id="controls-container">
                 <button id="folderPicker" class="control-btn">Choose Folder</button>
-                <button id="layerBtn" class="control-btn" disabled>Layers</button>
+                <button id="reloadBtn" class="control-btn" title="Reload last used folder" style="display: none;">&#x21bb;</button>
+                <button id="settingsBtn" class="control-btn" disabled>Settings</button>
                 <button id="fitMapBtn" class="control-btn" disabled>Fit Map</button>
-            </div>
-
-            <div id="layerOptions" style="display: none;">
-                <div id="layerOptionsHeader">
-                    <h4>View Options</h4>
-                    <button id="closeLayerBtn">Close</button>
-                </div>
-                <label>
-                    <input type="checkbox" id="showVisits" class="layer-checkbox" checked> Show Visits
-                </label>
-                <label>
-                    <input type="checkbox" id="showActivities" class="layer-checkbox" checked> Show Activities
-                </label>
-                <div id="activityFilters" style="margin-left: 20px;">
-                        <!-- Activity filters will be populated here -->
-                    </div>
             </div>
 
             <div id="datePickerContainer">
@@ -740,9 +774,11 @@
                 <input type="date" id="endDatePicker" disabled>
                 <button id="nextDayBtn" disabled>&gt;</button>
             </div>
+            
+            <div id="date-range-info"></div>
 
             <div id="icon-buttons-container">
-				<div id="icon-buttons-left">
+                <div id="icon-buttons-left">
                     <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>
                         <span role="img" aria-label="Map">🗺️</span> Map
                     </button>
@@ -758,6 +794,33 @@
                 <button id="goBtn" class="control-btn" disabled>GO</button>
             </div>
 
+            <div id="settingsView">
+                <div id="settingsHeader">
+                    <h4></h4>
+                    <button id="closeSettingsBtn">Close Settings</button>
+                </div>
+                
+		                <h4>Timezone</h4>
+                <label for="timezone-select">Display times in:</label>
+                <select id="timezone-select">
+                    <!-- Timezones will be populated here -->
+                </select>
+				<br>
+		
+                <h4>Display Options</h4>
+                <label class="settings-option">
+                    <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
+                </label>
+		
+                <label class="settings-option">
+                    <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
+                </label>
+                <div id="activityFilters" style="margin-left: 20px;">
+                    <!-- Activity filters will be populated here -->
+                </div>
+
+            </div>
+
             <div id="loading-overlay">
                 <div id="loading-spinner"></div>
                 <span>Loading data...</span>
@@ -765,19 +828,18 @@
 
             <div id="timeline"></div>
 
-			<div id="status-bar-container">
+            <div id="status-bar-container">
                 <span id="data-source-indicator">No data loaded. Use "Choose Folder".</span>
                 <div style="text-align:right;">
-					<span id="api-call-counter">API Calls: 0</span>
-					<div id="cache-controls">
-						<button id="disableApiBtn" class="cache-btn">Disable API</button>
-						<button id="saveCacheBtn" class="cache-btn" disabled>Save Data</button>
-					</div>
+                    <span id="api-call-counter">API Calls: 0</span>
+                    <div id="cache-controls">
+                        <button id="disableApiBtn" class="cache-btn">Disable API</button>
+                        <button id="saveCacheBtn" class="cache-btn" disabled>Save Data</button>
+                    </div>
                 </div>
             </div>
 
             
-
         </div>
 
         <div id="summaryView" style="display: none;">
@@ -834,6 +896,10 @@
         let uiEnabled = false; // Flag to track if UI is enabled (data loaded)
         let placeApiCallCount = 0; // Counter for Place API calls
         let apiCallsDisabled = false;
+        let globalMinDate = null; // Earliest date in loaded data
+        let globalMaxDate = null; // Latest date in loaded data
+        let displayTimezone = 'default'; // User-selected timezone
+        let storedDirHandle = null; // For storing last used directory handle
 
         // Summary View Globals
         let allYearlySummaries = null; // Calculated yearly summaries
@@ -920,39 +986,39 @@
         }
 
         // --- Map Initialization ---
-		let AdvancedMarkerElement;
-		let Place;
-		let GoogleMap; // Renamed to avoid conflict with built-in Map
+        let AdvancedMarkerElement;
+        let Place;
+        let GoogleMap; // Renamed to avoid conflict with built-in Map
 
-		async function initMap() {
-		  try {
-			// First import the maps library
-			const { Map } = await google.maps.importLibrary("maps");
-			GoogleMap = Map;
-			map = new GoogleMap(document.getElementById('map'), {
-			  center: { lat: 25.034170, lng: 121.564560 },
-			  zoom: 12,
-			  mapId: "TIMELINE_MAP"
-			});
-			
-			// Then import other libraries we need
-			const markerModule = await google.maps.importLibrary("marker");
-			AdvancedMarkerElement = markerModule.AdvancedMarkerElement;
-			
-			const placesModule = await google.maps.importLibrary("places");
-			Place = placesModule.Place;
-			
-			console.log("Map and libraries loaded successfully");
-		  } catch (error) {
-			console.error("Error initializing map libraries:", error);
-			// Check if the error is due to API key issues specifically
-            if (error.message && (error.message.includes("ApiNotActivatedMapError") || error.message.includes("InvalidKeyMapError") || error.message.includes("ProjectNotLinkedToBillingError") )) {
+        async function initMap() {
+         try {
+             // First import the maps library
+             const { Map } = await google.maps.importLibrary("maps");
+             GoogleMap = Map;
+             map = new GoogleMap(document.getElementById('map'), {
+               center: { lat: 25.034170, lng: 121.564560 },
+               zoom: 12,
+               mapId: "TIMELINE_MAP"
+             });
+             
+             // Then import other libraries we need
+             const markerModule = await google.maps.importLibrary("marker");
+             AdvancedMarkerElement = markerModule.AdvancedMarkerElement;
+             
+             const placesModule = await google.maps.importLibrary("places");
+             Place = placesModule.Place;
+             
+             console.log("Map and libraries loaded successfully");
+         } catch (error) {
+             console.error("Error initializing map libraries:", error);
+             // Check if the error is due to API key issues specifically
+             if (error.message && (error.message.includes("ApiNotActivatedMapError") || error.message.includes("InvalidKeyMapError") || error.message.includes("ProjectNotLinkedToBillingError") )) {
                  alert("Failed to load Google Maps: API Key issue. Please check your API key, ensure the Maps JavaScript API is enabled, and that your project is linked to a billing account.");
-            } else {
+             } else {
                  alert("Failed to load Google Maps libraries. Please check your internet connection and API key settings.");
-            }
-		  }
-		}
+             }
+         }
+        }
 
         // --- UI Helper Functions ---
 
@@ -1031,7 +1097,7 @@
         function formatActivityType(activityType) {
             // Fallback to specific formatting for raw types
             switch (activityType) {
-				case 'IN_VEHICLE': case 'DRIVE': return 'Driving';
+                case 'IN_VEHICLE': case 'DRIVE': return 'Driving';
                 case 'IN_PASSENGER_VEHICLE': return 'In a Vehicle';
                 case 'IN_TAXI': return 'In a Taxi';
                 case 'MOTORCYCLING': return 'Motorcycling';
@@ -1071,14 +1137,24 @@
                 case 'UNKNOWN': case 'UNKNOWN_ACTIVITY_TYPE': return 'Unknown Activity';
                 case 'TILTING': return 'Device Tilt';
                 default:
-					 const group = getGroupedActivityType(activityType);
-					// Use group name if it's not UNKNOWN
-					if (group !== 'UNKNOWN' && group !== activityType) {
-						return group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-					}else{
-						return activityType ? activityType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity';
-					}
+                     const group = getGroupedActivityType(activityType);
+                    // Use group name if it's not UNKNOWN
+                    if (group !== 'UNKNOWN' && group !== activityType) {
+                        return group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    }else{
+                        return activityType ? activityType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity';
+                    }
             }
+        }
+
+        // --- Timezone Helpers ---
+        function getSelectedTimezone() {
+            return displayTimezone === 'default' ? moment.tz.guess() : displayTimezone;
+        }
+
+        function formatTimestamp(timestamp, formatString) {
+            const tz = getSelectedTimezone();
+            return moment(timestamp).tz(tz).format(formatString);
         }
 
         // --- API Call Counter ---
@@ -1112,14 +1188,13 @@
 				timelineItem.dataset.rawJson = escapeHtml('{"error": "Could not serialize data"}'); // Add error indicator
 			}*/
 			// --- DEBUG END: Add raw data ---
-
             // Check if a date header needs to be added for this date
             const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
             if (!existingHeader) {
                 const dateHeader = document.createElement('div');
                 dateHeader.className = 'date-header';
                 dateHeader.dataset.date = currentDate;
-                dateHeader.textContent = moment(currentDate).format('dddd, MMMM DD, YYYY'); // Format date nicely
+                dateHeader.textContent = formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY'); // Format date nicely
                 // Insert header before the first item of the day or at the end if no items yet
                 const firstItemOfDay = document.querySelector(`.timeline-item[data-item-date="${currentDate}"]`);
                 if (firstItemOfDay) {
@@ -1154,12 +1229,12 @@
 
                 timelineItem.classList.add('place-visit-item');
                 timelineItem.innerHTML = `
-                     <span class="timeline-icon-container" style="border-color: ${defaultPlaceStyle.color};">${defaultPlaceStyle.icon}</span>
-                     <div class="timeline-item-details">
-                         <strong class="nametag">${locationName}</strong><br>
-                         <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
-                     </div>
-                 `;
+                        <span class="timeline-icon-container" style="border-color: ${defaultPlaceStyle.color};">${defaultPlaceStyle.icon}</span>
+                        <div class="timeline-item-details">
+                            <strong class="nametag">${locationName}</strong><br>
+                            <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
+                        </div>
+                    `;
                 timelineItem.style.setProperty('--activity-color', defaultPlaceStyle.color);
 
             } else if (item.placeVisit) { // Handle standard 'placeVisit' structure
@@ -1179,12 +1254,12 @@
 
                 timelineItem.classList.add('place-visit-item');
                 timelineItem.innerHTML = `
-                     <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
-                     <div class="timeline-item-details">
-                         <strong class="nametag">${locationName}</strong><br>
-                         <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
-                     </div>
-                 `;
+                        <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
+                        <div class="timeline-item-details">
+                            <strong class="nametag">${locationName}</strong><br>
+                            <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
+                        </div>
+                    `;
                  timelineItem.style.setProperty('--activity-color', placeStyle.color);
 
             } else if (item.activitySegment) { // Handle 'activitySegment' (standard and transformed iOS)
@@ -1197,13 +1272,13 @@
                 const formattedType = formatActivityType(activityType);
                 const activityColor = getActivityColor(activityType);
                 timelineItem.innerHTML = `
-                     <span class="timeline-icon-container" style="border-color: ${activityColor};">${getActivityIcon(activityType)}</span>
-                     <div class="timeline-item-details">
-                         <strong>${formattedType}</strong><br>
-                         <span class="timeline-item-time">${moment(startTimestamp).format('hh:mm A')} - ${moment(endTimestamp).format('hh:mm A')}</span>
-                         <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
-                     </div>
-                 `;
+                        <span class="timeline-icon-container" style="border-color: ${activityColor};">${getActivityIcon(activityType)}</span>
+                        <div class="timeline-item-details">
+                            <strong>${formattedType}</strong><br>
+                            <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
+                            <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
+                        </div>
+                    `;
                  timelineItem.style.setProperty('--activity-color', activityColor);
             }
 
@@ -1294,14 +1369,14 @@
                  
                  const geoCoords = parseGeoString(visit.topCandidate?.placeLocation);
                  if (geoCoords) {
-                    lat = geoCoords.lat;
-                    lng = geoCoords.lng;
+                     lat = geoCoords.lat;
+                     lng = geoCoords.lng;
                  } else if (visit.location?.latitudeE7 && visit.location?.longitudeE7) { // Fallback if geo: parsing fails or not present
-                    lat = visit.location.latitudeE7 / 1e7;
-                    lng = visit.location.longitudeE7 / 1e7;
+                     lat = visit.location.latitudeE7 / 1e7;
+                     lng = visit.location.longitudeE7 / 1e7;
                  } else if (visit.centerLatE7 && visit.centerLngE7) { // Another fallback
-                    lat = visit.centerLatE7 / 1e7;
-                    lng = visit.centerLngE7 / 1e7;
+                     lat = visit.centerLatE7 / 1e7;
+                     lng = visit.centerLngE7 / 1e7;
                  }
 
                  startTimestamp = itemData.startTime;
@@ -1309,12 +1384,12 @@
                  // Create a pseudo-standard structure for consistency downstream
                  originalVisitData = {
                      location: { 
-                        name: locationName, 
-                        placeId: placeId, 
-                        latitudeE7: lat ? lat * 1e7 : undefined, 
-                        longitudeE7: lng ? lng * 1e7 : undefined,
-                        semanticType: semanticTypeStr // Store the original semantic type
-                    },
+                         name: locationName, 
+                         placeId: placeId, 
+                         latitudeE7: lat ? lat * 1e7 : undefined, 
+                         longitudeE7: lng ? lng * 1e7 : undefined,
+                         semanticType: semanticTypeStr // Store the original semantic type
+                     },
                      duration: { startTimestamp: startTimestamp, endTimestamp: endTimestamp }
                  };
             } else {
@@ -1360,8 +1435,8 @@
                 console.error("AdvancedMarkerElement class not loaded.");
                 return;
             }
-			
-			// Create a basic PinElement for a more consistent look with other markers
+            
+            // Create a basic PinElement for a more consistent look with other markers
             const PinElement = google.maps.marker.PinElement;
             let markerContent = null;
             if (PinElement) {
@@ -1379,36 +1454,36 @@
             }
 
             const marker = new AdvancedMarkerElement({
-                    position: position,
-                    map: map,
-                    title: name,
-                    content: markerContent // Use PinElement or default if null
-                });
-                markers.push(marker); 
+                     position: position,
+                     map: map,
+                     title: name,
+                     content: markerContent // Use PinElement or default if null
+                 });
+                 markers.push(marker); 
 
             // Create InfoWindow content (without photo initially)
-                const infoWindowContent = `
-                     <div style="max-width: 250px;">
-                         <h3 style="margin: 5px 0;">${name}</h3>
-                         <p style="margin: 3px 0; font-size: 0.9em;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
-                         <div class="photo-container" data-place-id="basic-${index}">
-                              <div class="photo-placeholder">No photo available</div>
-                         </div>
-                         <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
-                     <p style="margin-top: 5px; font-size: 0.85em;"><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">View on Google Maps</a></p>
-                     </div>`;
+                 const infoWindowContent = `
+                         <div style="max-width: 250px;">
+                             <h3 style="margin: 5px 0;">${name}</h3>
+                             <p style="margin: 3px 0; font-size: 0.9em;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
+                             <div class="photo-container" data-place-id="basic-${index}">
+                                   <div class="photo-placeholder">No photo available</div>
+                             </div>
+                             <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY hh:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "hh:mm A")}</p>
+                         <p style="margin-top: 5px; font-size: 0.85em;"><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">View on Google Maps</a></p>
+                         </div>`;
 
-                const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-                infoWindow.placeId = null; // No place ID for basic marker
-            infoWindow.photoFetched = true; // Mark as "fetched" since there's no photo to fetch
-                infoWindows.push(infoWindow);
+                 const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+                 infoWindow.placeId = null; // No place ID for basic marker
+         infoWindow.photoFetched = true; // Mark as "fetched" since there's no photo to fetch
+                 infoWindows.push(infoWindow);
 
-                // Add listeners
-                const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-                addMarkerClickListener(marker, infoWindow, index);
-                if (sidebarItem) {
-                    addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
-                }
+                 // Add listeners
+                 const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+                 addMarkerClickListener(marker, infoWindow, index);
+                 if (sidebarItem) {
+                     addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+                 }
         }
 
         // Fetches place details using the new Place.fetchFields method
@@ -1422,14 +1497,14 @@
                 updateSidebarItem(index, fallbackName, null, []);
                 return;
             }
-			
+            
             // Define the fields to fetch (excluding 'photos')
             const fields = [
-                'id',                   // Basic identifier
-                'displayName',          // New name field
-                'formattedAddress',     // New address field
-                'location',             // New geometry field (lat/lng)
-                'svgIconMaskURI',          // New icon URL field
+                'id',                 // Basic identifier
+                'displayName',        // New name field
+                'formattedAddress',   // New address field
+                'location',           // New geometry field (lat/lng)
+                'svgIconMaskURI',       // New icon URL field
                 'iconBackgroundColor',  // New icon background color field
                 'googleMapsURI',
                 'types'
@@ -1437,13 +1512,13 @@
 
             try {
                 const place = new Place({
-				  id: placeId,
-				  requestedLanguage: "en", // optional
-				});
+                  id: placeId,
+                  requestedLanguage: "en", // optional
+                });
 
-				await place.fetchFields({
-				  fields: fields
-				});
+                await place.fetchFields({
+                  fields: fields
+                });
                 incrementApiCallCount(); // Increment API counter for basic details
 
                 //console.log("Place details fetched successfully:", place);
@@ -1493,8 +1568,8 @@
             }
         }
 
-		// Renders the marker and InfoWindow using fetched Place Details (new API)
-		async function renderPlaceDetails(place, placeVisit, index) {
+        // Renders the marker and InfoWindow using fetched Place Details (new API)
+        async function renderPlaceDetails(place, placeVisit, index) {
             // Determine the display name, prioritizing "Home" or "Work" if applicable
             let displayName = place.displayName;
             const originalSemanticType = placeVisit.location.semanticType; // From original data (e.g., TYPE_HOME or "Home")
@@ -1535,7 +1610,7 @@
                         scale: 1.0
                     });
                     markerContent = pinElement.element;
-				} catch (e) {
+                } catch (e) {
                     console.warn("Could not create PinElement with image glyph, using default marker:", e);
                     // Fallback: create a simpler PinElement without glyph if image fails
                     const fallbackPin = new PinElement({ background: place.iconBackgroundColor || '#4285F4', scale: 0.8 });
@@ -1557,21 +1632,21 @@
             markers.push(marker);
 
             // --- Prepare InfoWindow content ---
-			let mapsLink;
-			try {
-				if (place.googleMapsURI) {
-					mapsLink = `<a href="${place.googleMapsURI}" target="_blank">View on Google Maps</a>`;
-				} else if (position && typeof position.lat === 'function' && typeof position.lng === 'function') {
-					mapsLink = `<a href="https://maps.google.com/?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`;
-				} else if (position && 'lat' in position && 'lng' in position) {
-					mapsLink = `<a href="https://maps.google.com/?q=${position.lat},${position.lng}" target="_blank">View on Google Maps</a>`;
-				} else {
-					throw new Error("No valid location for fallback maps link");
-				}
-			} catch (e) {
-				console.warn("Could not create link, 1:", place);
-				console.warn("Could not create link, 2:", e);
-			}
+            let mapsLink;
+            try {
+                if (place.googleMapsURI) {
+                    mapsLink = `<a href="${place.googleMapsURI}" target="_blank">View on Google Maps</a>`;
+                } else if (position && typeof position.lat === 'function' && typeof position.lng === 'function') {
+                    mapsLink = `<a href="https://maps.google.com/?q=${position.lat()},${position.lng()}" target="_blank">View on Google Maps</a>`;
+                } else if (position && 'lat' in position && 'lng' in position) {
+                    mapsLink = `<a href="https://maps.google.com/?q=${position.lat},${position.lng}" target="_blank">View on Google Maps</a>`;
+                } else {
+                    throw new Error("No valid location for fallback maps link");
+                }
+            } catch (e) {
+                console.warn("Could not create link, 1:", place);
+                console.warn("Could not create link, 2:", e);
+            }
 
             // Always start with the placeholder
             const photoHtml = `<div class="photo-placeholder">Loading photo...</div>`;
@@ -1585,7 +1660,7 @@
                 <div class="photo-container" data-place-id="${placeId}">
                    ${photoHtml}
                 </div>
-                <p style="margin: 5px 0; font-size: 0.85em;">${moment(placeVisit.duration.startTimestamp).format("MMM DD, YYYY hh:mm A")} - ${moment(placeVisit.duration.endTimestamp).format("hh:mm A")}</p>
+                <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY hh:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "hh:mm A")}</p>
                 <p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
             </div>`;
 
@@ -1603,7 +1678,7 @@
             if (sidebarItem) {
                 addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
             }
-		}
+        }
 
 
         // Renders an activity segment as a polyline on the map
@@ -1672,7 +1747,7 @@
         // Fetches *only* the photo for an InfoWindow if not already fetched
         async function fetchPhotoForInfoWindow(infoWindow) {
         
-			// If API calls are disabled, skip photo fetch
+            // If API calls are disabled, skip photo fetch
             if (apiCallsDisabled) {
                 console.log("API calls disabled. Skipping photo fetch.");
                 if (infoWindow && !infoWindow.photoFetched) { // Still update placeholder if not fetched
@@ -1689,21 +1764,21 @@
                 }
                 return;
             }
-  
+ 
             // Skip if no placeId or photo already fetched/failed
             if (!infoWindow || !infoWindow.placeId || infoWindow.photoFetched) {
                 console.log(`Skipping photo fetch for placeId: ${infoWindow?.placeId}. Reason: No placeId or photo already fetched/failed.`);
                 // Ensure placeholder shows 'No photo available' if there's no placeId and it hasn't been marked fetched yet
                 if (infoWindow && !infoWindow.placeId && !infoWindow.photoFetched) {
                      try {
-                        const contentNode = document.createElement('div');
-                        contentNode.innerHTML = infoWindow.getContent();
-                        const photoContainer = contentNode.querySelector(`.photo-container`);
-                        if (photoContainer) {
-                            photoContainer.innerHTML = '<div class="photo-placeholder">No photo available</div>';
-                            infoWindow.setContent(contentNode.innerHTML);
-                        }
-                        infoWindow.photoFetched = true; // Mark as fetched (or known unavailable)
+                         const contentNode = document.createElement('div');
+                         contentNode.innerHTML = infoWindow.getContent();
+                         const photoContainer = contentNode.querySelector(`.photo-container`);
+                         if (photoContainer) {
+                             photoContainer.innerHTML = '<div class="photo-placeholder">No photo available</div>';
+                             infoWindow.setContent(contentNode.innerHTML);
+                         }
+                         infoWindow.photoFetched = true; // Mark as fetched (or known unavailable)
                      } catch (e) { console.error("Error updating basic marker infowindow content:", e); }
                 }
                 return;
@@ -1712,13 +1787,13 @@
             const fields = ['photos']; // Request only photos
             try {
                 incrementApiCallCount(); // Increment counter for photo fetch
-				const place = new Place({
-				  id: infoWindow.placeId,
-				  requestedLanguage: "en", // optional
-				});
-				await place.fetchFields({
-				  fields: fields
-				});
+                const place = new Place({
+                  id: infoWindow.placeId,
+                  requestedLanguage: "en", // optional
+                });
+                await place.fetchFields({
+                  fields: fields
+                });
                 
                 let photoHtml;
                 if (place.photos && place.photos.length > 0) {
@@ -1764,7 +1839,7 @@
             }
         }
 
-	    // Adds click listener to a marker to open InfoWindow and highlight sidebar
+        // Adds click listener to a marker to open InfoWindow and highlight sidebar
         function addMarkerClickListener(marker, infoWindow, index) {
           marker.addListener('click', async () => {
             if (!marker.map) return; // Don't do anything if marker isn't on map
@@ -1848,7 +1923,10 @@
         // Highlights a specific sidebar item and scrolls it into view
         function highlightSidebarItem(index) {
             const timelineItems = document.querySelectorAll('.timeline-item');
-            document.getElementById('layerOptions').style.display = 'none'; // Hide layer options when an item is clicked
+            
+            // Hide settings and show timeline when an item is clicked
+            document.getElementById('settingsView').style.display = 'none';
+            document.getElementById('timeline').style.display = 'block';
 
             timelineItems.forEach((item) => {
                 if (item.dataset.index === String(index)) {
@@ -1957,17 +2035,17 @@
 
 
         // Helper function to escape HTML special characters for attributes. Used w debug
-		function escapeHtml(unsafe) {
-			if (!unsafe) return '';
-			// Ensure it's a string before replacing
-			const str = String(unsafe);
-			return str
-				 .replace(/&/g, "&amp;")
-				 .replace(/</g, "&lt;")
-				 .replace(/>/g, "&gt;")
-				 .replace(/"/g, "&quot;")
-				 .replace(/'/g, "&#039;");
-		 }
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            // Ensure it's a string before replacing
+            const str = String(unsafe);
+            return str
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
 
 
         // --- Data Loading and Processing ---
@@ -1975,14 +2053,17 @@
         // Loads and renders timeline data for a single date, applying filters
         async function loadTimelineDataForDate(selectedDate) {
             if (!uiEnabled) return;
+            
+            const tz = getSelectedTimezone();
+            const startOfDay = moment.tz(selectedDate, tz).startOf('day');
+            const endOfDay = moment.tz(selectedDate, tz).endOf('day');
 
-            const localSelectedDate = moment(selectedDate); // Use local time for date matching
-            const year = localSelectedDate.year();
-            const month = localSelectedDate.format('MMMM').toUpperCase(); // Use uppercase month name as key
+            const year = startOfDay.year();
+            const month = startOfDay.format('MMMM').toUpperCase(); // Use uppercase month name as key
             const dataKey = `${year}_${month}`;
 
             if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
-                const selectedDateStr = localSelectedDate.format('YYYY-MM-DD'); // For data attribute
+                const selectedDateStr = startOfDay.format('YYYY-MM-DD'); // For data attribute
 
                 const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
                     // Determine start/end times consistently across formats
@@ -2001,32 +2082,31 @@
                     // Skip if timestamps are missing
                     if (!itemStartTime || !itemEndTime) return false;
 
-                    const itemStartMoment = moment(itemStartTime);
+                    const itemStartMoment = moment(itemStartTime); // These are UTC moments
                     const itemEndMoment = moment(itemEndTime);
 
-                    // Check if the item overlaps with the selected date
-                    if (!itemStartMoment.isSame(localSelectedDate, 'day') &&
-                        !itemEndMoment.isSame(localSelectedDate, 'day') &&
-                        !(itemStartMoment.isBefore(localSelectedDate, 'day') && itemEndMoment.isAfter(localSelectedDate, 'day'))) {
-                        return false; // Does not overlap with the selected date
+                    // Check if the item's UTC time range overlaps with the selected day's time range in the chosen timezone
+                    if (itemEndMoment.isBefore(startOfDay) || itemStartMoment.isAfter(endOfDay)) {
+                        return false; // Does not overlap
                     }
 
                     // Apply layer filters
-                    if ((item.placeVisit || item.visit) && !document.getElementById('showVisits').checked) return false; // Check both visit types
-                    // Check for activitySegment OR the iOS top-level activity
-                    const currentActivitySegment = item.activitySegment || (item.activity ? item : null);
-                    if (currentActivitySegment) { // If it's an activity type
+                    if (item.placeVisit || item.visit) {
+                        if (!document.getElementById('showVisits').checked) return false;
+                    } 
+                    else if (item.activitySegment) {
                         if (!document.getElementById('showActivities').checked) return false;
                         
-                        // Use activityType from activitySegment or directly from iOS item.activity.topCandidate.type
-                        const activityType = currentActivitySegment.activitySegment?.activityType || // Standard
-                                             (currentActivitySegment.activitySegment?.activities && currentActivitySegment.activitySegment.activities[0]?.activityType) || // Standard with activities array
-                                             (currentActivitySegment.activitySegment?.waypointPath && currentActivitySegment.activitySegment.waypointPath.travelMode) || // Standard waypoint
-                                             currentActivitySegment.activity?.topCandidate?.type || // iOS
+                        const segment = item.activitySegment;
+                        const activityType = segment.activityType ||
+                                             (segment.activities && segment.activities[0]?.activityType) ||
+                                             (segment.waypointPath && segment.waypointPath.travelMode) ||
                                              'UNKNOWN';
                         const groupedType = getGroupedActivityType(activityType);
                         const filterCheckbox = document.getElementById(`filter-${groupedType}`);
-                        if (filterCheckbox && !filterCheckbox.checked) return false;
+                        if (filterCheckbox && !filterCheckbox.checked) {
+                            return false; // Filtered out
+                        }
                     }
 
                     return true; // Item is relevant
@@ -2072,7 +2152,7 @@
                     document.getElementById('timeline').appendChild(timelineItem);
 
                     // Render corresponding map elements (marker or polyline)
-					if (item.placeVisit || item.visit) { 
+                    if (item.placeVisit || item.visit) { 
                         renderPlaceVisit(item, globalIndex); // Pass the whole item
                     } else if (item.activitySegment) { // Standard activity segment
                         renderActivitySegment(item.activitySegment, globalIndex);
@@ -2102,16 +2182,16 @@
 
             if (!uiEnabled) return;
             
-			// the main check is with the GO button. other calls (like filter changes) don't need another warning
-			// this only creates a console warning atm
-			if (showRangeWarning) {
-				const startMoment = moment.utc(startDate);
-				const endMoment = moment.utc(endDate);
-				const dayDifference = endMoment.diff(startMoment, 'days');
-				if (dayDifference > 62) {
-					console.log("Date range warning check in loadTimelineDataInDateRange, difference:", dayDifference);
-				}
-			}
+            // the main check is with the GO button. other calls (like filter changes) don't need another warning
+            // this only creates a console warning atm
+            if (showRangeWarning) {
+                const startMoment = moment(startDate);
+                const endMoment = moment(endDate);
+                const dayDifference = endMoment.diff(startMoment, 'days');
+                if (dayDifference > 62) {
+                    console.log("Date range warning check in loadTimelineDataInDateRange, difference:", dayDifference);
+                }
+            }
 
             clearMap();
             clearTimeline();
@@ -2119,8 +2199,9 @@
             //placeDetailsCache = {}; // Clear place details cache for new range
             updateApiCallDisplay();
 
-            const startMoment = moment.utc(startDate).startOf('day'); // Use UTC start of day
-            const endMoment = moment.utc(endDate).endOf('day'); // Use UTC end of day for comparison
+            const tz = getSelectedTimezone();
+            const startMoment = moment.tz(startDate, tz).startOf('day');
+            const endMoment = moment.tz(endDate, tz).endOf('day');
 
             document.getElementById('loading-overlay').style.display = "flex"; // Show loading spinner
 
@@ -2198,7 +2279,7 @@
                         const distanceKm = distanceMeters * kmConversion;
 
                         if (distanceKm > 0) {
-							const activityType = segment.activityType || (segment.activities && segment.activities.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
+                            const activityType = segment.activityType || (segment.activities && segment.activities.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
                             const groupedType = getGroupedActivityType(activityType);
 
                             // Add to yearly summary
@@ -2221,8 +2302,9 @@
         // Calculates summary specifically for the selected date range
         function calculateSelectedDatesSummary(startDate, endDate) {
             const summary = { visits: 0, distanceKm: 0, distanceByActivity: {} };
-            const startMoment = moment.utc(startDate).startOf('day');
-            const endMoment = moment.utc(endDate).endOf('day');
+            const tz = getSelectedTimezone();
+            const startMoment = moment.tz(startDate, tz).startOf('day');
+            const endMoment = moment.tz(endDate, tz).endOf('day');
             const kmConversion = 0.001;
 
             let currentDate = startMoment.clone();
@@ -2247,13 +2329,13 @@
                          }
                          if (!itemStartTime || !itemEndTime) return; // Skip if no time
 
-                         const itemStartMoment = moment(itemStartTime);
-                         const itemEndMoment = moment(itemEndTime);
+                         const itemStartMoment = moment(itemStartTime); // UTC
+                         const itemEndMoment = moment(itemEndTime); // UTC
 
-                         // Check if the item overlaps with the *current processing day* within the selected range
-                         if (!itemStartMoment.isSame(currentDate, 'day') &&
-                             !itemEndMoment.isSame(currentDate, 'day') &&
-                             !(itemStartMoment.isBefore(currentDate, 'day') && itemEndMoment.isAfter(currentDate, 'day'))) {
+                         // Check if the item's UTC time range overlaps with the selected day's time range in the chosen timezone
+                         const dayStart = currentDate.clone().startOf('day');
+                         const dayEnd = currentDate.clone().endOf('day');
+                         if (itemEndMoment.isBefore(dayStart) || itemStartMoment.isAfter(dayEnd)) {
                              return; // Skip items not overlapping this specific day
                          }
 
@@ -2271,7 +2353,7 @@
                                  summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceKm;
                              }
                          }
-                     });
+                      });
                 }
                 currentDate.add(1, 'days');
             }
@@ -2285,8 +2367,8 @@
 
             const summaryData = calculateSelectedDatesSummary(startDate, endDate);
 
-            const startStr = moment(startDate).format('MMM DD, YYYY');
-            const endStr = moment(endDate).format('MMM DD, YYYY');
+            const startStr = formatTimestamp(startDate, 'MMM DD, YYYY');
+            const endStr = formatTimestamp(endDate, 'MMM DD, YYYY');
             const title = startStr === endStr ? startStr : `${startStr} to ${endStr}`;
 
             const item = document.createElement('div');
@@ -2313,7 +2395,7 @@
                  <div class="summary-details">Visits: <span>${summaryData.visits.toLocaleString()}</span></div>
                  <div class="summary-details">Total Dist: <span>${summaryData.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
                  ${activityHtml}
-             `;
+              `;
             container.appendChild(item);
         }
 
@@ -2362,7 +2444,7 @@
                      <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
                      <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
                      ${activityHtml}
-                 `;
+                  `;
 
                 // --- Year Click Listener ---
                 item.addEventListener('click', () => {
@@ -2435,7 +2517,7 @@
                      <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
                      <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
                      ${activityHtml}
-                 `;
+                  `;
 
                  // Add click listener to navigate to this month on the map
                  item.addEventListener('click', () => navigateToMonth(year, monthIndex));
@@ -2452,9 +2534,10 @@
         // Navigates from the summary view to the map view for a specific month
         function navigateToMonth(year, monthIndex) {
             console.log(`Navigating to: ${year}-${String(monthIndex + 1).padStart(2, '0')}`);
-            // Calculate start and end dates for the selected month
-            const startOfMonth = moment.utc({ year: year, month: monthIndex }).startOf('month').format('YYYY-MM-DD');
-            const endOfMonth = moment.utc({ year: year, month: monthIndex }).endOf('month').format('YYYY-MM-DD');
+            const tz = getSelectedTimezone();
+            // Calculate start and end dates for the selected month in the correct timezone
+            const startOfMonth = moment.tz({ year: year, month: monthIndex }, tz).startOf('month').format('YYYY-MM-DD');
+            const endOfMonth = moment.tz({ year: year, month: monthIndex }, tz).endOf('month').format('YYYY-MM-DD');
 
             // Update date pickers
             document.getElementById('startDatePicker').value = startOfMonth;
@@ -2473,182 +2556,189 @@
         // --- UI Initialization and Event Listeners ---
 
         // Initializes the date picker controls and listeners
-		function initDatePicker() {
-			const startDatePicker = document.getElementById('startDatePicker');
-			const endDatePicker = document.getElementById('endDatePicker');
-			const prevDayBtn = document.getElementById('prevDayBtn');
-			const nextDayBtn = document.getElementById('nextDayBtn');
-			const goBtn = document.getElementById('goBtn');
+        function initDatePicker() {
+            const startDatePicker = document.getElementById('startDatePicker');
+            const endDatePicker = document.getElementById('endDatePicker');
+            const prevDayBtn = document.getElementById('prevDayBtn');
+            const nextDayBtn = document.getElementById('nextDayBtn');
+            const goBtn = document.getElementById('goBtn');
 
-			// Set initial dates to today
-			const today = moment().format('YYYY-MM-DD');
-			startDatePicker.value = today;
-			endDatePicker.value = today;
+            // Set initial dates to today
+            const today = moment().format('YYYY-MM-DD');
+            startDatePicker.value = today;
+            endDatePicker.value = today;
 
-			// Function to navigate days using arrow buttons
-			const navigateDays = (days) => {
-				if (!uiEnabled) return;
-
-				// Ensure start date is not after end date (can happen if range was > 1 day)
+            // Function to navigate days using arrow buttons
+            const navigateDays = (days) => {
+                if (!uiEnabled) return;
+                				// Ensure start date is not after end date (can happen if range was > 1 day)
 				// If moving back, the end date should also move back by the same amount
 				// If moving forward, the end date should also move forward by the same amount
 				// The difference between start and end should remain constant.
-				const originalStart = moment.utc(startDatePicker.value);
-				const originalEnd = moment.utc(endDatePicker.value);
-				const diffDays = originalEnd.diff(originalStart, 'days');
+                const tz = getSelectedTimezone();
+                const originalStart = moment.tz(startDatePicker.value, tz);
+                const originalEnd = moment.tz(endDatePicker.value, tz);
+                const diffDays = originalEnd.diff(originalStart, 'days');
 
-				const newStart = moment.utc(startDatePicker.value).add(days, 'days');
-				const newEnd = newStart.clone().add(diffDays, 'days'); // Maintain original range duration
+                const newStart = originalStart.clone().add(days, 'days');
+                const newEnd = newStart.clone().add(diffDays, 'days'); // Maintain original range duration
 
-				startDatePicker.value = newStart.format('YYYY-MM-DD');
-				endDatePicker.value = newEnd.format('YYYY-MM-DD');
+                startDatePicker.value = newStart.format('YYYY-MM-DD');
+                endDatePicker.value = newEnd.format('YYYY-MM-DD');
 
-				// Load data for the new range (without the 62-day warning for arrow navigation)
-				loadTimelineDataInDateRange(newStart.toDate(), newEnd.toDate(), false); // Pass false to skip warning
-			};
+                // Load data for the new range (without the 62-day warning for arrow navigation)
+                loadTimelineDataInDateRange(newStart.toDate(), newEnd.toDate(), false); // Pass false to skip warning
+            };
 
-			prevDayBtn.addEventListener('click', () => navigateDays(-1));
-			nextDayBtn.addEventListener('click', () => navigateDays(1));
+            prevDayBtn.addEventListener('click', () => navigateDays(-1));
+            nextDayBtn.addEventListener('click', () => navigateDays(1));
 
-			// GO button click handler
-			goBtn.addEventListener('click', () => {
-				if (!uiEnabled) return;
-				const startDate = moment.utc(startDatePicker.value); // Keep as moment object for diff
-				const endDate = moment.utc(endDatePicker.value);   // Keep as moment object for diff
+            // GO button click handler
+            goBtn.addEventListener('click', () => {
+                if (!uiEnabled) return;
+                const tz = getSelectedTimezone();
+                const startDate = moment.tz(startDatePicker.value, tz);
+                const endDate = moment.tz(endDatePicker.value, tz);
 
-				// Basic validation: ensure start date is not after end date
-				if (startDate.isAfter(endDate)) {
-					console.warn("Start date cannot be after end date.");
-					alert("Start date cannot be after end date."); // User feedback
+                // Basic validation: ensure start date is not after end date
+                if (startDate.isAfter(endDate)) {
+                    console.warn("Start date cannot be after end date.");
+                    alert("Start date cannot be after end date."); // User feedback
 					// Clear map/timeline and return
-					clearMap();
-					clearTimeline();
-					globalIndex = 0;
-					//placeDetailsCache = {};
-					updateApiCallDisplay();
+                    clearMap();
+                    clearTimeline();
+                    globalIndex = 0;
+                    //placeDetailsCache = {};
+                    updateApiCallDisplay();
 					// Clear summary data as well if needed
-					document.getElementById('summary-selected-dates').innerHTML = '';
-					document.getElementById('summary-years').innerHTML = '';
-					document.getElementById('summary-months').innerHTML = '';
-					return;
-				}
+                    document.getElementById('summary-selected-dates').innerHTML = '';
+                    document.getElementById('summary-years').innerHTML = '';
+                    document.getElementById('summary-months').innerHTML = '';
+                    return;
+                }
 
-				// Warn if date range is more than 62 days
-				const dayDifference = endDate.diff(startDate, 'days');
-				if (dayDifference > 62) {
-					const userConfirmation = confirm(`The selected date range is ${dayDifference + 1} days. Loading this much data might cause a large number of API calls. Do you want to continue?`);
-					if (!userConfirmation) {
-						return; // User cancelled
-					}
-				}
+                // Warn if date range is more than 62 days
+                const dayDifference = endDate.diff(startDate, 'days');
+                if (dayDifference > 62) {
+                    const userConfirmation = confirm(`The selected date range is ${dayDifference + 1} days. Loading this much data might cause a large number of API calls. Do you want to continue?`);
+                    if (!userConfirmation) {
+                        return; // User cancelled
+                    }
+                }
 
 				loadTimelineDataInDateRange(startDate.toDate(), endDate.toDate(), true); // Pass true or remove for default warning behavior in loadTimelineDataInDateRange if needed
-			});
-		}
+            });
+        }
 
         // Populates the activity filter checkboxes based on loaded data
-		function populateActivityFilters() {
-			const activityFilters = document.getElementById('activityFilters');
-			activityFilters.innerHTML = ''; // Clear existing filters
+        function populateActivityFilters() {
+            const activityFilters = document.getElementById('activityFilters');
+            activityFilters.innerHTML = ''; // Clear existing filters
 
-			// Collect unique *grouped* activity types from all loaded data
-			const uniqueGroupedTypes = new Set();
-			Object.values(timelineData).forEach(monthData => {
-				monthData.timelineObjects?.forEach(item => {
-					let rawActivityType = 'UNKNOWN'; // Default
+            // Collect unique *grouped* activity types from all loaded data
+            const uniqueGroupedTypes = new Set();
+            Object.values(timelineData).forEach(monthData => {
+                monthData.timelineObjects?.forEach(item => {
+                    let rawActivityType = 'UNKNOWN'; // Default
 
 					// After readFilesFromDirectory, both standard Google Takeout data and
 					// transformed iOS data should have an item.activitySegment structure.
-					if (item.activitySegment) {
-						rawActivityType = item.activitySegment.activityType ||
-										 (item.activitySegment.activities && item.activitySegment.activities[0]?.activityType) ||
-										 (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) ||
+                    if (item.activitySegment) {
+                        rawActivityType = item.activitySegment.activityType ||
+                                          (item.activitySegment.activities && item.activitySegment.activities[0]?.activityType) ||
+                                          (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) ||
 										 'UNKNOWN'; // Default if no specific type found within activitySegment
-					}
+                    }
 					// This else if block is a fallback for data that might not have been transformed as expected,
 					else if (item.activity?.topCandidate?.type) { // Check for raw iOS-like structure if no activitySegment
 						// console.warn("Encountered item.activity structure directly in populateActivityFilters. Data might not be fully transformed:", JSON.stringify(item).substring(0,200));
-						rawActivityType = item.activity.topCandidate.type;
-					}
-					let processedActivityType;
-					if (typeof rawActivityType === 'string') {
-						processedActivityType = rawActivityType.trim().toUpperCase();
-					}
+                        rawActivityType = item.activity.topCandidate.type;
+                    }
+                    let processedActivityType;
+                    if (typeof rawActivityType === 'string') {
+                        processedActivityType = rawActivityType.trim().toUpperCase();
+                    }
 
 					// If rawActivityType was not a string, or became empty after trim, default to 'UNKNOWN'
-					if (!processedActivityType) {
-						processedActivityType = 'UNKNOWN';
-					}
+                    if (!processedActivityType) {
+                        processedActivityType = 'UNKNOWN';
+                    }
 
-					const groupedType = getGroupedActivityType(processedActivityType);
+                    const groupedType = getGroupedActivityType(processedActivityType);
 
-					uniqueGroupedTypes.add(groupedType);
-				});
-			});
+                    uniqueGroupedTypes.add(groupedType);
+                });
+            });
 
-			// Sort types alphabetically, putting UNKNOWN last
-			const sortedGroupedTypes = Array.from(uniqueGroupedTypes).sort((a, b) => {
-				if (a === 'UNKNOWN') return 1; // Move UNKNOWN to the end
-				if (b === 'UNKNOWN') return -1;
-				return a.localeCompare(b); // Alphabetical sort for others
-			});
+            // Sort types alphabetically, putting UNKNOWN last
+            const sortedGroupedTypes = Array.from(uniqueGroupedTypes).sort((a, b) => {
+                if (a === 'UNKNOWN') return 1; // Move UNKNOWN to the end
+                if (b === 'UNKNOWN') return -1;
+                return a.localeCompare(b); // Alphabetical sort for others
+            });
 
-			// Create checkboxes for each type (excluding STATIONARY)
-			sortedGroupedTypes.forEach(groupType => {
-				if (groupType === 'STATIONARY') return; // Skip STATIONARY filter
+            // Create checkboxes for each type (excluding STATIONARY)
+            sortedGroupedTypes.forEach(groupType => {
+                if (groupType === 'STATIONARY') return; // Skip STATIONARY filter
 
-				const label = document.createElement('label');
-				label.className = 'layer-option';
-				const formattedName = groupType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const label = document.createElement('label');
+                label.className = 'settings-option';
+                const formattedName = groupType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-				label.innerHTML = `
-					 <input type="checkbox" id="filter-${groupType}" class="layer-checkbox activity-filter-checkbox" checked data-group-type="${groupType}">
-					 <span style="color:${getActivityColor(groupType)}; margin-right: 4px;">${getActivityIcon(groupType)}</span>
-					 ${formattedName}
-				 `;
-				activityFilters.appendChild(label);
+                label.innerHTML = `
+                        <input type="checkbox" id="filter-${groupType}" class="settings-checkbox activity-filter-checkbox" checked data-group-type="${groupType}">
+                        <span style="color:${getActivityColor(groupType)}; margin-right: 4px;">${getActivityIcon(groupType)}</span>
+                        ${formattedName}
+                    `;
+                activityFilters.appendChild(label);
 
-				// Add event listener to reload data when filter changes
-				const checkbox = label.querySelector('input');
-				checkbox.addEventListener('change', () => {
-					if (!uiEnabled) return;
+                // Add event listener to reload data when filter changes
+                const checkbox = label.querySelector('input');
+                checkbox.addEventListener('change', () => {
+                    if (!uiEnabled) return;
 
-					// Update the main "Show Activities" checkbox based on individual filters
-					const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
-					document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
+                    // Update the main "Show Activities" checkbox based on individual filters
+                    const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
+                    document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
 
-					// Reload data with current date range and new filters
-					const startDate = new Date(document.getElementById('startDatePicker').value);
-					const endDate = new Date(document.getElementById('endDatePicker').value);
-					loadTimelineDataInDateRange(startDate, endDate, false);
-				});
-			});
-		}
+                    // Reload data with current date range and new filters
+                    const startDate = new Date(document.getElementById('startDatePicker').value);
+                    const endDate = new Date(document.getElementById('endDatePicker').value);
+                    loadTimelineDataInDateRange(startDate, endDate, false);
+                });
+            });
+        }
 
-        // Initializes the layer button and its options panel
-        function initLayerButton() {
-            const layerBtn = document.getElementById('layerBtn');
-            const layerOptions = document.getElementById('layerOptions');
-            const closeLayerBtn = document.getElementById('closeLayerBtn');
+        // Initializes the settings button and its options panel
+        function initSettingsButton() {
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsView = document.getElementById('settingsView');
+            const closeSettingsBtn = document.getElementById('closeSettingsBtn');
             const showActivitiesCheckbox = document.getElementById('showActivities');
             const showVisitsCheckbox = document.getElementById('showVisits');
             const activityFiltersDiv = document.getElementById('activityFilters');
+            const timelineDiv = document.getElementById('timeline');
 
-            // Toggle layer options visibility
-            layerBtn.addEventListener('click', () => {
+            // Toggle settings view visibility
+            settingsBtn.addEventListener('click', () => {
                 if (!uiEnabled) return;
-                layerOptions.style.display = layerOptions.style.display === 'none' ? 'block' : 'none';
+                const isHidden = settingsView.style.display === 'none';
+                settingsView.style.display = isHidden ? 'block' : 'none';
+                timelineDiv.style.display = isHidden ? 'none' : 'block';
             });
 
-            // Close layer options
-            closeLayerBtn.addEventListener('click', () => layerOptions.style.display = 'none');
+            // Close settings view
+            closeSettingsBtn.addEventListener('click', () => {
+                settingsView.style.display = 'none';
+                timelineDiv.style.display = 'block';
+            });
 
             // Function to reload data based on current filters and date range
             const reloadData = () => {
                 if (!uiEnabled) return;
                 const startDate = new Date(document.getElementById('startDatePicker').value);
                 const endDate = new Date(document.getElementById('endDatePicker').value);
-                loadTimelineDataInDateRange(startDate, endDate);
+                loadTimelineDataInDateRange(startDate, endDate, false);
             };
 
             // Reload data when "Show Visits" changes
@@ -2738,7 +2828,7 @@
                  document.getElementById('summary-selected-year').textContent = ''; // Clear month header
                  document.getElementById('backToYearsBtn').style.display = 'none';
              });
-         }
+        }
 
         // Updates the active state of the Map/Summary toggle buttons
         function updateViewToggleButtons() {
@@ -2764,7 +2854,7 @@
                 disableApiBtn.classList.toggle('active', apiCallsDisabled);
                 console.log(`API calls ${apiCallsDisabled ? 'disabled' : 'enabled'}.`);
                 if (!apiCallsDisabled){
-					document.getElementById('goBtn').click();
+                    document.getElementById('goBtn').click();
                 }
             });
 
@@ -2801,24 +2891,35 @@
                 document.getElementById('prevDayBtn'),
                 document.getElementById('nextDayBtn'),
                 document.getElementById('goBtn'),
-                document.getElementById('layerBtn'),
+                document.getElementById('settingsBtn'),
                 document.getElementById('fitMapBtn'),
                 document.getElementById('summaryBtn'),
                 document.getElementById('mapBtn'),
-                document.getElementById('saveCacheBtn')
+                document.getElementById('saveCacheBtn'),
+                document.getElementById('reloadBtn')
             ];
             elementsToToggle.forEach(el => { if(el) el.disabled = !enabled; });
+            
+            // Special case for reload button - it should only be enabled if a handle exists
+            if (enabled && storedDirHandle) {
+                document.getElementById('reloadBtn').disabled = false;
+            } else {
+                 document.getElementById('reloadBtn').disabled = true;
+            }
 
-            // Also enable/disable layer filter checkboxes
-            const layerCheckboxes = document.querySelectorAll('#layerOptions input[type="checkbox"]');
-            layerCheckboxes.forEach(cb => cb.disabled = !enabled);
+
+            // Also enable/disable settings filter checkboxes
+            const settingsCheckboxes = document.querySelectorAll('#settingsView input[type="checkbox"]');
+            settingsCheckboxes.forEach(cb => cb.disabled = !enabled);
+            document.getElementById('timezone-select').disabled = !enabled;
 
             if (!enabled) {
                 // Reset state when UI is disabled (e.g., no data loaded)
                 document.getElementById('data-source-indicator').textContent = 'No data loaded. Use "Choose Folder".';
                 clearMap();
                 clearTimeline();
-                document.getElementById('layerOptions').style.display = 'none';
+                document.getElementById('settingsView').style.display = 'none';
+                document.getElementById('timeline').style.display = 'block';
                 document.getElementById('summaryView').style.display = 'none'; // Hide summary view
                 document.getElementById('map').classList.remove('hidden'); // Ensure map is visible
                 summaryViewVisible = false;
@@ -2828,6 +2929,7 @@
                 selectedSummaryYear = null;
                 updateApiCallDisplay();
                 document.getElementById('activityFilters').innerHTML = ''; // Clear activity filters
+                document.getElementById('date-range-info').innerHTML = ''; // Clear date range info
                  // Reset summary view state
                  document.getElementById('summaryView').classList.remove('expanded-year-active');
                  document.getElementById('summary-months').style.display = 'none';
@@ -2853,6 +2955,8 @@
                 allYearlySummaries = null; // Reset summary data
                 allMonthlySummaries = null;
                 selectedSummaryYear = null;
+                globalMinDate = null;
+                globalMaxDate = null;
                 updateApiCallDisplay();
                 // Show loading overlay and disable UI only on initial call
                 document.getElementById('loading-overlay').style.display = "flex";
@@ -2912,38 +3016,38 @@
                         console.log('Processing iOS Format Timeline.json...');
                         
                         // --- NEW: Step 1 - Pre-process timelinePath objects ---
-			console.log("Pre-processing timelinePath objects...");
-			const allPathPoints = [];
-			jsonData.forEach(item => {
-				if (item.timelinePath && Array.isArray(item.timelinePath)) {
-					// Use moment.js to parse the start time of the path chunk
-					const pathStartTime = moment(item.startTime);
-					if (!pathStartTime.isValid()) return; // Skip if start time is invalid
+            console.log("Pre-processing timelinePath objects...");
+            const allPathPoints = [];
+            jsonData.forEach(item => {
+                if (item.timelinePath && Array.isArray(item.timelinePath)) {
+                    // Use moment.js to parse the start time of the path chunk
+                    const pathStartTime = moment(item.startTime);
+                    if (!pathStartTime.isValid()) return; // Skip if start time is invalid
 
-					item.timelinePath.forEach(point => {
-						const offsetMinutes = parseInt(point.durationMinutesOffsetFromStartTime, 10);
-						if (isNaN(offsetMinutes)) return; // Skip if offset is not a number
+                    item.timelinePath.forEach(point => {
+                        const offsetMinutes = parseInt(point.durationMinutesOffsetFromStartTime, 10);
+                        if (isNaN(offsetMinutes)) return; // Skip if offset is not a number
 
-						// The existing geo string parser works perfectly here
-						const geo = parseGeoString(point.point);
-						if (!geo) return;
+                        // The existing geo string parser works perfectly here
+                        const geo = parseGeoString(point.point);
+                        if (!geo) return;
 
-						// Calculate the absolute timestamp for this specific point
-						const pointTimestamp = pathStartTime.clone().add(offsetMinutes, 'minutes');
+                        // Calculate the absolute timestamp for this specific point
+                        const pointTimestamp = pathStartTime.clone().add(offsetMinutes, 'minutes');
 
-						allPathPoints.push({
-							timestamp: pointTimestamp,
-							lat: geo.lat,
-							lng: geo.lng
-						});
-					});
-				}
-			});
+                        allPathPoints.push({
+                            timestamp: pointTimestamp,
+                            lat: geo.lat,
+                            lng: geo.lng
+                        });
+                    });
+                }
+            });
 
-			// Sort all points by time to ensure they are in chronological order
-			allPathPoints.sort((a, b) => a.timestamp - b.timestamp);
-			console.log(`Found and processed ${allPathPoints.length} total points from timelinePath.`);
-			let pathPointPointer = 0; // An optimizer for our search loop
+            // Sort all points by time to ensure they are in chronological order
+            allPathPoints.sort((a, b) => a.timestamp - b.timestamp);
+            console.log(`Found and processed ${allPathPoints.length} total points from timelinePath.`);
+            let pathPointPointer = 0; // An optimizer for our search loop
 
                         
                         jsonData.forEach(item => {
@@ -2952,6 +3056,11 @@
                             const startTimestamp = item.startTime;
                             const date = new Date(startTimestamp);
                             if (isNaN(date.getTime())) return; 
+
+                            // Update min/max dates
+                            if (!globalMinDate || date < globalMinDate) globalMinDate = date;
+                            if (!globalMaxDate || date > globalMaxDate) globalMaxDate = date;
+
 
                             const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
                             if (!processedData[key]) processedData[key] = { timelineObjects: [] };
@@ -2977,31 +3086,31 @@
                                     simplifiedRawPath: { points: [] } 
                                 };
 
-				// --- NEW: Step 2 - Associate path points with this activity ---
-				const activityStartTime = moment(item.startTime);
-				const activityEndTime = moment(item.endTime);
+            // --- NEW: Step 2 - Associate path points with this activity ---
+            const activityStartTime = moment(item.startTime);
+            const activityEndTime = moment(item.endTime);
 
-				// Efficiently find all points from the master list that fall within this activity's timeframe
-				for (let i = pathPointPointer; i < allPathPoints.length; i++) {
-					const point = allPathPoints[i];
+            // Efficiently find all points from the master list that fall within this activity's timeframe
+            for (let i = pathPointPointer; i < allPathPoints.length; i++) {
+                const point = allPathPoints[i];
 
-					// Since the list is sorted, we can advance our pointer past points that are too old
-					if (point.timestamp.isBefore(activityStartTime)) {
-						pathPointPointer = i + 1;
-						continue;
-					}
+                // Since the list is sorted, we can advance our pointer past points that are too old
+                if (point.timestamp.isBefore(activityStartTime)) {
+                    pathPointPointer = i + 1;
+                    continue;
+                }
 
-					// If the point is after the activity, we can stop searching for this activity
-					if (point.timestamp.isAfter(activityEndTime)) {
-						break;
-					}
+                // If the point is after the activity, we can stop searching for this activity
+                if (point.timestamp.isAfter(activityEndTime)) {
+                    break;
+                }
 
-					// This point belongs to the current activity, so add it to the path
-					transformedActivity.simplifiedRawPath.points.push({
-						lat: point.lat,
-						lng: point.lng
-					});
-				}
+                // This point belongs to the current activity, so add it to the path
+                transformedActivity.simplifiedRawPath.points.push({
+                    lat: point.lat,
+                    lng: point.lng
+                });
+            }
 
                                 const startGeo = parseGeoString(activityData.start);
                                 if (startGeo) {
@@ -3025,7 +3134,7 @@
                         timelineData = processedData; 
                         console.log('iOS Format Timeline.json processed successfully.');
 
-			    
+            
                     // --- Handle Standard Timeline Object Format ---
                     } else if (jsonData.timelineObjects) {
                         dataSourceText = 'Local Timeline.json (Standard Format)';
@@ -3035,11 +3144,16 @@
                             if (!timestamp) return;
                             const date = new Date(timestamp);
                             if (isNaN(date.getTime())) return; // Skip invalid dates
+                            
+                            // Update min/max dates
+                            if (!globalMinDate || date < globalMinDate) globalMinDate = date;
+                            if (!globalMaxDate || date > globalMaxDate) globalMaxDate = date;
+
                             const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
                             if (!processedData[key]) processedData[key] = { timelineObjects: [] };
                             processedData[key].timelineObjects.push(item);
                             if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
-							else if (item.activitySegment?.activities && item.activitySegment.activities[0]?.activityType) {
+                            else if (item.activitySegment?.activities && item.activitySegment.activities[0]?.activityType) {
                                 activityTypes.add(item.activitySegment.activities[0].activityType);
                             }
                         });
@@ -3083,6 +3197,12 @@
                              const startTime = segment.startTime;
                              const endTime = segment.endTime;
                              if (!startTime || !endTime) return null;
+
+                             // Update min/max dates
+                             const startDate = new Date(startTime);
+                             if (!globalMinDate || startDate < globalMinDate) globalMinDate = startDate;
+                             if (!globalMaxDate || startDate > globalMaxDate) globalMaxDate = startDate;
+
 
                              // Process Place Visit Segment
                              if (segment.visit?.topCandidate?.placeLocation?.latLng && segment.visit?.topCandidate?.placeId) {
@@ -3142,7 +3262,6 @@
                                      activitySegment.simplifiedRawPath.points.push({ // Ensure E7 format for points
                                          latE7: allPathPoints[i].latE7,
                                          lngE7: allPathPoints[i].lngE7,
-                                         // timestampMs: pointTime.valueOf() // Optional: add timestamp if needed later
                                      });
                                  }
                                  activityTypes.add(activitySegment.activityType);
@@ -3187,13 +3306,22 @@
                                 if (data.timelineObjects) {
                                     // Directly add to the global timelineData object
                                     timelineData[fileNameKey] = data;
-                                    // Collect activity types
+                                    // Collect activity types and min/max dates
                                     data.timelineObjects.forEach(item => {
+                                        const timestamp = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp;
+                                        if(timestamp) {
+                                            const date = new Date(timestamp);
+                                            if(!isNaN(date.getTime())) {
+                                                if (!globalMinDate || date < globalMinDate) globalMinDate = date;
+                                                if (!globalMaxDate || date > globalMaxDate) globalMaxDate = date;
+                                            }
+                                        }
+
                                         if (item.activitySegment?.activityType) {
                                             activityTypes.add(item.activitySegment.activityType);
                                         } else if (item.activitySegment?.activities && item.activitySegment.activities[0]?.activityType) {
                                             activityTypes.add(item.activitySegment.activities[0].activityType.toUpperCase());
-										}
+                                        }
                                     });
                                 } else {
                                     console.warn(`Skipping file ${entry.name}: Does not contain 'timelineObjects'.`);
@@ -3221,7 +3349,14 @@
                         console.log("Data loading complete. Enabling UI.");
                         document.getElementById('data-source-indicator').innerHTML = 'Data source: ' + dataSourceText + '<br>' +
                             (placeCacheFile ? ` (Cache: ${Object.keys(placeDetailsCache).length} entries)` : ' (No cache file loaded)');
+                        
+                        // Save the handle to IndexedDB for the "Reload Last" button
+                        await saveDirectoryHandle(dirHandle);
+                        storedDirHandle = dirHandle; // Update in-memory handle
+                        //document.getElementById('reloadBtn').style.display = 'inline-block';
+
                         populateActivityFilters(); // Populate filters based on loaded data
+                        displayMinMaxDates(); // Show the first/last dates
                         setUIEnabled(true); // Enable UI elements
 
                         // Perform initial data load for the default date range
@@ -3255,12 +3390,17 @@
         // Initializes the "Choose Folder" button
         async function initFolderPicker() {
             const folderPicker = document.getElementById('folderPicker');
+            const reloadBtn = document.getElementById('reloadBtn');
+
             // Check if showDirectoryPicker is supported
             if ('showDirectoryPicker' in window) {
                 folderPicker.addEventListener('click', async () => {
                     try {
                         // Options for directory picker
-                        const opts = { mode: 'read' }; // Request read access
+                        const opts = { 
+                            mode: 'read',
+                            startIn: storedDirHandle || 'documents' // Suggest last used handle or a default
+                        };
                         // Show the directory picker dialog
                         const dirHandle = await window.showDirectoryPicker(opts);
                         // Start processing the selected directory
@@ -3279,6 +3419,23 @@
                          if(Object.keys(timelineData).length === 0) setUIEnabled(false);
                     }
                 });
+
+                // Add listener for the reload button
+                reloadBtn.addEventListener('click', async () => {
+                    if (storedDirHandle) {
+                        console.log("Reloading from stored directory handle.");
+                        // Verify permission - this will re-prompt the user if needed
+                        if (await verifyPermission(storedDirHandle, false)) { // Ask for READ-ONLY
+                            await readFilesFromDirectory(storedDirHandle);
+                        } else {
+                            console.warn("Permission to reload directory was denied.");
+                            alert("Permission to access the previous folder was denied. Please choose the folder again.");
+                        }
+                    } else {
+                        alert("No previous folder is stored. Please choose a folder first.");
+                    }
+                });
+
             } else {
                  // Fallback or message for unsupported browsers
                  folderPicker.disabled = true;
@@ -3287,6 +3444,133 @@
                  alert('Your browser does not support the File System Access API needed to select folders. Please try a different browser (like Chrome or Edge).');
             }
         }
+
+        // --- IndexedDB Functions for Directory Handle ---
+        const DB_NAME = 'TimelineViewerDB';
+        const STORE_NAME = 'settings';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = event => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = event => resolve(event.target.result);
+                request.onerror = event => reject(event.target.error);
+            });
+        }
+
+        async function saveDirectoryHandle(dirHandle) {
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put(dirHandle, 'lastDirectoryHandle');
+                await new Promise(resolve => tx.oncomplete = resolve);
+                console.log('Directory handle saved to IndexedDB.');
+            } catch (error) {
+                console.error('Error saving directory handle to IndexedDB:', error);
+            }
+        }
+
+        async function getDirectoryHandle() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.get('lastDirectoryHandle');
+                return new Promise((resolve, reject) => {
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            } catch (error) {
+                console.error('Error getting directory handle from IndexedDB:', error);
+                return null;
+            }
+        }
+        
+        async function verifyPermission(fileHandle, readWrite) {
+            const options = {};
+            if (readWrite) {
+                options.mode = 'readwrite';
+            } else {
+                options.mode = 'read';
+            }
+            // Check if permission was already granted. If so, return true.
+            if ((await fileHandle.queryPermission(options)) === 'granted') {
+                return true;
+            }
+            // Request permission. If the user grants it, return true.
+            if ((await fileHandle.requestPermission(options)) === 'granted') {
+                return true;
+            }
+            // The user didn't grant permission, so return false.
+            return false;
+        }
+
+        // --- Timezone Functions ---
+        function populateTimezoneSelector() {
+            const select = document.getElementById('timezone-select');
+            select.innerHTML = ''; // Clear existing
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = 'default';
+            defaultOption.textContent = `System Default (${moment.tz.guess()})`;
+            select.appendChild(defaultOption);
+
+            if (typeof Intl.supportedValuesOf === 'function') {
+                const timezones = Intl.supportedValuesOf('timeZone');
+                timezones.forEach(tz => {
+                    const option = document.createElement('option');
+                    option.value = tz;
+                    option.textContent = tz;
+                    select.appendChild(option);
+                });
+            } else {
+                console.warn("Intl.supportedValuesOf('timeZone') is not supported. Using moment-timezone's list.");
+                moment.tz.names().forEach(tz => {
+                    const option = document.createElement('option');
+                    option.value = tz;
+                    option.textContent = tz;
+                    select.appendChild(option);
+                });
+            }
+
+            select.addEventListener('change', (e) => {
+                displayTimezone = e.target.value;
+                console.log(`Timezone changed to: ${displayTimezone}`);
+                // Reload data to apply new timezone formatting and filtering
+                if (uiEnabled) {
+                    // Also update the date range info text to reflect the new timezone
+                    displayMinMaxDates();
+                    document.getElementById('goBtn').click();
+                }
+            });
+        }
+        
+        // --- Min/Max Date Display ---
+        function displayMinMaxDates() {
+            const container = document.getElementById('date-range-info');
+            if (globalMinDate && globalMaxDate) {
+                const minStr = formatTimestamp(globalMinDate, 'YYYY-MM-DD');
+                const maxStr = formatTimestamp(globalMaxDate, 'YYYY-MM-DD');
+                container.innerHTML = `Data available from <span id="min-date-link">${minStr}</span> to <span id="max-date-link">${maxStr}</span>`;
+                
+                document.getElementById('min-date-link').addEventListener('click', () => {
+                    document.getElementById('startDatePicker').value = minStr;
+                });
+                document.getElementById('max-date-link').addEventListener('click', () => {
+                    document.getElementById('endDatePicker').value = maxStr;
+                });
+
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
 
         // --- Window Load ---
         window.onload = async () => { 
@@ -3308,12 +3592,20 @@
                 await initMap();
                 initDatePicker();
                 initFolderPicker(); // This now checks for browser support
-                initLayerButton();
+                initSettingsButton();
                 initFitMapButton();
                 initSummaryView(); // Initialize Summary View Listeners & Buttons
                 initCacheControls();
+                populateTimezoneSelector();
                 setUIEnabled(false); // Start with UI disabled
                 updateApiCallDisplay(); // Initialize counter display
+
+                // Check for stored directory handle
+                storedDirHandle = await getDirectoryHandle();
+                if (storedDirHandle) {
+                    console.log("Found stored directory handle.");
+                    //document.getElementById('reloadBtn').style.display = 'inline-block';
+                }
 
                 // Add global key listeners for date navigation
                 document.addEventListener('keydown', (e) => {
