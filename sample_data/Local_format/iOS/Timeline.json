@@ -6,9 +6,9 @@
       "hierarchyLevel": "0",
       "topCandidate": {
         "placeID": "ChIJmQJIxlVYwokRLgeuocVOGVU",
-        "semanticType": "Searched Address",
+        "name": "Times Square",
         "placeLocation": "geo:40.758895,-73.985131",
-        "probability": "0.98"
+        "probability": "0.95"
       },
       "probability": "0.95"
     }
@@ -30,14 +30,14 @@
     "endTime": "2025-07-07T15:18:00.000-04:00",
     "startTime": "2025-07-07T15:00:25.000-04:00",
     "visit": {
-        "hierarchyLevel": "1",
-        "topCandidate": {
-            "placeID": "ChIJnaaBxlVYwokR82p8p0So1dM",
-            "semanticType": "Unknown",
-            "placeLocation": "geo:40.754738,-73.983793",
-            "probability": "0.90"
-        },
+      "hierarchyLevel": "1",
+      "topCandidate": {
+        "placeID": "ChIJnaaBxlVYwokR82p8p0So1dM",
+        "name": "Macy's",
+        "placeLocation": "geo:40.754738,-73.983793",
         "probability": "0.88"
+      },
+      "probability": "0.88"
     }
   },
   {
@@ -73,81 +73,32 @@
       "hierarchyLevel": "0",
       "topCandidate": {
         "placeID": "ChIJ9_x2DGBZwokR7sBgx-zlsb8",
-        "semanticType": "Unknown",
+        "name": "Washington Square Park",
         "placeLocation": "geo:40.734810,-73.991240",
-        "probability": "0.96"
+        "probability": "0.94"
       },
       "probability": "0.94"
     }
   },
   {
-    "startTime": "2025-07-07T14:45:00.000-04:00",
-    "endTime": "2025-07-07T15:47:00.000-04:00",
+    "startTime": "2025-07-07T14:45:10.000-04:00",
+    "endTime": "2025-07-07T15:46:15.000-04:00",
     "timelinePath": [
-      {
-        "point": "geo:40.758895,-73.985131",
-        "durationMinutesOffsetFromStartTime": "0"
-      },
-      {
-        "point": "geo:40.757950,-73.985830",
-        "durationMinutesOffsetFromStartTime": "4"
-      },
-      {
-        "point": "geo:40.756830,-73.986600",
-        "durationMinutesOffsetFromStartTime": "8"
-      },
-      {
-        "point": "geo:40.756800,-73.985450",
-        "durationMinutesOffsetFromStartTime": "11"
-      },
-      {
-        "point": "geo:40.755850,-73.984800",
-        "durationMinutesOffsetFromStartTime": "13"
-      },
-      {
-        "point": "geo:40.754738,-73.983793",
-        "durationMinutesOffsetFromStartTime": "15"
-      },
-      {
-        "point": "geo:40.754738,-73.983793",
-        "durationMinutesOffsetFromStartTime": "33"
-      },
-      {
-        "point": "geo:40.751500,-73.984800",
-        "durationMinutesOffsetFromStartTime": "37"
-      },
-      {
-        "point": "geo:40.748440,-73.985664",
-        "durationMinutesOffsetFromStartTime": "40"
-      },
-      {
-        "point": "geo:40.744850,-73.986800",
-        "durationMinutesOffsetFromStartTime": "44"
-      },
-      {
-        "point": "geo:40.741040,-73.987823",
-        "durationMinutesOffsetFromStartTime": "48"
-      },
-      {
-        "point": "geo:40.738500,-73.989100",
-        "durationMinutesOffsetFromStartTime": "52"
-      },
-      {
-        "point": "geo:40.735914,-73.990334",
-        "durationMinutesOffsetFromStartTime": "55"
-      },
-      {
-        "point": "geo:40.735914,-73.990334",
-        "durationMinutesOffsetFromStartTime": "56"
-      },
-      {
-        "point": "geo:40.735600,-73.991000",
-        "durationMinutesOffsetFromStartTime": "59"
-      },
-      {
-        "point": "geo:40.734810,-73.991240",
-        "durationMinutesOffsetFromStartTime": "61"
-      }
+      { "point": "geo:40.758895,-73.985131", "durationMinutesOffsetFromStartTime": "0" },
+      { "point": "geo:40.757950,-73.985830", "durationMinutesOffsetFromStartTime": "4" },
+      { "point": "geo:40.756830,-73.986600", "durationMinutesOffsetFromStartTime": "8" },
+      { "point": "geo:40.756800,-73.985450", "durationMinutesOffsetFromStartTime": "11" },
+      { "point": "geo:40.755850,-73.984800", "durationMinutesOffsetFromStartTime": "13" },
+      { "point": "geo:40.754738,-73.983793", "durationMinutesOffsetFromStartTime": "15" },
+      { "point": "geo:40.754738,-73.983793", "durationMinutesOffsetFromStartTime": "33" },
+      { "point": "geo:40.751500,-73.984800", "durationMinutesOffsetFromStartTime": "37" },
+      { "point": "geo:40.748440,-73.985664", "durationMinutesOffsetFromStartTime": "40" },
+      { "point": "geo:40.744850,-73.986800", "durationMinutesOffsetFromStartTime": "44" },
+      { "point": "geo:40.741040,-73.987823", "durationMinutesOffsetFromStartTime": "48" },
+      { "point": "geo:40.738500,-73.989100", "durationMinutesOffsetFromStartTime": "52" },
+      { "point": "geo:40.735914,-73.990334", "durationMinutesOffsetFromStartTime": "55" },
+      { "point": "geo:40.735600,-73.991000", "durationMinutesOffsetFromStartTime": "58" },
+      { "point": "geo:40.734810,-73.991240", "durationMinutesOffsetFromStartTime": "61" }
     ]
   }
 ]
