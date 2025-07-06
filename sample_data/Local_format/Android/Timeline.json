@@ -1,0 +1,107 @@
+{
+  "timelineObjects": [
+    {
+      "placeVisit": {
+        "location": {
+          "latitudeE7": 407588950,
+          "longitudeE7": -739851310,
+          "placeId": "ChIJmQJIxlVYwokRLgeuocVOGVU",
+          "name": "Times Square"
+        },
+        "duration": {
+          "startTimestamp": "2025-07-07T17:30:00Z",
+          "endTimestamp": "2025-07-07T18:45:10Z"
+        },
+        "placeConfidence": "HIGH_CONFIDENCE",
+        "visitConfidence": 95,
+        "editConfirmationStatus": "NOT_CONFIRMED"
+      }
+    },
+    {
+      "activitySegment": {
+        "startLocation": { "latitudeE7": 407588950, "longitudeE7": -739851310 },
+        "endLocation": { "latitudeE7": 407547380, "longitudeE7": -739837930 },
+        "duration": { "startTimestamp": "2025-07-07T18:45:10Z", "endTimestamp": "2025-07-07T19:00:25Z" },
+        "distance": 550,
+        "activityType": "WALKING",
+        "confidence": "HIGH",
+        "waypointPath": {
+          "waypoints": [
+            { "latE7": 407588950, "lngE7": -739851310 },
+            { "latE7": 407579500, "lngE7": -739858300 },
+            { "latE7": 407568300, "lngE7": -739866000 },
+            { "latE7": 407568000, "lngE7": -739854500 },
+            { "latE7": 407558500, "lngE7": -739848000 },
+            { "latE7": 407547380, "lngE7": -739837930 }
+          ]
+        }
+      }
+    },
+    {
+      "placeVisit": {
+        "location": {
+          "latitudeE7": 407547380,
+          "longitudeE7": -739837930,
+          "placeId": "ChIJnaaBxlVYwokR82p8p0So1dM",
+          "name": "Macy's"
+        },
+        "duration": { "startTimestamp": "2025-07-07T19:00:25Z", "endTimestamp": "2025-07-07T19:18:00Z" },
+        "placeConfidence": "MEDIUM_CONFIDENCE",
+        "visitConfidence": 88,
+        "editConfirmationStatus": "NOT_CONFIRMED"
+      }
+    },
+    {
+      "activitySegment": {
+        "startLocation": { "latitudeE7": 407547380, "longitudeE7": -739837930 },
+        "endLocation": { "latitudeE7": 407359140, "longitudeE7": -739903340 },
+        "duration": { "startTimestamp": "2025-07-07T19:18:00Z", "endTimestamp": "2025-07-07T19:40:50Z" },
+        "distance": 2400,
+        "activityType": "IN_SUBWAY",
+        "confidence": "HIGH",
+        "waypointPath": {
+          "waypoints": [
+            { "latE7": 407547380, "lngE7": -739837930 },
+            { "latE7": 407515000, "lngE7": -739848000 },
+            { "latE7": 407484400, "lngE7": -739856640 },
+            { "latE7": 407448500, "lngE7": -739868000 },
+            { "latE7": 407410400, "lngE7": -739878230 },
+            { "latE7": 407385000, "lngE7": -739891000 },
+            { "latE7": 407359140, "lngE7": -739903340 }
+          ]
+        }
+      }
+    },
+    {
+      "activitySegment": {
+        "startLocation": { "latitudeE7": 407359140, "longitudeE7": -739903340 },
+        "endLocation": { "latitudeE7": 407348100, "lngE7": -739912400 },
+        "duration": { "startTimestamp": "2025-07-07T19:40:50Z", "endTimestamp": "2025-07-07T19:46:15Z" },
+        "distance": 150,
+        "activityType": "WALKING",
+        "confidence": "HIGH",
+        "waypointPath": {
+          "waypoints": [
+            { "latE7": 407359140, "lngE7": -739903340 },
+            { "latE7": 407356000, "lngE7": -739910000 },
+            { "latE7": 407348100, "lngE7": -739912400 }
+          ]
+        }
+      }
+    },
+    {
+      "placeVisit": {
+        "location": {
+          "latitudeE7": 407348100,
+          "longitudeE7": -739912400,
+          "placeId": "ChIJ9_x2DGBZwokR7sBgx-zlsb8",
+          "name": "Washington Square Park"
+        },
+        "duration": { "startTimestamp": "2025-07-07T19:46:15Z", "endTimestamp": "2025-07-07T20:30:00Z" },
+        "placeConfidence": "HIGH_CONFIDENCE",
+        "visitConfidence": 94,
+        "editConfirmationStatus": "NOT_CONFIRMED"
+      }
+    }
+  ]
+}
