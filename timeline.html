@@ -20,29 +20,29 @@
 		window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
 
 		(g => {
-          var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
-          b = b[c] || (b[c] = {});
-          var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, 
-              u = () => h || (h = new Promise(async (f, n) => {
-                await (a = m.createElement("script"));
-                e.set("libraries", [...r] + "");
-                for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
-                e.set("callback", c + ".maps." + q);
-                // Use the globally stored API key
-                if (g.key) { // Check if a key was passed in the config object
-                         e.set("key", g.key);
-                }
-                a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-                d[q] = f;
-                a.onerror = () => h = n(Error(p + " could not load."));
-                a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-                m.head.append(a);
-              }));
-          d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
+            var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
+            b = b[c] || (b[c] = {});
+            var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, 
+                u = () => h || (h = new Promise(async (f, n) => {
+                    await (a = m.createElement("script"));
+                    e.set("libraries", [...r] + "");
+                    for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+                    e.set("callback", c + ".maps." + q);
+                    // Use the globally stored API key
+                    if (g.key) { // Check if a key was passed in the config object
+                             e.set("key", g.key);
+                    }
+                    a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+                    d[q] = f;
+                    a.onerror = () => h = n(Error(p + " could not load."));
+                    a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+                    m.head.append(a);
+                }));
+            d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
         })
         ({ key: window.GOOGLE_MAPS_API_KEY,
-           v: "beta",
-           libraries: "places" });
+            v: "beta",
+            libraries: "places" });
     </script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
@@ -121,7 +121,7 @@
             color: #6c757d;
         }
         #reloadBtn {
-			display:none; /* don't need this atm */
+            display:none; /* don't need this atm */
             flex-grow: 0; /* Don't let it grow */
             padding: 10px;
             background-color: #6c757d;
@@ -185,10 +185,11 @@
             margin-left: 20px;
             padding-top: 5px;
         }
-        #timezone-select {
+        #timezone-select,
+        #distance-unit-select {
             width: 100%;
             padding: 8px;
-            margin-bottom:20px;
+            margin-bottom:10px;
             border-radius: 4px;
             border: 1px solid #ced4da;
             font-size: 14px;
@@ -785,6 +786,9 @@
                     <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>
                         <span role="img" aria-label="Summary">📊</span> Summary
                     </button>
+                    <button id="kmlBtn" class="icon-btn" title="Export as KML" disabled>
+                        <span role="img" aria-label="Export">📤</span> Export KML
+                    </button>
                 </div>
                 <div id="icon-buttons-right">
                     </div>
@@ -800,24 +804,30 @@
                     <button id="closeSettingsBtn">Close Settings</button>
                 </div>
                 
-		                <h4>Timezone</h4>
+                    <h4>Timezone</h4>
                 <label for="timezone-select">Display times in:</label>
                 <select id="timezone-select">
-                    <!-- Timezones will be populated here -->
+			<!-- Timezones will be populated here -->
+                    </select>
+                
+                <h4>Distance Units</h4>
+                <label for="distance-unit-select">Display distances in:</label>
+                <select id="distance-unit-select">
+                    <option value="km" selected>Kilometers</option>
+                    <option value="mi">Miles</option>
                 </select>
-				<br>
-		
+
                 <h4>Display Options</h4>
                 <label class="settings-option">
                     <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
                 </label>
-		
+        
                 <label class="settings-option">
                     <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
                 </label>
                 <div id="activityFilters" style="margin-left: 20px;">
                     <!-- Activity filters will be populated here -->
-                </div>
+                    </div>
 
             </div>
 
@@ -899,6 +909,7 @@
         let globalMinDate = null; // Earliest date in loaded data
         let globalMaxDate = null; // Latest date in loaded data
         let displayTimezone = 'default'; // User-selected timezone
+        let distanceUnit = 'km'; // User-selected distance unit ('km' or 'mi')
         let storedDirHandle = null; // For storing last used directory handle
 
         // Summary View Globals
@@ -996,9 +1007,9 @@
              const { Map } = await google.maps.importLibrary("maps");
              GoogleMap = Map;
              map = new GoogleMap(document.getElementById('map'), {
-               center: { lat: 25.034170, lng: 121.564560 },
-               zoom: 12,
-               mapId: "TIMELINE_MAP"
+                center: { lat: 25.034170, lng: 121.564560 },
+                zoom: 12,
+                mapId: "TIMELINE_MAP"
              });
              
              // Then import other libraries we need
@@ -1137,7 +1148,7 @@
                 case 'UNKNOWN': case 'UNKNOWN_ACTIVITY_TYPE': return 'Unknown Activity';
                 case 'TILTING': return 'Device Tilt';
                 default:
-                     const group = getGroupedActivityType(activityType);
+                    const group = getGroupedActivityType(activityType);
                     // Use group name if it's not UNKNOWN
                     if (group !== 'UNKNOWN' && group !== activityType) {
                         return group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -1147,7 +1158,7 @@
             }
         }
 
-        // --- Timezone Helpers ---
+        // --- Timezone & Distance Helpers ---
         function getSelectedTimezone() {
             return displayTimezone === 'default' ? moment.tz.guess() : displayTimezone;
         }
@@ -1157,10 +1168,25 @@
             return moment(timestamp).tz(tz).format(formatString);
         }
 
+        function formatDistance(meters) {
+            const M_TO_MI = 0.000621371;
+            if (distanceUnit === 'mi') {
+                const miles = meters * M_TO_MI;
+                return `${miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi`;
+            } else { // Default to km
+                const kilometers = meters / 1000;
+                return `${kilometers.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+            }
+        }
+
         // --- API Call Counter ---
         function incrementApiCallCount() {
             placeApiCallCount++;
             updateApiCallDisplay();
+            // Enable save button if this is the first API call and the UI is active
+            if (placeApiCallCount > 0 && uiEnabled) {
+                document.getElementById('saveCacheBtn').disabled = false;
+            }
         }
 
         function updateApiCallDisplay() {
@@ -1177,17 +1203,17 @@
             const timelineItem = document.createElement('div');
             timelineItem.className = 'timeline-item';
             timelineItem.dataset.index = index; // Use the global index
-			// --- DEBUG START: Add raw data ---
-			/*try {
-				// Select the relevant part of the item (visit or activity)
-				const rawData = item;
-				const jsonString = JSON.stringify(rawData);
-				timelineItem.dataset.rawJson = escapeHtml(jsonString); // Add as data attribute
-			} catch (e) {
-				console.error("Error stringifying or escaping raw data for item:", item, e);
-				timelineItem.dataset.rawJson = escapeHtml('{"error": "Could not serialize data"}'); // Add error indicator
-			}*/
-			// --- DEBUG END: Add raw data ---
+            // --- DEBUG START: Add raw data ---
+            /*try {
+                // Select the relevant part of the item (visit or activity)
+                const rawData = item;
+                const jsonString = JSON.stringify(rawData);
+                timelineItem.dataset.rawJson = escapeHtml(jsonString); // Add as data attribute
+            } catch (e) {
+                console.error("Error stringifying or escaping raw data for item:", item, e);
+                timelineItem.dataset.rawJson = escapeHtml('{"error": "Could not serialize data"}'); // Add error indicator
+            }*/
+            // --- DEBUG END: Add raw data ---
             // Check if a date header needs to be added for this date
             const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
             if (!existingHeader) {
@@ -1267,7 +1293,6 @@
                 startTimestamp = activitySegment.duration.startTimestamp;
                 endTimestamp = activitySegment.duration.endTimestamp;
                 const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || (activitySegment.waypointPath && activitySegment.waypointPath.distanceMeters) || 0;
-                const distanceKm = distanceMeters / 1000;
                 const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities[0]?.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
                 const formattedType = formatActivityType(activityType);
                 const activityColor = getActivityColor(activityType);
@@ -1276,7 +1301,7 @@
                         <div class="timeline-item-details">
                             <strong>${formattedType}</strong><br>
                             <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
-                            <span class="distance">Distance: ${distanceKm.toFixed(2)} km</span>
+                            <span class="distance">Distance: ${formatDistance(distanceMeters)}</span>
                         </div>
                     `;
                  timelineItem.style.setProperty('--activity-color', activityColor);
@@ -1356,45 +1381,45 @@
                 endTimestamp = placeVisit.duration.endTimestamp;
                 originalVisitData = placeVisit; 
             } else if (itemData.visit) { // iOS format (itemData is the raw timeline object)
-                 const visit = itemData.visit; // The 'visit' sub-object
-                 semanticTypeStr = visit.topCandidate?.semanticType; // e.g., "Home", "Work"
-                 if (semanticTypeStr?.toUpperCase() === "HOME") {
+                const visit = itemData.visit; // The 'visit' sub-object
+                semanticTypeStr = visit.topCandidate?.semanticType; // e.g., "Home", "Work"
+                if (semanticTypeStr?.toUpperCase() === "HOME") {
                     locationName = "Home";
-                 } else if (semanticTypeStr?.toUpperCase() === "WORK") {
+                } else if (semanticTypeStr?.toUpperCase() === "WORK") {
                     locationName = "Work";
-                 } else {
+                } else {
                     locationName = visit.topCandidate?.name || visit.topCandidate?.semanticType;
-                 }
-                 placeId = visit.topCandidate?.placeID;
-                 
-                 const geoCoords = parseGeoString(visit.topCandidate?.placeLocation);
-                 if (geoCoords) {
-                     lat = geoCoords.lat;
-                     lng = geoCoords.lng;
-                 } else if (visit.location?.latitudeE7 && visit.location?.longitudeE7) { // Fallback if geo: parsing fails or not present
-                     lat = visit.location.latitudeE7 / 1e7;
-                     lng = visit.location.longitudeE7 / 1e7;
-                 } else if (visit.centerLatE7 && visit.centerLngE7) { // Another fallback
-                     lat = visit.centerLatE7 / 1e7;
-                     lng = visit.centerLngE7 / 1e7;
-                 }
+                }
+                placeId = visit.topCandidate?.placeID;
+                
+                const geoCoords = parseGeoString(visit.topCandidate?.placeLocation);
+                if (geoCoords) {
+                    lat = geoCoords.lat;
+                    lng = geoCoords.lng;
+                } else if (visit.location?.latitudeE7 && visit.location?.longitudeE7) { // Fallback if geo: parsing fails or not present
+                    lat = visit.location.latitudeE7 / 1e7;
+                    lng = visit.location.longitudeE7 / 1e7;
+                } else if (visit.centerLatE7 && visit.centerLngE7) { // Another fallback
+                    lat = visit.centerLatE7 / 1e7;
+                    lng = visit.centerLngE7 / 1e7;
+                }
 
-                 startTimestamp = itemData.startTime;
-                 endTimestamp = itemData.endTime;
-                 // Create a pseudo-standard structure for consistency downstream
-                 originalVisitData = {
-                     location: { 
-                         name: locationName, 
-                         placeId: placeId, 
-                         latitudeE7: lat ? lat * 1e7 : undefined, 
-                         longitudeE7: lng ? lng * 1e7 : undefined,
-                         semanticType: semanticTypeStr // Store the original semantic type
-                     },
-                     duration: { startTimestamp: startTimestamp, endTimestamp: endTimestamp }
-                 };
+                startTimestamp = itemData.startTime;
+                endTimestamp = itemData.endTime;
+                // Create a pseudo-standard structure for consistency downstream
+                originalVisitData = {
+                    location: { 
+                        name: locationName, 
+                        placeId: placeId, 
+                        latitudeE7: lat ? lat * 1e7 : undefined, 
+                        longitudeE7: lng ? lng * 1e7 : undefined,
+                        semanticType: semanticTypeStr // Store the original semantic type
+                    },
+                    duration: { startTimestamp: startTimestamp, endTimestamp: endTimestamp }
+                };
             } else {
-                 console.warn("Unrecognized place visit structure:", itemData);
-                 return; 
+                console.warn("Unrecognized place visit structure:", itemData);
+                return; 
             }
 
             const fallbackName = locationName || (lat && lng ? `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})` : 'Unknown Location');
@@ -1421,7 +1446,7 @@
                 // Update sidebar with basic info
                 updateSidebarItem(index, fallbackName, null);
             } else {
-                 console.warn(`Skipping marker render due to invalid coordinates for: ${fallbackName}`);
+                console.warn(`Skipping marker render due to invalid coordinates for: ${fallbackName}`);
             }
         }
 
@@ -1454,36 +1479,36 @@
             }
 
             const marker = new AdvancedMarkerElement({
-                     position: position,
-                     map: map,
-                     title: name,
-                     content: markerContent // Use PinElement or default if null
-                 });
-                 markers.push(marker); 
+                          position: position,
+                          map: map,
+                          title: name,
+                          content: markerContent // Use PinElement or default if null
+                      });
+                      markers.push(marker); 
 
             // Create InfoWindow content (without photo initially)
-                 const infoWindowContent = `
-                         <div style="max-width: 250px;">
-                             <h3 style="margin: 5px 0;">${name}</h3>
-                             <p style="margin: 3px 0; font-size: 0.9em;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
-                             <div class="photo-container" data-place-id="basic-${index}">
-                                   <div class="photo-placeholder">No photo available</div>
-                             </div>
-                             <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY hh:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "hh:mm A")}</p>
+                  const infoWindowContent = `
+                          <div style="max-width: 250px;">
+                               <h3 style="margin: 5px 0;">${name}</h3>
+                               <p style="margin: 3px 0; font-size: 0.9em;">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</p>
+                               <div class="photo-container" data-place-id="basic-${index}">
+                                     <div class="photo-placeholder">No photo available</div>
+                               </div>
+                               <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY hh:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "hh:mm A")}</p>
                          <p style="margin-top: 5px; font-size: 0.85em;"><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">View on Google Maps</a></p>
-                         </div>`;
+                          </div>`;
 
-                 const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-                 infoWindow.placeId = null; // No place ID for basic marker
-         infoWindow.photoFetched = true; // Mark as "fetched" since there's no photo to fetch
-                 infoWindows.push(infoWindow);
+                  const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
+                  infoWindow.placeId = null; // No place ID for basic marker
+      infoWindow.photoFetched = true; // Mark as "fetched" since there's no photo to fetch
+                  infoWindows.push(infoWindow);
 
-                 // Add listeners
-                 const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-                 addMarkerClickListener(marker, infoWindow, index);
-                 if (sidebarItem) {
-                     addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
-                 }
+                  // Add listeners
+                  const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+                  addMarkerClickListener(marker, infoWindow, index);
+                  if (sidebarItem) {
+                      addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+                  }
         }
 
         // Fetches place details using the new Place.fetchFields method
@@ -1500,24 +1525,24 @@
             
             // Define the fields to fetch (excluding 'photos')
             const fields = [
-                'id',                 // Basic identifier
-                'displayName',        // New name field
+                'id',               // Basic identifier
+                'displayName',      // New name field
                 'formattedAddress',   // New address field
                 'location',           // New geometry field (lat/lng)
-                'svgIconMaskURI',       // New icon URL field
-                'iconBackgroundColor',  // New icon background color field
+                'svgIconMaskURI',     // New icon URL field
+                'iconBackgroundColor', // New icon background color field
                 'googleMapsURI',
                 'types'
             ];
 
             try {
                 const place = new Place({
-                  id: placeId,
-                  requestedLanguage: "en", // optional
+                    id: placeId,
+                    requestedLanguage: "en", // optional
                 });
 
                 await place.fetchFields({
-                  fields: fields
+                    fields: fields
                 });
                 incrementApiCallCount(); // Increment API counter for basic details
 
@@ -1588,8 +1613,8 @@
             // --- Create Marker ---
             const PinElement = google.maps.marker.PinElement;
             if (!AdvancedMarkerElement || !PinElement) {
-                 console.error("Marker library classes (AdvancedMarkerElement, PinElement) not loaded.");
-                 return;
+                console.error("Marker library classes (AdvancedMarkerElement, PinElement) not loaded.");
+                return;
             }
 
             let markerContent;
@@ -1617,9 +1642,9 @@
                     markerContent = fallbackPin.element;
                 }
             } else {
-                 // Fallback if no icon URI or background color - use a generic colored pin
-                 const fallbackPin = new PinElement({ background: '#ce5140', scale: 0.9 }); // Default
-                 markerContent = fallbackPin.element;
+                // Fallback if no icon URI or background color - use a generic colored pin
+                const fallbackPin = new PinElement({ background: '#ce5140', scale: 0.9 }); // Default
+                markerContent = fallbackPin.element;
             }
 
             // Create the Advanced Marker
@@ -1715,8 +1740,8 @@
 
             // Only render if we have at least two points
             if (path.length < 2) {
-                 console.log(`Skipping polyline render for index ${index}: Not enough points (${path.length})`);
-                 return;
+                console.log(`Skipping polyline render for index ${index}: Not enough points (${path.length})`);
+                return;
             }
 
             const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities[0]?.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
@@ -1764,7 +1789,7 @@
                 }
                 return;
             }
- 
+
             // Skip if no placeId or photo already fetched/failed
             if (!infoWindow || !infoWindow.placeId || infoWindow.photoFetched) {
                 console.log(`Skipping photo fetch for placeId: ${infoWindow?.placeId}. Reason: No placeId or photo already fetched/failed.`);
@@ -1788,11 +1813,11 @@
             try {
                 incrementApiCallCount(); // Increment counter for photo fetch
                 const place = new Place({
-                  id: infoWindow.placeId,
-                  requestedLanguage: "en", // optional
+                    id: infoWindow.placeId,
+                    requestedLanguage: "en", // optional
                 });
                 await place.fetchFields({
-                  fields: fields
+                    fields: fields
                 });
                 
                 let photoHtml;
@@ -2239,7 +2264,6 @@
             console.log("Calculating summaries...");
             const yearly = {};
             const monthly = {};
-            const kmConversion = 0.001; // Meters to kilometers
 
             for (const key in timelineData) {
                 if (!timelineData[key].timelineObjects) continue;
@@ -2259,13 +2283,13 @@
 
                 // Initialize summary objects if they don't exist
                 if (!yearly[year]) {
-                    yearly[year] = { visits: 0, distanceKm: 0, distanceByActivity: {} };
+                    yearly[year] = { visits: 0, distanceMeters: 0, distanceByActivity: {} };
                 }
                 if (!monthly[year]) {
                     monthly[year] = {};
                 }
                 if (!monthly[year][monthIndex]) {
-                    monthly[year][monthIndex] = { visits: 0, distanceKm: 0, distanceByActivity: {} };
+                    monthly[year][monthIndex] = { visits: 0, distanceMeters: 0, distanceByActivity: {} };
                 }
 
                 // Process each item in the month's data
@@ -2276,19 +2300,18 @@
                     } else if (item.activitySegment) {
                         const segment = item.activitySegment;
                         const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
-                        const distanceKm = distanceMeters * kmConversion;
 
-                        if (distanceKm > 0) {
+                        if (distanceMeters > 0) {
                             const activityType = segment.activityType || (segment.activities && segment.activities.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
                             const groupedType = getGroupedActivityType(activityType);
 
                             // Add to yearly summary
-                            yearly[year].distanceKm += distanceKm;
-                            yearly[year].distanceByActivity[groupedType] = (yearly[year].distanceByActivity[groupedType] || 0) + distanceKm;
+                            yearly[year].distanceMeters += distanceMeters;
+                            yearly[year].distanceByActivity[groupedType] = (yearly[year].distanceByActivity[groupedType] || 0) + distanceMeters;
 
                             // Add to monthly summary
-                            monthly[year][monthIndex].distanceKm += distanceKm;
-                            monthly[year][monthIndex].distanceByActivity[groupedType] = (monthly[year][monthIndex].distanceByActivity[groupedType] || 0) + distanceKm;
+                            monthly[year][monthIndex].distanceMeters += distanceMeters;
+                            monthly[year][monthIndex].distanceByActivity[groupedType] = (monthly[year][monthIndex].distanceByActivity[groupedType] || 0) + distanceMeters;
                         }
                     }
                 });
@@ -2301,11 +2324,10 @@
 
         // Calculates summary specifically for the selected date range
         function calculateSelectedDatesSummary(startDate, endDate) {
-            const summary = { visits: 0, distanceKm: 0, distanceByActivity: {} };
+            const summary = { visits: 0, distanceMeters: 0, distanceByActivity: {} };
             const tz = getSelectedTimezone();
             const startMoment = moment.tz(startDate, tz).startOf('day');
             const endMoment = moment.tz(endDate, tz).endOf('day');
-            const kmConversion = 0.001;
 
             let currentDate = startMoment.clone();
             while (currentDate.isSameOrBefore(endMoment, 'day')) {
@@ -2345,12 +2367,11 @@
                          } else if (item.activitySegment) {
                              const segment = item.activitySegment;
                              const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
-                             const distanceKm = distanceMeters * kmConversion;
-                             if (distanceKm > 0) {
-                                 summary.distanceKm += distanceKm;
+                             if (distanceMeters > 0) {
+                                 summary.distanceMeters += distanceMeters;
                                  const activityType = segment.activityType || (segment.activities && segment.activities[0]?.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
                                  const groupedType = getGroupedActivityType(activityType);
-                                 summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceKm;
+                                 summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceMeters;
                              }
                          }
                       });
@@ -2381,9 +2402,9 @@
                 sortedActivities.forEach(activityGroup => {
                     const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     const icon = getActivityIcon(activityGroup);
-                    activityHtml += `<li>${icon} ${formattedName}: <span>${summaryData.distanceByActivity[activityGroup].toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></li>`;
+                    activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(summaryData.distanceByActivity[activityGroup])}</span></li>`;
                 });
-            } else if (summaryData.distanceKm > 0) {
+            } else if (summaryData.distanceMeters > 0) {
                  activityHtml += '<li>No distance breakdown available</li>';
             } else {
                  activityHtml += '<li>No distance recorded</li>';
@@ -2391,11 +2412,11 @@
             activityHtml += '</ul>';
 
             item.innerHTML = `
-                 <strong>${title}</strong>
-                 <div class="summary-details">Visits: <span>${summaryData.visits.toLocaleString()}</span></div>
-                 <div class="summary-details">Total Dist: <span>${summaryData.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
-                 ${activityHtml}
-              `;
+                  <strong>${title}</strong>
+                  <div class="summary-details">Visits: <span>${summaryData.visits.toLocaleString()}</span></div>
+                  <div class="summary-details">Total Dist: <span>${formatDistance(summaryData.distanceMeters)}</span></div>
+                  ${activityHtml}
+                 `;
             container.appendChild(item);
         }
 
@@ -2430,9 +2451,9 @@
                     sortedActivities.forEach(activityGroup => {
                         const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                         const icon = getActivityIcon(activityGroup);
-                        activityHtml += `<li>${icon} ${formattedName}: <span>${data.distanceByActivity[activityGroup].toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></li>`;
+                        activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
                     });
-                } else if (data.distanceKm > 0) {
+                } else if (data.distanceMeters > 0) {
                      activityHtml += '<li>No distance breakdown available</li>';
                 } else {
                      activityHtml += '<li>No distance recorded</li>';
@@ -2440,11 +2461,11 @@
                 activityHtml += '</ul>';
 
                 item.innerHTML = `
-                     <strong>${year}</strong>
-                     <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
-                     <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
-                     ${activityHtml}
-                  `;
+                        <strong>${year}</strong>
+                        <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+                        <div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
+                        ${activityHtml}
+                       `;
 
                 // --- Year Click Listener ---
                 item.addEventListener('click', () => {
@@ -2503,9 +2524,9 @@
                      sortedActivities.forEach(activityGroup => {
                          const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                          const icon = getActivityIcon(activityGroup);
-                         activityHtml += `<li>${icon} ${formattedName}: <span>${data.distanceByActivity[activityGroup].toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></li>`;
+                         activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
                      });
-                } else if (data.distanceKm > 0) {
+                } else if (data.distanceMeters > 0) {
                      activityHtml += '<li>No distance breakdown available</li>';
                 } else {
                      activityHtml += '<li>No distance recorded</li>';
@@ -2513,11 +2534,11 @@
                 activityHtml += '</ul>';
 
                 item.innerHTML = `
-                     <strong>${monthName}</strong>
-                     <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
-                     <div class="summary-details">Total Dist: <span>${data.distanceKm.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km</span></div>
-                     ${activityHtml}
-                  `;
+                        <strong>${monthName}</strong>
+                        <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+                        <div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
+                        ${activityHtml}
+                       `;
 
                  // Add click listener to navigate to this month on the map
                  item.addEventListener('click', () => navigateToMonth(year, monthIndex));
@@ -2571,10 +2592,10 @@
             // Function to navigate days using arrow buttons
             const navigateDays = (days) => {
                 if (!uiEnabled) return;
-                				// Ensure start date is not after end date (can happen if range was > 1 day)
-				// If moving back, the end date should also move back by the same amount
-				// If moving forward, the end date should also move forward by the same amount
-				// The difference between start and end should remain constant.
+                                 // Ensure start date is not after end date (can happen if range was > 1 day)
+                // If moving back, the end date should also move back by the same amount
+                // If moving forward, the end date should also move forward by the same amount
+                // The difference between start and end should remain constant.
                 const tz = getSelectedTimezone();
                 const originalStart = moment.tz(startDatePicker.value, tz);
                 const originalEnd = moment.tz(endDatePicker.value, tz);
@@ -2604,13 +2625,13 @@
                 if (startDate.isAfter(endDate)) {
                     console.warn("Start date cannot be after end date.");
                     alert("Start date cannot be after end date."); // User feedback
-					// Clear map/timeline and return
+                    // Clear map/timeline and return
                     clearMap();
                     clearTimeline();
                     globalIndex = 0;
                     //placeDetailsCache = {};
                     updateApiCallDisplay();
-					// Clear summary data as well if needed
+                    // Clear summary data as well if needed
                     document.getElementById('summary-selected-dates').innerHTML = '';
                     document.getElementById('summary-years').innerHTML = '';
                     document.getElementById('summary-months').innerHTML = '';
@@ -2626,7 +2647,7 @@
                     }
                 }
 
-				loadTimelineDataInDateRange(startDate.toDate(), endDate.toDate(), true); // Pass true or remove for default warning behavior in loadTimelineDataInDateRange if needed
+                loadTimelineDataInDateRange(startDate.toDate(), endDate.toDate(), true); // Pass true or remove for default warning behavior in loadTimelineDataInDateRange if needed
             });
         }
 
@@ -2641,17 +2662,17 @@
                 monthData.timelineObjects?.forEach(item => {
                     let rawActivityType = 'UNKNOWN'; // Default
 
-					// After readFilesFromDirectory, both standard Google Takeout data and
-					// transformed iOS data should have an item.activitySegment structure.
+                    // After readFilesFromDirectory, both standard Google Takeout data and
+                    // transformed iOS data should have an item.activitySegment structure.
                     if (item.activitySegment) {
                         rawActivityType = item.activitySegment.activityType ||
                                           (item.activitySegment.activities && item.activitySegment.activities[0]?.activityType) ||
                                           (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) ||
-										 'UNKNOWN'; // Default if no specific type found within activitySegment
+                                         'UNKNOWN'; // Default if no specific type found within activitySegment
                     }
-					// This else if block is a fallback for data that might not have been transformed as expected,
-					else if (item.activity?.topCandidate?.type) { // Check for raw iOS-like structure if no activitySegment
-						// console.warn("Encountered item.activity structure directly in populateActivityFilters. Data might not be fully transformed:", JSON.stringify(item).substring(0,200));
+                    // This else if block is a fallback for data that might not have been transformed as expected,
+                    else if (item.activity?.topCandidate?.type) { // Check for raw iOS-like structure if no activitySegment
+                        // console.warn("Encountered item.activity structure directly in populateActivityFilters. Data might not be fully transformed:", JSON.stringify(item).substring(0,200));
                         rawActivityType = item.activity.topCandidate.type;
                     }
                     let processedActivityType;
@@ -2659,7 +2680,7 @@
                         processedActivityType = rawActivityType.trim().toUpperCase();
                     }
 
-					// If rawActivityType was not a string, or became empty after trim, default to 'UNKNOWN'
+                    // If rawActivityType was not a string, or became empty after trim, default to 'UNKNOWN'
                     if (!processedActivityType) {
                         processedActivityType = 'UNKNOWN';
                     }
@@ -2895,10 +2916,13 @@
                 document.getElementById('fitMapBtn'),
                 document.getElementById('summaryBtn'),
                 document.getElementById('mapBtn'),
-                document.getElementById('saveCacheBtn'),
+                document.getElementById('kmlBtn'),
                 document.getElementById('reloadBtn')
             ];
             elementsToToggle.forEach(el => { if(el) el.disabled = !enabled; });
+            
+            // Explicitly set the "Save Data" button state based on API calls
+            document.getElementById('saveCacheBtn').disabled = !enabled || (placeApiCallCount === 0);
             
             // Special case for reload button - it should only be enabled if a handle exists
             if (enabled && storedDirHandle) {
@@ -2912,6 +2936,7 @@
             const settingsCheckboxes = document.querySelectorAll('#settingsView input[type="checkbox"]');
             settingsCheckboxes.forEach(cb => cb.disabled = !enabled);
             document.getElementById('timezone-select').disabled = !enabled;
+            document.getElementById('distance-unit-select').disabled = !enabled;
 
             if (!enabled) {
                 // Reset state when UI is disabled (e.g., no data loaded)
@@ -2930,10 +2955,10 @@
                 updateApiCallDisplay();
                 document.getElementById('activityFilters').innerHTML = ''; // Clear activity filters
                 document.getElementById('date-range-info').innerHTML = ''; // Clear date range info
-                 // Reset summary view state
-                 document.getElementById('summaryView').classList.remove('expanded-year-active');
-                 document.getElementById('summary-months').style.display = 'none';
-                 document.getElementById('backToYearsBtn').style.display = 'none';
+                // Reset summary view state
+                document.getElementById('summaryView').classList.remove('expanded-year-active');
+                document.getElementById('summary-months').style.display = 'none';
+                document.getElementById('backToYearsBtn').style.display = 'none';
             } else {
                  updateViewToggleButtons(); // Ensure correct button is active when enabled
             }
@@ -2957,6 +2982,7 @@
                 selectedSummaryYear = null;
                 globalMinDate = null;
                 globalMaxDate = null;
+                placeApiCallCount = 0; // Reset API counter on new folder load
                 updateApiCallDisplay();
                 // Show loading overlay and disable UI only on initial call
                 document.getElementById('loading-overlay').style.display = "flex";
@@ -3086,31 +3112,31 @@
                                     simplifiedRawPath: { points: [] } 
                                 };
 
-            // --- NEW: Step 2 - Associate path points with this activity ---
-            const activityStartTime = moment(item.startTime);
-            const activityEndTime = moment(item.endTime);
+                // --- NEW: Step 2 - Associate path points with this activity ---
+                const activityStartTime = moment(item.startTime);
+                const activityEndTime = moment(item.endTime);
 
-            // Efficiently find all points from the master list that fall within this activity's timeframe
-            for (let i = pathPointPointer; i < allPathPoints.length; i++) {
-                const point = allPathPoints[i];
+                // Efficiently find all points from the master list that fall within this activity's timeframe
+                for (let i = pathPointPointer; i < allPathPoints.length; i++) {
+                    const point = allPathPoints[i];
 
-                // Since the list is sorted, we can advance our pointer past points that are too old
-                if (point.timestamp.isBefore(activityStartTime)) {
-                    pathPointPointer = i + 1;
-                    continue;
+                    // Since the list is sorted, we can advance our pointer past points that are too old
+                    if (point.timestamp.isBefore(activityStartTime)) {
+                        pathPointPointer = i + 1;
+                        continue;
+                    }
+
+                    // If the point is after the activity, we can stop searching for this activity
+                    if (point.timestamp.isAfter(activityEndTime)) {
+                        break;
+                    }
+
+                    // This point belongs to the current activity, so add it to the path
+                    transformedActivity.simplifiedRawPath.points.push({
+                        lat: point.lat,
+                        lng: point.lng
+                    });
                 }
-
-                // If the point is after the activity, we can stop searching for this activity
-                if (point.timestamp.isAfter(activityEndTime)) {
-                    break;
-                }
-
-                // This point belongs to the current activity, so add it to the path
-                transformedActivity.simplifiedRawPath.points.push({
-                    lat: point.lat,
-                    lng: point.lng
-                });
-            }
 
                                 const startGeo = parseGeoString(activityData.start);
                                 if (startGeo) {
@@ -3437,15 +3463,15 @@
                 });
 
             } else {
-                 // Fallback or message for unsupported browsers
-                 folderPicker.disabled = true;
-                 folderPicker.textContent = 'Folder Picker Not Supported';
-                 console.warn('window.showDirectoryPicker is not supported in this browser.');
-                 alert('Your browser does not support the File System Access API needed to select folders. Please try a different browser (like Chrome or Edge).');
+                // Fallback or message for unsupported browsers
+                folderPicker.disabled = true;
+                folderPicker.textContent = 'Folder Picker Not Supported';
+                console.warn('window.showDirectoryPicker is not supported in this browser.');
+                alert('Your browser does not support the File System Access API needed to select folders. Please try a different browser (like Chrome or Edge).');
             }
         }
 
-        // --- IndexedDB Functions for Directory Handle ---
+        // --- IndexedDB Functions for Directory Handle & Settings ---
         const DB_NAME = 'TimelineViewerDB';
         const STORE_NAME = 'settings';
 
@@ -3463,33 +3489,41 @@
             });
         }
 
-        async function saveDirectoryHandle(dirHandle) {
+        async function saveSetting(key, value) {
             try {
                 const db = await openDB();
                 const tx = db.transaction(STORE_NAME, 'readwrite');
                 const store = tx.objectStore(STORE_NAME);
-                store.put(dirHandle, 'lastDirectoryHandle');
+                store.put(value, key);
                 await new Promise(resolve => tx.oncomplete = resolve);
-                console.log('Directory handle saved to IndexedDB.');
+                console.log(`Setting '${key}' saved to IndexedDB.`);
             } catch (error) {
-                console.error('Error saving directory handle to IndexedDB:', error);
+                console.error(`Error saving setting '${key}' to IndexedDB:`, error);
             }
         }
 
-        async function getDirectoryHandle() {
+        async function getSetting(key) {
             try {
                 const db = await openDB();
                 const tx = db.transaction(STORE_NAME, 'readonly');
                 const store = tx.objectStore(STORE_NAME);
-                const request = store.get('lastDirectoryHandle');
+                const request = store.get(key);
                 return new Promise((resolve, reject) => {
                     request.onsuccess = () => resolve(request.result);
                     request.onerror = () => reject(request.error);
                 });
             } catch (error) {
-                console.error('Error getting directory handle from IndexedDB:', error);
-                return null;
+                console.error(`Error getting setting '${key}' from IndexedDB:`, error);
+                return undefined;
             }
+        }
+        
+        async function saveDirectoryHandle(dirHandle) {
+             await saveSetting('lastDirectoryHandle', dirHandle);
+        }
+
+        async function getDirectoryHandle() {
+             return await getSetting('lastDirectoryHandle');
         }
         
         async function verifyPermission(fileHandle, readWrite) {
@@ -3511,7 +3545,7 @@
             return false;
         }
 
-        // --- Timezone Functions ---
+        // --- Timezone and Units Functions ---
         function populateTimezoneSelector() {
             const select = document.getElementById('timezone-select');
             select.innerHTML = ''; // Clear existing
@@ -3539,14 +3573,41 @@
                 });
             }
 
-            select.addEventListener('change', (e) => {
+            // Apply the loaded or default setting to the UI
+            select.value = displayTimezone;
+
+            select.addEventListener('change', async (e) => {
                 displayTimezone = e.target.value;
-                console.log(`Timezone changed to: ${displayTimezone}`);
-                // Reload data to apply new timezone formatting and filtering
+                await saveSetting('displayTimezone', displayTimezone);
+                console.log(`Timezone changed and saved: ${displayTimezone}`);
                 if (uiEnabled) {
-                    // Also update the date range info text to reflect the new timezone
                     displayMinMaxDates();
                     document.getElementById('goBtn').click();
+                }
+            });
+        }
+        
+        function initDistanceUnitSelector() {
+            const select = document.getElementById('distance-unit-select');
+            // Apply the loaded or default setting to the UI
+            select.value = distanceUnit;
+
+            select.addEventListener('change', async (e) => {
+                distanceUnit = e.target.value;
+                await saveSetting('distanceUnit', distanceUnit);
+                console.log(`Distance unit changed and saved: ${distanceUnit}`);
+                if (uiEnabled) {
+                    document.getElementById('goBtn').click();
+                    if (summaryViewVisible) {
+                        displaySelectedDatesSummary(
+                            new Date(document.getElementById('startDatePicker').value),
+                            new Date(document.getElementById('endDatePicker').value)
+                        );
+                        displayYearSummary();
+                        if (selectedSummaryYear !== null) {
+                            displayMonthSummary(selectedSummaryYear);
+                        }
+                    }
                 }
             });
         }
@@ -3571,6 +3632,203 @@
             }
         }
 
+        // --- KML Export ---
+        function getFilteredDataForRange(startDateStr, endDateStr) {
+            const tz = getSelectedTimezone();
+            const startOfDay = moment.tz(startDateStr, tz).startOf('day');
+            const endOfDay = moment.tz(endDateStr, tz).endOf('day');
+            let allItemsInRange = [];
+
+            let currentDate = startOfDay.clone();
+            // Create a set to avoid processing the same month's data multiple times
+            const monthsToProcess = new Set();
+            while (currentDate.isSameOrBefore(endOfDay, 'day')) {
+                const dataKey = `${currentDate.year()}_${currentDate.format('MMMM').toUpperCase()}`;
+                monthsToProcess.add(dataKey);
+                currentDate.add(1, 'days');
+            }
+
+            monthsToProcess.forEach(dataKey => {
+                if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
+                    const monthItems = timelineData[dataKey].timelineObjects.filter(item => {
+                         let itemStartTime, itemEndTime;
+                         if (item.placeVisit) {
+                             itemStartTime = item.placeVisit.duration?.startTimestamp;
+                             itemEndTime = item.placeVisit.duration?.endTimestamp;
+                         } else if (item.activitySegment) {
+                             itemStartTime = item.activitySegment.duration?.startTimestamp;
+                             itemEndTime = item.activitySegment.duration?.endTimestamp;
+                         } else if (item.visit || item.activity) {
+                             itemStartTime = item.startTime;
+                             itemEndTime = item.endTime;
+                         }
+                         if (!itemStartTime || !itemEndTime) return false;
+                         const itemStartMoment = moment(itemStartTime);
+                         const itemEndMoment = moment(itemEndTime);
+                         // Check for overlap with the total date range
+                         return itemEndMoment.isSameOrAfter(startOfDay) && itemStartMoment.isSameOrBefore(endOfDay);
+                    });
+                    allItemsInRange.push(...monthItems);
+                }
+            });
+            
+            // Sort the final combined list chronologically
+            allItemsInRange.sort((a, b) => {
+                const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
+                const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+                return timeA - timeB;
+            });
+            return allItemsInRange;
+        }
+
+
+        function exportToKML() {
+            if (!uiEnabled) return;
+        
+            const startDateStr = document.getElementById('startDatePicker').value;
+            const endDateStr = document.getElementById('endDatePicker').value;
+            // Get all the raw data items for the selected date range
+            const itemsToExport = getFilteredDataForRange(startDateStr, endDateStr);
+        
+            if (itemsToExport.length === 0) {
+                alert("No data available in the selected range to export.");
+                return;
+            }
+        
+            let kmlPlacemarks = '';
+        
+            itemsToExport.forEach(item => {
+                // --- Logic for Place Visits ---
+                if (item.placeVisit) {
+                    const place = item.placeVisit;
+                    const placeId = place.location.placeId;
+                    const lat = place.location.latitudeE7 / 1e7;
+                    const lng = place.location.longitudeE7 / 1e7;
+                    if (isNaN(lat) || isNaN(lng)) return; // Skip if no valid coordinates
+        
+                    // Determine the best available name
+                    let placeName = place.location.name || 'Unknown Location'; // Default name from file
+                    const semanticType = place.location.semanticType;
+
+                    // 1. Check for special "Home" or "Work" semantic types
+                    if (semanticType === "TYPE_HOME" || placeName.toLowerCase() === "home") {
+                        placeName = "Home";
+                    } else if (semanticType === "TYPE_WORK" || placeName.toLowerCase() === "work") {
+                        placeName = "Work";
+                    } 
+                    // 2. If not Home/Work, check the cache for an API-fetched name
+                    else if (placeId && placeDetailsCache[placeId]) {
+                        placeName = placeDetailsCache[placeId].displayName;
+                    }
+        
+                    const name = escapeHtml(placeName);
+                    const start = formatTimestamp(place.duration.startTimestamp, 'YYYY-MM-DD HH:mm');
+                    const end = formatTimestamp(place.duration.endTimestamp, 'HH:mm');
+        
+                    kmlPlacemarks += `
+          <Placemark>
+            <name>${name}</name>
+            <description>Arrived: ${start}&#10;Departed: ${end}</description>
+            <styleUrl>#placeVisitStyle</styleUrl>
+            <Point>
+              <coordinates>${lng},${lat},0</coordinates>
+            </Point>
+          </Placemark>`;
+                
+                // --- Logic for Activity Segments (no changes needed here) ---
+                } else if (item.activitySegment) {
+                    const activity = item.activitySegment;
+                    const activityType = activity.activityType || (activity.activities && activity.activities[0]?.activityType) || 'UNKNOWN';
+                    const groupedType = getGroupedActivityType(activityType);
+                    const name = escapeHtml(formatActivityType(activityType));
+                    const distanceMeters = activity.distance || 0;
+        
+                    let coords = [];
+                    // This handles multiple path formats from different data sources
+                    let path = activity.waypointPath?.waypoints || activity.simplifiedRawPath?.points || activity.path;
+                    if (path) {
+                        path.forEach(p => {
+                            const pLat = p.latE7 / 1e7 || p.lat;
+                            const pLng = p.lngE7 / 1e7 || p.lng;
+                             if (!isNaN(pLat) && !isNaN(pLng)) coords.push(`${pLng},${pLat},0`);
+                        });
+                    }
+                    // If no detailed path, create a simple line between start and end
+                    if (coords.length < 2) {
+                        const startLat = activity.startLocation?.latitudeE7 / 1e7;
+                        const startLng = activity.startLocation?.longitudeE7 / 1e7;
+                        const endLat = activity.endLocation?.latitudeE7 / 1e7;
+                        const endLng = activity.endLocation?.longitudeE7 / 1e7;
+                        if (!isNaN(startLat) && !isNaN(startLng) && !isNaN(endLat) && !isNaN(endLng)) {
+                            coords = [`${startLng},${startLat},0`, `${endLng},${endLat},0`];
+                        } else {
+                            return; // Cannot create a line for this segment
+                        }
+                    }
+        
+                    kmlPlacemarks += `
+          <Placemark>
+            <name>${name}</name>
+            <description>Distance: ${formatDistance(distanceMeters)}</description>
+            <styleUrl>#${groupedType}</styleUrl>
+            <LineString>
+              <tessellate>1</tessellate>
+              <coordinates>
+                ${coords.join('\n                ')}
+              </coordinates>
+            </LineString>
+          </Placemark>`;
+                }
+            });
+        
+            let kmlStyles = '';
+            const usedGroups = new Set(itemsToExport
+                .filter(i => i.activitySegment)
+                .map(i => getGroupedActivityType(i.activitySegment.activityType || 'UNKNOWN'))
+            );
+            
+            usedGroups.forEach(group => {
+                const color = getActivityColor(group).replace('#', ''); // Get hex color without #
+                const kmlColor = `cc${color.substring(4, 6)}${color.substring(2, 4)}${color.substring(0, 2)}`; // 80% opacity, BGR format
+                kmlStyles += `
+    <Style id="${group}">
+      <LineStyle>
+        <color>${kmlColor}</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>`;
+            });
+        
+            kmlStyles += `
+    <Style id="placeVisitStyle">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/red-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+    </Style>`;
+        
+            const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document>
+    <name>Timeline Export ${startDateStr} to ${endDateStr}</name>
+    ${kmlStyles}
+    ${kmlPlacemarks}
+  </Document>
+</kml>`;
+        
+            const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Timeline-Export-${startDateStr}-to-${endDateStr}.kml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        }
+
 
         // --- Window Load ---
         window.onload = async () => { 
@@ -3587,16 +3845,28 @@
                 return; // Stop further execution
             }
 
+            // Load stored settings from IndexedDB before initializing everything else
+            const storedTimezone = await getSetting('displayTimezone');
+            if (storedTimezone) {
+                displayTimezone = storedTimezone;
+                console.log(`Loaded timezone setting from DB: ${displayTimezone}`);
+            }
+            const storedUnit = await getSetting('distanceUnit');
+            if (storedUnit) {
+                distanceUnit = storedUnit;
+                console.log(`Loaded distance unit setting from DB: ${distanceUnit}`);
+            }
 
             try {
                 await initMap();
                 initDatePicker();
-                initFolderPicker(); // This now checks for browser support
+                initFolderPicker();
                 initSettingsButton();
                 initFitMapButton();
-                initSummaryView(); // Initialize Summary View Listeners & Buttons
+                initSummaryView();
                 initCacheControls();
                 populateTimezoneSelector();
+                initDistanceUnitSelector();
                 setUIEnabled(false); // Start with UI disabled
                 updateApiCallDisplay(); // Initialize counter display
 
@@ -3626,9 +3896,15 @@
                         document.getElementById("nextDayBtn").click();
                     }
                 });
+                
+                // kml export button
+                const kmlBtn = document.getElementById('kmlBtn');
+                kmlBtn.addEventListener('click', () => {
+					exportToKML()
+				});
             } catch (error) {
-                 console.error("Error during initialization:", error);
-                 alert("An error occurred during map initialization. Please check your API key and network connection.");
+                console.error("Error during initialization:", error);
+                alert("An error occurred during map initialization. Please check your API key and network connection.");
             }
         };
     </script>
