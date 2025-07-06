@@ -14,13 +14,14 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - Supports both Google Takeout data and On-Device data file (Android or iOS)
 - Timeline and map view
 - Place info and icons
-- Duration of visits ; distance traveled
-- Travel modes color-coded
-- Direction of travel arrows when clicking a path
+- Duration of visits ; distance traveled (in km or miles)
+- Travel modes color-coded ; direction of travel arrows when clicking a path
 - View multiple days at once
+- Timezone setting for viewing your travel days with local times
 - Toggle layers on and off, eg to view only places without the travel paths
 - Summary of activities by year/month
 - Place details retrieved from Google Places API can be saved locally, to reduce future API calls
+- Export to KML file
   
 #
 
