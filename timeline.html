@@ -17,7 +17,7 @@
 
     <!-- Google Maps importLibrary loader -->
     <script>
-        window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
+        window.GOOGLE_MAPS_API_KEY = "AIzaSyASqwPEe33fJsJWvmnRRZsvuku-VE8Dt3w"; // Replace YOUR_API_KEY with your actual key
 
         (g => {
             var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
@@ -76,10 +76,33 @@
             border-right: 1px solid #dee2e6;
             display: flex;
             flex-direction: column; /* Stack elements vertically */
-            height: 100%; /* Ensure sidebar takes full height */
-            overflow: hidden; /* Prevent sidebar itself from scrolling */
-            position: relative; /* Ensure sidebar stays in flow */
-            z-index: 60; /* Keep sidebar above summary view background if needed */
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            z-index: 60;
+        }
+        #sidebar-main {
+            flex-grow: 1; /* Make this new wrapper fill the space */
+            position: relative;
+            overflow: hidden; /* Hide overflow */
+            display: flex; /* This will contain our single visible tab */
+        }
+
+        #dateView, #searchView, #settingsView {
+            width: 100%;
+            height: 100%;
+            display: none; /* All tabs hidden by default */
+            flex-direction: column;
+            flex-grow: 1;
+            overflow: hidden; /* Prevent the tab itself from scrolling */
+        }
+        #searchView, #settingsView {
+            display: none;
+            flex-direction: column;
+        }
+        #dateView {
+            display: none; /* Will be changed to 'flex' by JS */
+            flex-direction: column;
         }
 
         /* --- Control Sections (Non-scrolling) --- */
@@ -178,18 +201,6 @@
         }
         .settings-checkbox {
             margin-right: 8px;
-        }
-        #closeSettingsBtn {
-            padding: 4px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            color: #495057;
-        }
-        #closeSettingsBtn:hover {
-            background-color: #e9ecef;
         }
         #activityFilters {
             margin-left: 20px;
@@ -376,18 +387,6 @@
             margin: 0;
             font-weight: 500;
         }
-        #closeSearchBtn {
-            padding: 4px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            color: #495057;
-        }
-        #closeSearchBtn:hover {
-            background-color: #e9ecef;
-        }
         #search-controls {
             padding: 10px 12px;
             background-color: #ffffff;
@@ -476,18 +475,18 @@
 
         #main-content-area {
             flex-grow: 1; /* This makes the wrapper take all available space */
-            position: relative; /* For positioning children like the loading overlay */
-            overflow: hidden; /* Hide any overflow from the wrapper itself */
-            display: flex; /* Use flex to manage the single visible view inside */
+            position: relative;
+            overflow: hidden;
+            display: flex;
         }
 
-        /* --- Timeline (Scrollable Area) --- */
+        /* Ensure the timeline inside the main area is scrollable */
         #timeline {
-            width: 100%; /* Fill the wrapper */
-            height: 100%; /* Fill the wrapper */
-            overflow-y: auto; /* Make ONLY the timeline scrollable */
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
             padding: 10px 12px;
-            padding-top:0px;
+            padding-top: 0px;
             background-color: #f8f9fa;
         }
         /* --- Sticky Date Header --- */
@@ -664,21 +663,25 @@
             flex-direction: column;
             gap: 10px;
         }
-        #currentLocationBtn {
+        .map-overlay-btn {
             background-color: #fff;
             border: none;
             border-radius: 2px;
             box-shadow: 0 2px 6px rgba(0,0,0,.3);
             cursor: pointer;
-            padding: 5px 8px;
+            padding: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size:120%;
+            font-size: 120%;
+            width: 36px; /* Consistent size */
+            height: 36px;
+            line-height: 1;
         }
-        #currentLocationBtn img {
-            width: 18px;
-            height: 18px;
+        .map-overlay-btn:disabled {
+            cursor: not-allowed;
+            background-color: #f5f5f5;
+            color: #aaa;
         }
         /* --- Advanced Marker (if needed, seems okay) --- */
         .advanced-marker { display: flex; flex-direction: column; align-items: center; }
@@ -937,86 +940,54 @@
 <body>
 <div id="container">
     <div id="sidebar">
+
         <div id="controls-container">
             <div id="controls-left">
                 <button id="folderPicker" class="control-btn">Load Data</button>
                 <button id="reloadBtn" class="icon-btn" title="Reload last used folder" style="display: none;">&#x21bb;</button>
             </div>
             <div id="controls-right">
+                <button id="calendarBtn" class="icon-btn" title="Date View" disabled>📅</button>
                 <button id="searchBtn" class="icon-btn" title="Search" disabled>🔍</button>
-                <button id="fitMapBtn" class="icon-btn" title="Fit Map" disabled>⤢</button>
                 <button id="settingsBtn" class="icon-btn" title="Settings" disabled>⚙️</button>
             </div>
         </div>
 
-        <div id="datePickerContainer">
-            <button id="prevDayBtn" disabled>&lt;</button>
-            <input type="date" id="startDatePicker" disabled>
-            <span id="dateToSpan">to</span>
-            <input type="date" id="endDatePicker" disabled>
-            <button id="nextDayBtn" disabled>&gt;</button>
-        </div>
-
-        <div id="date-range-info"></div>
-
-        <div id="icon-buttons-container">
-            <div id="icon-buttons-left">
-                <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>
-                    <span role="img" aria-label="Map">🗺️</span> Map
-                </button>
-                <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>
-                    <span role="img" aria-label="Summary">📊</span> Summary
-                </button>
-                <button id="kmlBtn" class="icon-btn" title="Export as KML" disabled>
-                    <span role="img" aria-label="Export">📤</span> Export KML
-                </button>
-            </div>
-            <div id="icon-buttons-right">
-            </div>
-        </div>
-
-        <div id="go-container">
-            <button id="goBtn" class="control-btn" disabled>GO</button>
-        </div>
-
-        <div id="main-content-area">
-
-            <div id="settingsView">
-                <div id="settingsHeader">
-                    <h4></h4>
-                    <button id="closeSettingsBtn">Close Settings</button>
+        <div id="sidebar-main">
+            <div id="dateView">
+                <div id="datePickerContainer">
+                    <button id="prevDayBtn" disabled>&lt;</button>
+                    <input type="date" id="startDatePicker" disabled>
+                    <span id="dateToSpan">to</span>
+                    <input type="date" id="endDatePicker" disabled>
+                    <button id="nextDayBtn" disabled>&gt;</button>
                 </div>
-
-                <h4>Timezone</h4>
-                <label for="timezone-select">Display times in:</label>
-                <select id="timezone-select">
-                    <!-- Timezones will be populated here -->
-                </select>
-
-                <h4>Distance Units</h4>
-                <label for="distance-unit-select">Display distances in:</label>
-                <select id="distance-unit-select">
-                    <option value="km" selected>Kilometers</option>
-                    <option value="mi">Miles</option>
-                </select>
-
-                <h4>Display Options</h4>
-                <label class="settings-option">
-                    <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
-                </label>
-
-                <label class="settings-option">
-                    <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
-                </label>
-                <div id="activityFilters" style="margin-left: 20px;">
-                    <!-- Activity filters will be populated here -->
+                <div id="date-range-info"></div>
+                <div id="icon-buttons-container">
+                    <div id="icon-buttons-left">
+                        <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>
+                            <span role="img" aria-label="Map">🗺️</span> Map
+                        </button>
+                        <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>
+                            <span role="img" aria-label="Summary">📊</span> Summary
+                        </button>
+                        <button id="kmlBtn" class="icon-btn" title="Export as KML" disabled>
+                            <span role="img" aria-label="Export">📤</span> Export KML
+                        </button>
+                    </div>
+                    <div id="icon-buttons-right"></div>
+                </div>
+                <div id="go-container">
+                    <button id="goBtn" class="control-btn" disabled>GO</button>
+                </div>
+                <div id="main-content-area">
+                    <div id="timeline"></div>
                 </div>
             </div>
 
             <div id="searchView">
                 <div id="searchHeader">
                     <h4>Search Places</h4>
-                    <button id="closeSearchBtn">Close</button>
                 </div>
                 <div id="search-controls">
                     <div id="autocomplete-suggestions-container">
@@ -1024,18 +995,35 @@
                         <div id="autocomplete-results"></div>
                     </div>
                 </div>
-                <div id="searchResults">
-                    <!-- Search results will be populated here -->
+                <div id="searchResults"></div>
+            </div>
+
+            <div id="settingsView">
+                <div id="settingsHeader">
                 </div>
+                <h4>Timezone</h4>
+                <label for="timezone-select">Display times in:</label>
+                <select id="timezone-select"></select>
+                <h4>Distance Units</h4>
+                <label for="distance-unit-select">Display distances in:</label>
+                <select id="distance-unit-select">
+                    <option value="km" selected>Kilometers</option>
+                    <option value="mi">Miles</option>
+                </select>
+                <h4>Display Options</h4>
+                <label class="settings-option">
+                    <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
+                </label>
+                <label class="settings-option">
+                    <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
+                </label>
+                <div id="activityFilters" style="margin-left: 20px;"></div>
             </div>
+        </div>
 
-            <div id="loading-overlay">
-                <div id="loading-spinner"></div>
-                <span>Loading data...</span>
-            </div>
-
-            <div id="timeline"></div>
-
+        <div id="loading-overlay">
+            <div id="loading-spinner"></div>
+            <span>Loading data...</span>
         </div>
 
         <div id="status-bar-container">
@@ -1048,8 +1036,6 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 
     <div id="summaryView" style="display: none;">
@@ -1076,7 +1062,8 @@
     <div id="map" class=""></div>
 
     <div class="map-custom-controls">
-        <button id="currentLocationBtn" title="My Location"> 𖦏 </button>
+        <button id="fitMapBtn" class="map-overlay-btn" title="Fit Map to Data" disabled>⤢</button>
+        <button id="currentLocationBtn" class="map-overlay-btn" title="My Location">𖦏</button>
     </div>
 
     <div id="howToMessage">
@@ -1404,26 +1391,37 @@
         }
     }
 
-    // Manages visibility of the main sidebar views (Timeline, Settings, Search)
-    function showSidebarView(viewId) {
-        const timelineView = document.getElementById('timeline');
-        const settingsView = document.getElementById('settingsView');
+    function showSidebarTab(tabName) {
+        // Tab content
+        const dateView = document.getElementById('dateView');
         const searchView = document.getElementById('searchView');
+        const settingsView = document.getElementById('settingsView');
+        // Tab buttons
+        const calendarBtn = document.getElementById('calendarBtn');
+        const searchBtn = document.getElementById('searchBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
 
-        // Hide all views first
-        timelineView.style.display = 'none';
-        settingsView.style.display = 'none';
+        // Hide all tab content
+        dateView.style.display = 'none';
         searchView.style.display = 'none';
+        settingsView.style.display = 'none';
 
-        // Show the requested view
-        const viewToShow = document.getElementById(viewId);
-        if (viewToShow) {
-            // Use 'flex' for views that need to fill space and manage children
-            if (viewId === 'searchView' || viewId === 'settingsView') {
-                viewToShow.style.display = 'flex';
-            } else {
-                viewToShow.style.display = 'block';
-            }
+        // Deactivate all tab buttons
+        calendarBtn.classList.remove('active');
+        searchBtn.classList.remove('active');
+        settingsBtn.classList.remove('active');
+
+        // Show the selected tab and activate its button
+        if (tabName === 'date') {
+            dateView.style.display = 'flex';
+            calendarBtn.classList.add('active');
+        } else if (tabName === 'search') {
+            searchView.style.display = 'flex';
+            searchBtn.classList.add('active');
+            document.getElementById('searchInput').focus(); // Auto-focus search input
+        } else if (tabName === 'settings') {
+            settingsView.style.display = 'flex';
+            settingsBtn.classList.add('active');
         }
     }
 
@@ -2542,22 +2540,15 @@
     // --- Search Functionality ---
     function initSearch() {
         const searchBtn = document.getElementById('searchBtn');
-        const closeSearchBtn = document.getElementById('closeSearchBtn');
         const searchInput = document.getElementById('searchInput');
 
         searchBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
-            showSidebarView('searchView');
-            searchInput.focus();
+            showSidebarTab('search');
         });
 
-        closeSearchBtn.addEventListener('click', () => {
-            showSidebarView('timeline');
-            clearAutocompleteSuggestions();
-            searchInput.value = '';
-        });
 
-        // New Autocomplete logic using Places API (New)
+        // Autocomplete logic using Places API (New)
         searchInput.addEventListener('input', debounce(async (e) => {
             const query = e.target.value;
             if (query.length < 3) { // Don't search for very short strings
@@ -2752,12 +2743,14 @@
                 const targetDate = resultItem.dataset.date;
                 console.log(`Navigating to date: ${targetDate}`);
 
-                // Set date pickers
+                // 1. Switch back to the Date tab
+                showSidebarTab('date');
+
+                // 2. Set date pickers
                 document.getElementById('startDatePicker').value = targetDate;
                 document.getElementById('endDatePicker').value = targetDate;
 
-                // Close search and trigger GO
-                showSidebarView('timeline');
+                // 3. Trigger GO
                 document.getElementById('goBtn').click();
             });
 
@@ -3076,7 +3069,9 @@
         document.getElementById('summaryView').style.display = 'none';
         document.getElementById('map').classList.remove('hidden');
         summaryViewVisible = false;
-        updateViewToggleButtons(); // Update button state
+
+        showSidebarTab('date');
+        updateViewToggleButtons();
 
         // Trigger data load for the selected month
         document.getElementById('goBtn').click();
@@ -3241,20 +3236,14 @@
     // Initializes the settings button and its options panel
     function initSettingsButton() {
         const settingsBtn = document.getElementById('settingsBtn');
-        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const showActivitiesCheckbox = document.getElementById('showActivities');
         const showVisitsCheckbox = document.getElementById('showVisits');
         const activityFiltersDiv = document.getElementById('activityFilters');
 
-        // Toggle settings view visibility
+        // Toggle settings tab visibility
         settingsBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
-            showSidebarView('settingsView');
-        });
-
-        // Close settings view
-        closeSettingsBtn.addEventListener('click', () => {
-            showSidebarView('timeline');
+            showSidebarTab('settings');
         });
 
         // Function to reload data based on current filters and date range
@@ -3410,6 +3399,7 @@
     function setUIEnabled(enabled) {
         uiEnabled = enabled;
         const elementsToToggle = [
+            document.getElementById('calendarBtn'),
             document.getElementById('startDatePicker'),
             document.getElementById('endDatePicker'),
             document.getElementById('prevDayBtn'),
@@ -3447,7 +3437,6 @@
             document.getElementById('data-source-indicator').textContent = 'No data loaded. Use "Load Data".';
             clearMap();
             clearTimeline();
-            showSidebarView('timeline'); // Default to timeline view
             document.getElementById('summaryView').style.display = 'none'; // Hide summary view
             document.getElementById('map').classList.remove('hidden'); // Ensure map is visible
             summaryViewVisible = false;
@@ -4451,8 +4440,10 @@
             initCurrentLocationButton();
             populateTimezoneSelector();
             initDistanceUnitSelector();
-            setUIEnabled(false); // Start with UI disabled
-            updateApiCallDisplay(); // Initialize counter display
+            document.getElementById('calendarBtn').addEventListener('click', () => showSidebarTab('date'));
+            setUIEnabled(false);
+            showSidebarTab('date'); // Start on the date tab
+            updateApiCallDisplay();
 
             // Check for stored directory handle
             storedDirHandle = await getDirectoryHandle();
