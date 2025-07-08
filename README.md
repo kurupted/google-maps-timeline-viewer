@@ -95,7 +95,7 @@ Setup procedure:
 ## View Your Timeline
 1. **Open the timeline.html File:**
     - Double-click the file to open it. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
-    - At the top left of the page, click Choose Folder and navigate to the folder that contains your Timeline data.
+    - At the top left of the page, click Load Data and navigate to the folder that contains your Timeline data.
         - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
         - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
     - Use the date picker to choose a date that contains timeline data.
