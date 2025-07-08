@@ -17,9 +17,11 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - Duration of visits ; distance traveled (in km or miles)
 - Travel modes color-coded ; direction of travel arrows when clicking a path
 - View multiple days at once
+- Search by place name to find dates with visits
+- Find all visited places within the viewable map area
+- Summary of activities by year/month
 - Timezone setting for viewing your travel days with local times
 - Toggle layers on and off, eg to view only places without the travel paths
-- Summary of activities by year/month
 - Place details retrieved from Google Places API can be saved locally, to reduce future API calls
 - Export to KML file
   
