@@ -4,7 +4,7 @@
 <!-- -----
         Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 
-        Version: July 7, 2025
+        Version: July 8, 2025
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -17,7 +17,7 @@
 
     <!-- Google Maps importLibrary loader -->
     <script>
-        window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
+        window.GOOGLE_MAPS_API_KEY = "AIzaSyDrD9ti16hsW5HKHdK8Y7JaPbCey6AnbFU"; // Replace YOUR_API_KEY with your actual key
 
         (g => {
             var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
@@ -88,7 +88,7 @@
             display: flex; /* This will contain our single visible tab */
         }
 
-        #dateView, #searchView, #settingsView {
+        #dateView, #searchView, #settingsView, #areaView {
             width: 100%;
             height: 100%;
             display: none; /* All tabs hidden by default */
@@ -339,7 +339,7 @@
             justify-content: center;
             padding-top: 5px;
         }
-        #goBtn {
+        #goBtn, #findInAreaBtn {
             flex-grow: 1;
             padding: 12px 20px;
             background-color: #48a765;
@@ -351,16 +351,17 @@
             font-weight: 500;
             transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
-        #goBtn:hover:not(:disabled) {
+        #goBtn:hover:not(:disabled),
+        #findInAreaBtn:hover:not(:disabled){
             background-color: #218838;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        #goBtn:disabled {
+        #goBtn:disabled, #findInAreaBtn:disabled {
             background: #ced4da;
             color: #6c757d;
             cursor: not-allowed;
         }
-        #goBtn:disabled:hover {
+        #goBtn:disabled:hover, #findInAreaBtn:disabled:hover {
             background: #ced4da;
             box-shadow: none;
         }
@@ -417,7 +418,7 @@
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .search-result-item:hover {
-            border-color: #007bff;
+            border-color: #adb5bd;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .search-result-item strong {
@@ -471,6 +472,119 @@
             background-size: 34px;
             background-position: -1px -1px;
             flex-shrink: 0;
+        }
+
+        /* --- Styles for New Area View Controls --- */
+        #area-controls-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+            background-color: #ffffff;
+            display: flex;
+        }
+        #area-controls-header .control-btn {
+            flex-grow: 1;
+        }
+        #area-options-container {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .area-options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .area-options-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #495057;
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            gap: 8px;
+            font-size: 13px;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        #areaResultLimit {
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
+            background-color: #fff;
+            align-self: flex-start; /* Prevent stretching */
+        }
+        /* --- Area View Styles --- */
+        #area-controls {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Space between button and options */
+        }
+        .area-options {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            color: #495057;
+        }
+        #areaResults {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+            background-color: #f8f9fa;
+        }
+        .area-placeholder {
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+        #areaResults .timeline-item {
+            cursor: pointer;
+        }
+        #areaResults .timeline-item:hover {
+            border-color: #adb5bd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* --- Styles for Consolidated Area Results --- */
+        .consolidated-visit-dates {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .consolidated-visit-dates span {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 4px;
+            padding: 2px 6px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .consolidated-visit-dates span:hover {
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+        }
+        .timeline-item.consolidated {
+            cursor: default; /* Remove pointer cursor from the main body */
         }
 
         #main-content-area {
@@ -949,6 +1063,7 @@
             <div id="controls-right">
                 <button id="calendarBtn" class="icon-btn" title="Date View" disabled>📅</button>
                 <button id="searchBtn" class="icon-btn" title="Search" disabled>🔍</button>
+                <button id="areaBtn" class="icon-btn" title="Area View" disabled>⬚</button>
                 <button id="settingsBtn" class="icon-btn" title="Settings" disabled>⚙️</button>
             </div>
         </div>
@@ -997,6 +1112,35 @@
                 </div>
                 <div id="searchResults"></div>
             </div>
+
+            <div id="areaView">
+                <div id="area-controls-header">
+                    <button id="findInAreaBtn" class="control-btn">Find in this map area</button>
+                    <button id="newAreaSearchBtn" class="control-btn" style="display: none;">New Search</button>
+                </div>
+                <div id="area-options-container">
+                    <div class="area-options-group">
+                        <label class="area-options-title">Result Display:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="areaResultType" value="all" checked> A place entry for each visit</label>
+                            <label><input type="radio" name="areaResultType" value="consolidated"> Single entry for <i>all</i> visits</label>
+                        </div>
+                    </div>
+                    <div class="area-options-group">
+                        <label for="areaResultLimit" class="area-options-title">Limit:</label>
+                        <select id="areaResultLimit" title="Limit the number of results returned">
+                            <option value="-1">Unlimited</option>
+                            <option value="100" selected>100</option>
+                            <option value="250">250</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="areaResults">
+                    <p class="area-placeholder">Pan and zoom the map to your desired location, then click the button above to find all recorded visits in that area.</p>
+                </div>
+            </div>
+
 
             <div id="settingsView">
                 <div id="settingsHeader">
@@ -1109,6 +1253,9 @@
     let distanceUnit = 'km'; // User-selected distance unit ('km' or 'mi')
     let storedDirHandle = null; // For storing last used directory handle
     let locationBias = null; // For biasing autocomplete results
+    let lastAreaSearchResults = [];
+    let lastAreaSearchMode = 'all';
+    let lastTimelineItemToHighlight = null;
 
     // Summary View Globals
     let allYearlySummaries = null; // Calculated yearly summaries
@@ -1394,20 +1541,24 @@
     function showSidebarTab(tabName) {
         // Tab content
         const dateView = document.getElementById('dateView');
+        const areaView = document.getElementById('areaView');
         const searchView = document.getElementById('searchView');
         const settingsView = document.getElementById('settingsView');
         // Tab buttons
         const calendarBtn = document.getElementById('calendarBtn');
+        const areaBtn = document.getElementById('areaBtn');
         const searchBtn = document.getElementById('searchBtn');
         const settingsBtn = document.getElementById('settingsBtn');
 
         // Hide all tab content
         dateView.style.display = 'none';
+        areaView.style.display = 'none';
         searchView.style.display = 'none';
         settingsView.style.display = 'none';
 
         // Deactivate all tab buttons
         calendarBtn.classList.remove('active');
+        areaBtn.classList.remove('active');
         searchBtn.classList.remove('active');
         settingsBtn.classList.remove('active');
 
@@ -1415,15 +1566,30 @@
         if (tabName === 'date') {
             dateView.style.display = 'flex';
             calendarBtn.classList.add('active');
+            // When switching to date view, re-fit the map to that day's data
+            fitMapToData();
+        } else if (tabName === 'area') {
+            areaView.style.display = 'flex';
+            areaBtn.classList.add('active');
+            // If we have previous area results, restore them using the stored mode
+            if (lastAreaSearchResults.length > 0) {
+                const isConsolidated = lastAreaSearchMode === 'consolidated';
+                displayAreaResults(lastAreaSearchResults, isConsolidated);
+                // Also restore the UI state (hide options, show "New Search" button)
+                document.getElementById('area-options-container').style.display = 'none';
+                document.getElementById('findInAreaBtn').style.display = 'none';
+                document.getElementById('newAreaSearchBtn').style.display = 'flex';
+            }
         } else if (tabName === 'search') {
             searchView.style.display = 'flex';
             searchBtn.classList.add('active');
-            document.getElementById('searchInput').focus(); // Auto-focus search input
+            document.getElementById('searchInput').focus();
         } else if (tabName === 'settings') {
             settingsView.style.display = 'flex';
             settingsBtn.classList.add('active');
         }
     }
+
 
     // --- Timezone & Distance Helpers ---
     function getSelectedTimezone() {
@@ -1494,78 +1660,58 @@
                 timelineItem.dataset.rawJson = escapeHtml('{"error": "Could not serialize data"}'); // Add error indicator
             }*/
         // --- DEBUG END: Add raw data ---
+
         // Check if a date header needs to be added for this date
         const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
         if (!existingHeader) {
             const dateHeader = document.createElement('div');
             dateHeader.className = 'date-header';
             dateHeader.dataset.date = currentDate;
-            dateHeader.textContent = formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY'); // Format date nicely
-            // Insert header before the first item of the day or at the end if no items yet
-            const firstItemOfDay = document.querySelector(`.timeline-item[data-item-date="${currentDate}"]`);
-            if (firstItemOfDay) {
-                document.getElementById('timeline').insertBefore(dateHeader, firstItemOfDay);
-            } else {
-                document.getElementById('timeline').appendChild(dateHeader);
-            }
+            dateHeader.textContent = formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY');
+            const timelineContainer = document.getElementById('timeline');
+            timelineContainer.appendChild(dateHeader);
         }
 
         let startTimestamp, endTimestamp;
         let locationName = 'Unknown Location'; // Default name
         let placeTypesForStyle = []; // For sidebar icon styling
 
-        // Populate based on place visit or activity segment
-        if (item.visit) { // Handle iOS 'visit' structure
-            const visitData = item.visit; // This is the sub-object
-            startTimestamp = item.startTime;
-            endTimestamp = item.endTime;
+        if (item.visit || item.placeVisit) { // Combined logic for both visit types
+            const isIOS = !!item.visit;
+            const visitData = isIOS ? item.visit : item.placeVisit;
+            const locationData = isIOS ? visitData.topCandidate : visitData.location;
 
-            // Derive name for iOS visit, prioritizing semanticType "Home" or "Work"
-            if (visitData.topCandidate?.semanticType?.toUpperCase() === "HOME") {
+            startTimestamp = isIOS ? item.startTime : visitData.duration.startTimestamp;
+            endTimestamp = isIOS ? item.endTime : visitData.duration.endTimestamp;
+
+            const semanticType = (isIOS ? locationData?.semanticType : locationData.semanticType)?.toUpperCase();
+            if (semanticType === "HOME" || semanticType === "TYPE_HOME") {
                 locationName = "Home";
-            } else if (visitData.topCandidate?.semanticType?.toUpperCase() === "WORK") {
+            } else if (semanticType === "WORK" || semanticType === "TYPE_WORK") {
                 locationName = "Work";
             } else {
-                locationName = visitData.topCandidate?.name || visitData.topCandidate?.semanticType || 'Unknown Location';
+                locationName = locationData?.name || 'Unknown Location';
             }
-            // For iOS, we don't have 'types' directly in this initial object for styling,
-            // it will be fetched later if placeId exists.
-            // Default to a generic visit icon for now, will be updated by updateSidebarItem
-            const defaultPlaceStyle = getPlaceStyle([]);
 
-            timelineItem.classList.add('place-visit-item');
-            timelineItem.innerHTML = `
-                        <span class="timeline-icon-container" style="border-color: ${defaultPlaceStyle.color};">${defaultPlaceStyle.icon}</span>
-                        <div class="timeline-item-details">
-                            <strong class="nametag">${locationName}</strong><br>
-                            <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
-                        </div>
-                    `;
-            timelineItem.style.setProperty('--activity-color', defaultPlaceStyle.color);
+            placeTypesForStyle = locationData.placeTypes || [];
+            const placeId = isIOS ? locationData?.placeID : locationData.placeId;
 
-        } else if (item.placeVisit) { // Handle standard 'placeVisit' structure
-            const placeVisit = item.placeVisit;
-            startTimestamp = placeVisit.duration.startTimestamp;
-            endTimestamp = placeVisit.duration.endTimestamp;
-
-            if (placeVisit.location.semanticType === "TYPE_HOME" || placeVisit.location.name?.toLowerCase() === "home") {
-                locationName = "Home";
-            } else if (placeVisit.location.semanticType === "TYPE_WORK" || placeVisit.location.name?.toLowerCase() === "work") {
-                locationName = "Work";
-            } else {
-                locationName = placeVisit.location.name || 'Unknown Location';
+            // Add data attributes for later finding/scrolling
+            if (placeId) {
+                timelineItem.dataset.placeId = placeId;
             }
-            placeTypesForStyle = placeVisit.location.placeTypes || []; // Google Takeout might have this
+            timelineItem.dataset.startTimestamp = startTimestamp;
+
+
             const placeStyle = getPlaceStyle(placeTypesForStyle);
-
             timelineItem.classList.add('place-visit-item');
             timelineItem.innerHTML = `
-                        <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
-                        <div class="timeline-item-details">
-                            <strong class="nametag">${locationName}</strong><br>
-                            <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
-                        </div>
-                    `;
+                <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
+                <div class="timeline-item-details">
+                    <strong class="nametag">${locationName}</strong><br>
+                    <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
+                </div>
+            `;
             timelineItem.style.setProperty('--activity-color', placeStyle.color);
 
         } else if (item.activitySegment) { // Handle 'activitySegment' (standard and transformed iOS)
@@ -1577,13 +1723,13 @@
             const formattedType = formatActivityType(activityType);
             const activityColor = getActivityColor(activityType);
             timelineItem.innerHTML = `
-                        <span class="timeline-icon-container" style="border-color: ${activityColor};">${getActivityIcon(activityType)}</span>
-                        <div class="timeline-item-details">
-                            <strong>${formattedType}</strong><br>
-                            <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
-                            <span class="distance">Distance: ${formatDistance(distanceMeters)}</span>
-                        </div>
-                    `;
+                <span class="timeline-icon-container" style="border-color: ${activityColor};">${getActivityIcon(activityType)}</span>
+                <div class="timeline-item-details">
+                    <strong>${formattedType}</strong><br>
+                    <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
+                    <span class="distance">Distance: ${formatDistance(distanceMeters)}</span>
+                </div>
+            `;
             timelineItem.style.setProperty('--activity-color', activityColor);
         }
 
@@ -1595,7 +1741,7 @@
         // Add confirmed checkmark if applicable
         if ((item.placeVisit && item.placeVisit.editConfirmationStatus === "CONFIRMED") ||
             (item.activitySegment && item.activitySegment.editConfirmationStatus === "CONFIRMED") ||
-            (item.visit && item.visit.editConfirmationStatus === "CONFIRMED")) { // Added check for iOS format
+            (item.visit && item.visit.editConfirmationStatus === "CONFIRMED")) {
             const checkmark = document.createElement('span');
             checkmark.className = 'confirmed-checkmark';
             checkmark.textContent = '✔️';
@@ -1603,6 +1749,29 @@
         }
 
         return timelineItem;
+    }
+
+
+    // Finds a specific timeline item by its placeId and start time, then highlights and scrolls to it.
+    function findAndHighlightTimelineItem(placeId, startTimestamp) {
+        if (!placeId || !startTimestamp) return;
+
+        const timelineItems = document.querySelectorAll('#timeline .timeline-item');
+        let targetItem = null;
+
+        for (const item of timelineItems) {
+            if (item.dataset.placeId === placeId && item.dataset.startTimestamp === startTimestamp) {
+                targetItem = item;
+                break;
+            }
+        }
+
+        if (targetItem) {
+            console.log("Found timeline item to highlight:", targetItem);
+            highlightSidebarItem(targetItem.dataset.index);
+        } else {
+            console.warn("Could not find matching timeline item to highlight.", { placeId, startTimestamp });
+        }
     }
 
 
@@ -1640,7 +1809,7 @@
     }
 
     // Renders a place visit marker (handles both standard and iOS formats)
-    function renderPlaceVisit(itemData, index) {
+    function renderPlaceVisit(itemData, index, sidebarItem = null) {
         let locationName, placeId, lat, lng, startTimestamp, endTimestamp, originalVisitData, semanticTypeStr;
 
         // Adapt based on data structure (standard vs. iOS)
@@ -1709,7 +1878,7 @@
             if (placeDetailsCache[placeId]) {
                 // Use cached details
                 console.log(`Using cached details for placeId: ${placeId}`);
-                renderPlaceDetails(placeDetailsCache[placeId], originalVisitData, index);
+                renderPlaceDetails(placeDetailsCache[placeId], originalVisitData, index, sidebarItem);
             } else if (apiCallsDisabled) {
                 console.log(`API calls disabled. Rendering basic marker for placeId: ${placeId}`);
                 renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
@@ -1717,14 +1886,14 @@
             } else {
                 // Fetch details using the new API
                 console.log(`Fetching details for placeId: ${placeId}`);
-                fetchPlaceDetails(placeId, fallbackName, originalVisitData, index);
+                fetchPlaceDetails(placeId, fallbackName, originalVisitData, index, sidebarItem);
             }
         } else if (!isNaN(lat) && !isNaN(lng)) {
             // No placeId or invalid coords, render a basic marker immediately
             console.log(`Rendering basic marker for: ${fallbackName}`);
             renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
             // Update sidebar with basic info
-            updateSidebarItem(index, fallbackName, null);
+            updateSidebarItem(index, fallbackName, null, []);
         } else {
             console.warn(`Skipping marker render due to invalid coordinates for: ${fallbackName}`);
         }
@@ -1792,7 +1961,7 @@
     }
 
     // Fetches place details using the new Place.fetchFields method
-    async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index) {
+    async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index, sidebarItem = null) {
 
         if (apiCallsDisabled) {
             console.log("API calls disabled. Skipping fetchPlaceDetails, rendering basic marker.");
@@ -1830,7 +1999,7 @@
             // Cache the result
             placeDetailsCache[placeId] = place;
             // Render the marker and info window with the fetched details
-            renderPlaceDetails(place, placeVisit, index);
+            renderPlaceDetails(place, placeVisit, index, sidebarItem);
 
         } catch (error) {
             console.warn(`Error fetching place details with fetchFields for placeId ${placeId}:`, error);
@@ -1838,43 +2007,64 @@
             const lat = placeVisit.location.latitudeE7 / 1e7;
             const lng = placeVisit.location.longitudeE7 / 1e7;
             renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-            updateSidebarItem(index, fallbackName, null, []); // Update sidebar with fallback name
-        }
-    }
-
-
-    // Updates the corresponding sidebar item's name and icon
-    function updateSidebarItem(index, locationName, svgIconMaskURI, placeTypes) {
-        const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
-        if (sidebarItem && sidebarItem.classList.contains('place-visit-item')) { // Only update place visit items
-            const nametag = sidebarItem.querySelector('.nametag');
-            if (nametag) nametag.textContent = locationName;
-
-            const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
-            if (iconContainer) {
-                let finalIconHtml;
-                let finalBorderColor;
-
-                if (svgIconMaskURI && !svgIconMaskURI.includes('generic')) {
-                    // Try to use Google's icon if available, potentially with a background color derived from types
-                    const styleFromTypes = getPlaceStyle(placeTypes);
-                    finalIconHtml = `<span class="timeline-icon-svg" style="mask: url('${svgIconMaskURI}') no-repeat center / contain; -webkit-mask: url('${svgIconMaskURI}') no-repeat center / contain; background-color: ${styleFromTypes.color}">`;
-                    finalBorderColor = styleFromTypes.color; // Use color from type for border
-                } else {
-                    // Fallback to type-based emoji and color
-                    const placeStyle = getPlaceStyle(placeTypes);
-                    finalIconHtml = placeStyle.icon;
-                    finalBorderColor = placeStyle.color;
-                }
-                iconContainer.innerHTML = finalIconHtml;
-                iconContainer.style.borderColor = finalBorderColor;
-                sidebarItem.style.setProperty('--activity-color', finalBorderColor); // Update CSS var for the vertical line
+            // Note: sidebarItem is likely null here if called from date view, so we still need the original updateSidebarItem as a fallback.
+            if (sidebarItem) {
+                const nametag = sidebarItem.querySelector('strong');
+                if (nametag) nametag.textContent = fallbackName;
+            } else {
+                updateSidebarItem(index, fallbackName, null, []);
             }
         }
     }
 
+
+    /**
+     * Reliably finds a sidebar item by its index (in any tab) and updates its
+     * name and icon based on fetched data.
+     * @param {number} index - The unique index of the item.
+     * @param {string} locationName - The new name for the location.
+     * @param {string|null} svgIconMaskURI - The URI for the Google icon.
+     * @param {Array<string>} placeTypes - Array of place types for styling.
+     */
+    function updateSidebarItem(index, locationName, svgIconMaskURI, placeTypes = []) {
+        // This querySelector works globally, finding the item whether it's
+        // in the #timeline or the #areaResults container.
+        const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
+
+        if (!sidebarItem) {
+            // This can happen if the user switches views while data is loading. It's not a critical error.
+            console.warn(`updateSidebarItem: Could not find sidebar item with index ${index}.`);
+            return;
+        }
+
+        // Update the name tag
+        const nametag = sidebarItem.querySelector('strong');
+        if (nametag) {
+            nametag.textContent = locationName;
+        }
+
+        // Update the icon
+        const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
+        if (iconContainer) {
+            const placeStyle = getPlaceStyle(placeTypes);
+            let finalIconHtml;
+
+            // Prefer Google's icon from the API if it's available and not generic
+            if (svgIconMaskURI && !svgIconMaskURI.includes('generic')) {
+                finalIconHtml = `<span class="timeline-icon-svg" style="mask: url('${svgIconMaskURI}') no-repeat center / contain; -webkit-mask: url('${svgIconMaskURI}') no-repeat center / contain; background-color: ${placeStyle.color};"></span>`;
+            } else {
+                // Fallback to type-based emoji and color
+                finalIconHtml = placeStyle.icon;
+            }
+
+            iconContainer.innerHTML = finalIconHtml;
+            // Also update the left border color for activity segments
+            sidebarItem.style.setProperty('--activity-color', placeStyle.color);
+        }
+    }
+
     // Renders the marker and InfoWindow using fetched Place Details (new API)
-    async function renderPlaceDetails(place, placeVisit, index) {
+    async function renderPlaceDetails(place, placeVisit, index, sidebarItem = null) {
         // Determine the display name, prioritizing "Home" or "Work" if applicable
         let displayName = place.displayName;
         const originalSemanticType = placeVisit.location.semanticType; // From original data (e.g., TYPE_HOME or "Home")
@@ -1889,6 +2079,33 @@
         const locationName = displayName || placeVisit.location.name || 'Unknown Location';
         const position = place.location;
         const placeId = place.id; // Use place.id
+
+        // Find the sidebar item to update, preferring the directly passed element from Area View.
+        const itemToUpdate = sidebarItem || document.querySelector(`.timeline-item[data-index="${index}"]`);
+
+        // Update the item's name and icon now that we have the fetched details.
+        if (itemToUpdate) {
+            // This logic is moved from the `updateSidebarItem` function for a direct, reliable update.
+            const nametag = itemToUpdate.querySelector('strong');
+            if (nametag) {
+                nametag.textContent = locationName;
+            }
+
+            const iconContainer = itemToUpdate.querySelector('.timeline-icon-container');
+            if (iconContainer) {
+                const placeStyle = getPlaceStyle(place.types || []);
+                let finalIconHtml;
+
+                if (place.svgIconMaskURI && !place.svgIconMaskURI.includes('generic')) {
+                    finalIconHtml = `<span class="timeline-icon-svg" style="mask: url('${place.svgIconMaskURI}') no-repeat center / contain; -webkit-mask: url('${place.svgIconMaskURI}') no-repeat center / contain; background-color: ${placeStyle.color};"></span>`;
+                } else {
+                    finalIconHtml = placeStyle.icon;
+                }
+
+                iconContainer.innerHTML = finalIconHtml;
+                itemToUpdate.style.setProperty('--activity-color', placeStyle.color);
+            }
+        }
 
         // --- Create Marker ---
         const PinElement = google.maps.marker.PinElement;
@@ -1963,7 +2180,7 @@
                 <h3 style="margin: 5px 0;">${locationName}</h3>
                 <p style="margin: 3px 0; font-size: 0.9em;">${place.formattedAddress || ""}</p>
                 <div class="photo-container" data-place-id="${placeId}">
-                   ${photoHtml}
+                    ${photoHtml}
                 </div>
                 <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY hh:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "hh:mm A")}</p>
                 <p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
@@ -1974,14 +2191,10 @@
         infoWindow.photoFetched = false; // Mark photo as NOT fetched initially
         infoWindows.push(infoWindow);
 
-        // Update sidebar item appearance using new svgIconMaskURI
-        updateSidebarItem(index, locationName, place.svgIconMaskURI, place.types || []);
-
         // Add listeners
-        const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
         addMarkerClickListener(marker, infoWindow, index);
-        if (sidebarItem) {
-            addSidebarItemClickListener(sidebarItem, index, marker, infoWindow);
+        if (itemToUpdate) { // Use the item we already found/updated to attach the click listener
+            addSidebarItemClickListener(itemToUpdate, index, marker, infoWindow);
         }
     }
 
@@ -2227,35 +2440,39 @@
 
     // Highlights a specific sidebar item and scrolls it into view
     function highlightSidebarItem(index) {
-        const timelineItems = document.querySelectorAll('.timeline-item');
+        // Determine which view is active
+        const isAreaViewActive = document.getElementById('areaView').style.display === 'flex';
+        const container = isAreaViewActive
+            ? document.getElementById('areaResults')
+            : document.getElementById('timeline');
 
-        // Hide settings and show timeline when an item is clicked
-        document.getElementById('settingsView').style.display = 'none';
-        document.getElementById('timeline').style.display = 'block';
+        if (!container) return;
 
-        timelineItems.forEach((item) => {
-            if (item.dataset.index === String(index)) {
-                item.classList.add('highlighted');
-                // Scroll into view if not already visible
-                if (!isElementInViewport(item)) {
-                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            } else {
-                item.classList.remove('highlighted');
-            }
+        // Remove highlight from all items in the active container
+        container.querySelectorAll('.timeline-item').forEach((item) => {
+            item.classList.remove('highlighted');
         });
+
+        // Find and highlight the specific item
+        const targetItem = container.querySelector(`.timeline-item[data-index="${index}"]`);
+        if (targetItem) {
+            targetItem.classList.add('highlighted');
+            // Scroll the item into view within its container
+            if (!isElementInViewport(targetItem, container)) {
+                targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
     }
 
     // Helper function to check if an element is within the timeline's viewport
-    function isElementInViewport (el) {
-        if (!el) return false;
+    function isElementInViewport (el, container) {
+        if (!el || !container) return false;
         const rect = el.getBoundingClientRect();
-        const timeline = document.getElementById('timeline'); // Check against timeline scroll container
-        const timelineRect = timeline.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
 
         return (
-            rect.top >= timelineRect.top &&
-            rect.bottom <= timelineRect.bottom
+            rect.top >= containerRect.top &&
+            rect.bottom <= containerRect.bottom
         );
     }
 
@@ -2477,18 +2694,15 @@
 
     // Loads data for a range of dates, clearing previous data first
     async function loadTimelineDataInDateRange(startDate, endDate, showRangeWarning = true) {
-        // Ensure map is visible when loading data range
         if (summaryViewVisible) {
             document.getElementById('summaryView').style.display = 'none';
             document.getElementById('map').classList.remove('hidden');
             summaryViewVisible = false;
-            updateViewToggleButtons(); // Update button state
+            updateViewToggleButtons();
         }
 
         if (!uiEnabled) return;
 
-        // the main check is with the GO button. other calls (like filter changes) don't need another warning
-        // this only creates a console warning atm
         if (showRangeWarning) {
             const startMoment = moment(startDate);
             const endMoment = moment(endDate);
@@ -2500,42 +2714,270 @@
 
         clearMap();
         clearTimeline();
-        globalIndex = 0; // Reset index for new range
-        //placeDetailsCache = {}; // Clear place details cache for new range
+        globalIndex = 0;
         updateApiCallDisplay();
 
-        const tz = getSelectedTimezone();
-        const startMoment = moment.tz(startDate, tz).startOf('day');
-        const endMoment = moment.tz(endDate, tz).endOf('day');
+        document.getElementById('loading-overlay').style.display = "flex";
 
-        document.getElementById('loading-overlay').style.display = "flex"; // Show loading spinner
+        // Create a new promise that wraps the entire loading process
+        return new Promise(async (resolve, reject) => {
+            const promises = [];
+            let currentDate = moment(startDate).clone();
+            while (currentDate.isSameOrBefore(moment(endDate), 'day')) {
+                promises.push(loadTimelineDataForDate(currentDate.toDate()));
+                currentDate.add(1, 'days');
+            }
 
-        const promises = [];
-        let currentDate = startMoment.clone();
-
-        // Iterate through each day in the range
-        while (currentDate.isSameOrBefore(endMoment, 'day')) {
-            // Add the promise to load data for the current date
-            // No need to await here, just push the async function call
-            promises.push(loadTimelineDataForDate(currentDate.toDate()));
-            currentDate.add(1, 'days');
-        }
-
-        try {
-            // Wait for all daily data loads (including async rendering) to complete
-            await Promise.all(promises);
-        } catch (error) {
-            console.error("Error loading data for date range:", error);
-            // Potentially show an error message to the user
-        } finally {
-            // Hide loading spinner regardless of success or failure
-            document.getElementById('loading-overlay').style.display = "none";
-            document.getElementById('howToMessage').style.display = "none"; // Hide initial message
-            document.getElementById('map').classList.remove('hidden'); // Ensure map is visible
-            fitMapToData(); // Fit map to the loaded data bounds
-            console.log(`Finished loading range. Total API Calls: ${placeApiCallCount}`);
-        }
+            try {
+                await Promise.all(promises);
+                // After all data is loaded and rendered, check if we need to highlight an item
+                if (lastTimelineItemToHighlight) {
+                    findAndHighlightTimelineItem(lastTimelineItemToHighlight.placeId, lastTimelineItemToHighlight.startTimestamp);
+                    lastTimelineItemToHighlight = null; // Clear it after use
+                }
+                resolve(); // Resolve the main promise
+            } catch (error) {
+                console.error("Error loading data for date range:", error);
+                reject(error); // Reject the main promise on error
+            } finally {
+                document.getElementById('loading-overlay').style.display = "none";
+                document.getElementById('howToMessage').style.display = "none";
+                document.getElementById('map').classList.remove('hidden');
+                fitMapToData();
+                console.log(`Finished loading range. Total API Calls: ${placeApiCallCount}`);
+            }
+        });
     }
+
+
+    function findPlacesInMapArea() {
+        if (!map) return;
+        const bounds = map.getBounds();
+        if (!bounds) {
+            alert("Map is not ready yet. Please try again.");
+            return;
+        }
+
+        const resultsContainer = document.getElementById('areaResults');
+        resultsContainer.innerHTML = '<p class="area-placeholder">Searching...</p>';
+
+        const limit = parseInt(document.getElementById('areaResultLimit').value, 10);
+        const consolidate = document.querySelector('input[name="areaResultType"]:checked').value === 'consolidated';
+        lastAreaSearchMode = consolidate ? 'consolidated' : 'all'; // Store the mode
+
+        let foundVisits = [];
+        const consolidatedPlaces = new Map();
+
+        // Iterate through ALL loaded timeline data
+        for (const monthKey in timelineData) {
+            if (timelineData[monthKey] && timelineData[monthKey].timelineObjects) {
+                for (const item of timelineData[monthKey].timelineObjects) {
+                    let lat, lng, placeId, locationName, startTimestamp;
+
+                    if (item.placeVisit) {
+                        const pv = item.placeVisit;
+                        lat = pv.location.latitudeE7 / 1e7;
+                        lng = pv.location.longitudeE7 / 1e7;
+                        placeId = pv.location.placeId;
+                        locationName = pv.location.name || 'Unknown Location';
+                        startTimestamp = pv.duration.startTimestamp;
+                    } else if (item.visit) {
+                        const v = item.visit.topCandidate;
+                        const geo = parseGeoString(v?.placeLocation);
+                        if (geo) {
+                            lat = geo.lat;
+                            lng = geo.lng;
+                        }
+                        placeId = v?.placeID;
+                        locationName = v?.name || 'Unknown Location';
+                        startTimestamp = item.startTime;
+                    }
+
+                    if (lat !== undefined && lng !== undefined && placeId) {
+                        const visitLatLng = new google.maps.LatLng(lat, lng);
+                        if (bounds.contains(visitLatLng)) {
+                            if (consolidate) {
+                                if (!consolidatedPlaces.has(placeId)) {
+                                    consolidatedPlaces.set(placeId, {
+                                        placeId: placeId,
+                                        locationName: locationName, // Initial name
+                                        item: item, // Store the first item for rendering details
+                                        visits: []
+                                    });
+                                }
+                                consolidatedPlaces.get(placeId).visits.push({ date: startTimestamp });
+                            } else {
+                                foundVisits.push(item);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let finalResults;
+        if (consolidate) {
+            finalResults = Array.from(consolidatedPlaces.values());
+            // Sort consolidated places by the most recent visit date
+            finalResults.forEach(place => {
+                place.visits.sort((a, b) => new Date(b.date) - new Date(a.date));
+                place.mostRecentVisit = place.visits[0].date;
+            });
+            finalResults.sort((a, b) => new Date(b.mostRecentVisit) - new Date(a.mostRecentVisit));
+        } else {
+            foundVisits.sort((a, b) => {
+                const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.startTime);
+                const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.startTime);
+                return timeB - timeA;
+            });
+            finalResults = foundVisits;
+        }
+
+        // Apply the result limit
+        if (limit > 0 && finalResults.length > limit) {
+            finalResults = finalResults.slice(0, limit);
+        }
+
+        lastAreaSearchResults = finalResults;
+        displayAreaResults(finalResults, consolidate);
+
+        // Update UI to show results view
+        document.getElementById('area-options-container').style.display = 'none';
+        document.getElementById('findInAreaBtn').style.display = 'none';
+        document.getElementById('newAreaSearchBtn').style.display = 'flex';
+    }
+
+    /**
+     * Clears the map, then displays the area search results in the sidebar
+     * and renders a marker for each result on the map.
+     * @param {Array} visits - An array of visit items found in the map area.
+     */
+    function displayAreaResults(results, isConsolidated) {
+        const resultsContainer = document.getElementById('areaResults');
+        resultsContainer.innerHTML = '';
+        clearMap();
+        globalIndex = 0;
+
+        if (results.length === 0) {
+            resultsContainer.innerHTML = '<p class="area-placeholder">No visits found in this map area.</p>';
+            return;
+        }
+
+        results.forEach(result => {
+            const resultItem = isConsolidated
+                ? createConsolidatedAreaResultItem(result, globalIndex)
+                : createAreaResultItem(result, globalIndex);
+
+            if (resultItem) {
+                resultsContainer.appendChild(resultItem);
+                // For consolidated items, pass the representative item for rendering
+                const itemToRender = isConsolidated ? result.item : result;
+                renderPlaceVisit(itemToRender, globalIndex, resultItem);
+                globalIndex++;
+            }
+        });
+    }
+
+    /**
+     * Creates a single DOM element for an area search result with new formatting.
+     * @param {Object} item - The timeline item object.
+     * @param {number} index - The unique index for this item.
+     * @returns {HTMLElement} - The created DOM element.
+     */
+    function createAreaResultItem(item, index) {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'timeline-item place-visit-item';
+        resultItem.dataset.index = index;
+
+        let locationName, visitTimestamp, endTimestamp, placeId;
+
+        if (item.placeVisit) {
+            const pv = item.placeVisit;
+            placeId = pv.location.placeId;
+            locationName = placeDetailsCache[placeId]?.displayName || pv.location.name || 'Unknown Location';
+            visitTimestamp = pv.duration.startTimestamp;
+            endTimestamp = pv.duration.endTimestamp;
+        } else if (item.visit) {
+            const v = item.visit;
+            placeId = v.topCandidate?.placeID;
+            locationName = placeDetailsCache[placeId]?.displayName || v.topCandidate?.name || 'Unknown Location';
+            visitTimestamp = item.startTime;
+            endTimestamp = item.endTime;
+        } else {
+            return null;
+        }
+
+        const visitDate = moment(visitTimestamp);
+        const placeStyle = getPlaceStyle(placeDetailsCache[placeId]?.types || []);
+
+        resultItem.innerHTML = `
+            <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
+            <div class="timeline-item-details">
+                <strong>${locationName}</strong>
+                <div class="timeline-item-time">${visitDate.format('dddd, MMMM DD, YYYY')}</div>
+                <div class="timeline-item-time" style="font-size: 11px;">
+                    ${formatTimestamp(visitTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}
+                </div>
+            </div>
+        `;
+
+        resultItem.addEventListener('click', async () => {
+            const targetDate = moment(visitTimestamp).format('YYYY-MM-DD');
+            showSidebarTab('date');
+            document.getElementById('startDatePicker').value = targetDate;
+            document.getElementById('endDatePicker').value = targetDate;
+
+            // Set the global variable so the item can be found after loading
+            lastTimelineItemToHighlight = { placeId: placeId, startTimestamp: visitTimestamp };
+
+            // Directly call the loading function and await it
+            await loadTimelineDataInDateRange(new Date(targetDate), new Date(targetDate), false);
+        });
+
+        return resultItem;
+    }
+
+    function createConsolidatedAreaResultItem(placeData, index) {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'timeline-item place-visit-item consolidated';
+        resultItem.dataset.index = index;
+
+        const placeId = placeData.placeId;
+        const locationName = placeDetailsCache[placeId]?.displayName || placeData.locationName;
+        const placeStyle = getPlaceStyle(placeDetailsCache[placeId]?.types || []);
+
+        const datesHtml = placeData.visits.map(visit =>
+            `<span data-date="${moment(visit.date).format('YYYY-MM-DD')}" data-place-id="${placeId}" data-start-timestamp="${visit.date}">
+                ${moment(visit.date).format('YYYY-MM-DD')}
+            </span>`
+        ).join('');
+
+        resultItem.innerHTML = `
+            <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
+            <div class="timeline-item-details">
+                <strong>${locationName}</strong>
+                <div class="consolidated-visit-dates">${datesHtml}</div>
+            </div>
+        `;
+
+        // Add click listeners to each individual date span
+        resultItem.querySelectorAll('.consolidated-visit-dates span').forEach(span => {
+            span.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent any parent click events
+                const targetDate = span.dataset.date;
+                showSidebarTab('date');
+                document.getElementById('startDatePicker').value = targetDate;
+                document.getElementById('endDatePicker').value = targetDate;
+
+                lastTimelineItemToHighlight = { placeId: span.dataset.placeId, startTimestamp: span.dataset.startTimestamp };
+                await loadTimelineDataInDateRange(new Date(targetDate), new Date(targetDate), false);
+            });
+        });
+
+        return resultItem;
+    }
+
+
 
     // --- Search Functionality ---
     function initSearch() {
@@ -3407,6 +3849,7 @@
             document.getElementById('goBtn'),
             document.getElementById('settingsBtn'),
             document.getElementById('fitMapBtn'),
+            document.getElementById('areaBtn'),
             document.getElementById('summaryBtn'),
             document.getElementById('mapBtn'),
             document.getElementById('kmlBtn'),
@@ -3476,6 +3919,7 @@
             globalMinDate = null;
             globalMaxDate = null;
             locationBias = null;
+            lastAreaSearchResults = [];
             placeApiCallCount = 0; // Reset API counter on new folder load
             updateApiCallDisplay();
             // Show loading overlay and disable UI only on initial call
@@ -4440,10 +4884,22 @@
             initCurrentLocationButton();
             populateTimezoneSelector();
             initDistanceUnitSelector();
-            document.getElementById('calendarBtn').addEventListener('click', () => showSidebarTab('date'));
             setUIEnabled(false);
             showSidebarTab('date'); // Start on the date tab
             updateApiCallDisplay();
+
+            document.getElementById('calendarBtn').addEventListener('click', () => showSidebarTab('date'));
+            document.getElementById('areaBtn').addEventListener('click', () => showSidebarTab('area'));
+            document.getElementById('findInAreaBtn').addEventListener('click', findPlacesInMapArea);
+            document.getElementById('newAreaSearchBtn').addEventListener('click', () => {
+                // Hide results and the "New Search" button
+                document.getElementById('areaResults').innerHTML = '<p class="area-placeholder">Pan and zoom the map to your desired location, then click the button above to find all recorded visits in that area.</p>';
+                document.getElementById('newAreaSearchBtn').style.display = 'none';
+                // Show the options and the "Find" button
+                document.getElementById('area-options-container').style.display = 'flex';
+                document.getElementById('findInAreaBtn').style.display = 'flex';
+                clearMap();
+            });
 
             // Check for stored directory handle
             storedDirHandle = await getDirectoryHandle();
@@ -4499,6 +4955,7 @@
             kmlBtn.addEventListener('click', () => {
                 exportToKML()
             });
+
         } catch (error) {
             console.error("Error during initialization:", error);
             alert("An error occurred during map initialization. Please check your API key and network connection.");
