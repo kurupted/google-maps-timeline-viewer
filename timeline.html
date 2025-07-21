@@ -1143,99 +1143,97 @@
         }
         
         /*
-        ========================================
-        NEW RESPONSIVE STYLES
-        ========================================
-        */
-        
-        /* --- Mobile View Switcher --- */
-        #mobile-view-switcher {
-            display: none; /* Hidden on desktop */
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 55px;
-            /* Accomodate for iOS safe area (the notch/home bar) */
-            padding-bottom: env(safe-area-inset-bottom, 0);
-            box-sizing: content-box;
-            background-color: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-            z-index: 500;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-        }
+		========================================
+		RESPONSIVE STYLES
+		========================================
+		*/
 
-        #mobile-view-switcher button {
-            flex: 1;
-            background: none;
-            border: none;
-            border-right: 1px solid #dee2e6;
-            font-size: 16px;
-            font-weight: 500;
-            color: #495057;
-            cursor: pointer;
-            transition: background-color 0.2s ease, color 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+		/* --- Mobile View Switcher --- */
+		#mobile-view-switcher {
+			display: none; /* Hidden on desktop */
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 55px;
+			/* Accomodate for iOS safe area (the notch/home bar) */
+			padding-bottom: env(safe-area-inset-bottom, 0);
+			box-sizing: content-box;
+			background-color: #f8f9fa;
+			border-top: 1px solid #dee2e6;
+			z-index: 500;
+			box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+		}
 
-        #mobile-view-switcher button:last-child {
-            border-right: none;
-        }
+		#mobile-view-switcher button {
+			flex: 1;
+			background: none;
+			border: none;
+			border-right: 1px solid #dee2e6;
+			font-size: 16px;
+			font-weight: 500;
+			color: #495057;
+			cursor: pointer;
+			transition: background-color 0.2s ease, color 0.2s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
 
-        #mobile-view-switcher button.active {
-            background-color: #e9ecef;
-            color: #007bff;
-        }
+		#mobile-view-switcher button:last-child {
+			border-right: none;
+		}
 
-        /* --- Main Responsive Layout --- */
-        @media (max-width: 768px) {
-            #container {
-                display: block; /* Remove flex, stack elements */
-            }
+		#mobile-view-switcher button.active {
+			background-color: #e9ecef;
+			color: #007bff;
+		}
 
-            #mobile-view-switcher {
-                display: flex; /* Show the switcher on mobile */
-            }
+		/* --- Main Responsive Layout --- */
+		@media (max-width: 768px) {
+			#container {
+				display: block; /* Remove flex, stack elements */
+			}
 
-            #sidebar {
-                width: 100%;
-                /* Set height to end exactly above the switcher bar */
-                height: calc(100vh - 55px - env(safe-area-inset-bottom, 0));
-                border-right: none;
-            }
+			#mobile-view-switcher {
+				display: flex; /* Show the switcher on mobile */
+			}
 
-            #map {
-                position: fixed; /* Take map out of document flow */
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: calc(100% - 55px - env(safe-area-inset-bottom, 0));
-                z-index: 1; /* Keep it below the sidebar view */
-            }
+			#sidebar {
+				width: 100%;
+				/* Use dvh instead of vh to account for browser UI */
+				height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
+				border-right: none;
+			}
 
-            .map-custom-controls {
-                /* Position map controls above the view switcher, adding a little margin */
-                bottom: calc(55px + env(safe-area-inset-bottom, 0) + 15px); 
-                right: 15px;
-            }
+			#map {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
+				z-index: 1;
+			}
 
-            #summaryView, #howToMessage {
-                left: 0; /* Make summary/howto view full-screen */
-                width: 100%;
-                height: calc(100% - 55px - env(safe-area-inset-bottom, 0));
-                box-sizing: border-box;
-                padding: 15px;
-                border-left: none;
-            }
+			.map-custom-controls {
+				bottom: calc(55px + env(safe-area-inset-bottom, 0) + 15px); 
+				right: 15px;
+			}
 
-            /* Utility class to toggle views on mobile */
-            .mobile-hidden {
-                display: none !important;
-            }
-        }
+			#summaryView, #howToMessage {
+				left: 0;
+				width: 100%;
+				height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
+				box-sizing: border-box;
+				padding: 15px;
+				border-left: none;
+			}
+
+			.mobile-hidden {
+				display: none !important;
+			}
+		}
     </style>
 
 </head>
