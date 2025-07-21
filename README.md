@@ -17,6 +17,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - Toggle layers on and off, eg to view only places, without travel paths
 - Place details retrieved from Google Places API can be saved locally, to reduce future API calls
 - Export to KML file
+- Mobile-friendly UI, so you can use this on your phone
   
 #
 ![Alt text](/screenshot.png?raw=true "Screenshot")
@@ -31,8 +32,11 @@ If you're like me, you have years worth of timeline data that you want to be abl
 Setup procedure:
 
 ## Get Your Data: Option 1, On-Device data export
-1. Open the Maps app, go to your Timeline, and click ~~the export icon~~ the three dots in the top right, then "Location & privacy settings". Click where it says "Location is on", then click "Location services". Click "Timeline", then "Export Timeline data". Save the file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
-2. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
+1. Open the Google Maps app, tap your profile picture, select "Your timeline," then tap the three-dots icon in the corner.
+   Now, for Android: choose "Location & privacy settings", and click where it says "Location is on", then click "Location services". Click "Timeline", then "Export Timeline data".
+   For iOS: choose "Settings and privacy", then under the "Timeline data" section, look for an option labeled "Export Timeline" or "Download your data".
+2. Save the exported file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
+3. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
 
    
 ## Get Your Data: Option 2, Google Takeout (No longer available once you've started using on-device data)
@@ -82,7 +86,7 @@ Setup procedure:
 
 ##  Final Set Up
 1. **Download The Google Maps Timeline Viewer:**
-    - Save this project's [timeline.html](https://raw.githubusercontent.com/kurupted/google-maps-timeline-viewer/refs/heads/main/timeline.html) file anywhere you like, eg My Documents. (Copy/paste to eg Notepad and save as eg "timeline.html")
+    - Save this project's [timeline.html](https://raw.githubusercontent.com/kurupted/google-maps-timeline-viewer/refs/heads/main/timeline.html) file anywhere you like, either on your computer (eg in My Documents) or on your mobile device. (To save, copy/paste the text into eg Notepad, and save as "timeline.html")
    
 4. **Add your API key:**
    - Open the timeline.html file in a text editor and find the code below, near the top:
@@ -95,11 +99,11 @@ Setup procedure:
 
 ## View Your Timeline
 1. **Open the timeline.html File:**
-    - Double-click the file to open it. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
+    - Open the file on your computer or mobile device. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
     - At the top left of the page, click Load Data and navigate to the folder that contains your Timeline data.
         - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
         - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
-    - Use the date picker to choose a date that contains timeline data.
+    - Note that on Android you may not be allowed to load the data if it's in certain folders, such as Downloads -- move the data file to an accessible location.
 
 ## Note on API Usage & Billing
 - You can find the free usage limits, and over-the-limit pricing here: https://developers.google.com/maps/billing-and-pricing/pricing#places-pricing
