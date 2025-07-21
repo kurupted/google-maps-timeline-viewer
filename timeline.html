@@ -12,7 +12,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Google Maps Timeline Viewer</title>
 
     <!-- Google Maps importLibrary loader -->
@@ -1156,7 +1156,9 @@
             left: 0;
             width: 100%;
             height: 55px;
-            padding-bottom: env(safe-area-inset-bottom, 0); /* iOS notch/home bar support */
+            /* Accomodate for iOS safe area (the notch/home bar) */
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            box-sizing: content-box;
             background-color: #f8f9fa;
             border-top: 1px solid #dee2e6;
             z-index: 500;
@@ -1200,10 +1202,9 @@
 
             #sidebar {
                 width: 100%;
-                height: 100vh; /* Take full viewport height */
+                /* Set height to end exactly above the switcher bar */
+                height: calc(100vh - 55px - env(safe-area-inset-bottom, 0));
                 border-right: none;
-                padding-bottom: 55px; /* Add space for the bottom switcher bar */
-                box-sizing: border-box; /* Include padding in height calculation */
             }
 
             #map {
@@ -1211,19 +1212,20 @@
                 top: 0;
                 left: 0;
                 width: 100%;
-                height: 100%; /* Map covers full screen behind sidebar */
+                height: calc(100% - 55px - env(safe-area-inset-bottom, 0));
                 z-index: 1; /* Keep it below the sidebar view */
             }
 
             .map-custom-controls {
-                /* Position map controls above the view switcher */
-                bottom: 70px; 
+                /* Position map controls above the view switcher, adding a little margin */
+                bottom: calc(55px + env(safe-area-inset-bottom, 0) + 15px); 
                 right: 15px;
             }
 
             #summaryView, #howToMessage {
                 left: 0; /* Make summary/howto view full-screen */
                 width: 100%;
+                height: calc(100% - 55px - env(safe-area-inset-bottom, 0));
                 box-sizing: border-box;
                 padding: 15px;
                 border-left: none;
