@@ -4,7 +4,7 @@
 <!-- -----
         Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 
-        Version: July 8, 2025
+        Version: July 21, 2025
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -80,6 +80,7 @@
             overflow: hidden;
             position: relative;
             z-index: 60;
+            flex-shrink: 0;
         }
         #sidebar-main {
             flex-grow: 1; /* Make this new wrapper fill the space */
@@ -165,8 +166,8 @@
         /* --- Settings View --- */
         #settingsView {
             display: none; /* Initially hidden */
-            width: 100%;   /* Fill the wrapper */
-            height: 100%;  /* Fill the wrapper */
+            width: 100%;    /* Fill the wrapper */
+            height: 100%;   /* Fill the wrapper */
             overflow-y: auto; /* Make this section scrollable */
             padding: 10px 12px;
             border-bottom: 1px solid #e9ecef;
@@ -326,6 +327,8 @@
         .icon-btn:disabled {
             color: #adb5bd;
             cursor: not-allowed;
+            filter: grayscale(100%);
+            opacity: 0.7;
         }
         .icon-btn.active { /* Style for the active view button */
             background-color: #dde4ed; /* A slightly different background */
@@ -373,7 +376,6 @@
             height: 100%; /* Fill the wrapper */
             background-color: #f8f9fa;
             flex-direction: column; /* To stack header, input, results */
-            /* flex-grow: 1; has been removed */
         }
         #searchHeader {
             display: flex;
@@ -435,12 +437,28 @@
         #autocomplete-suggestions-container {
             position: relative; /* Container for positioning the dropdown */
         }
+        .clear-search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #eee;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+            display: none; /* Hidden by default, shown with JS */
+        }
+        .clear-search-btn:hover {
+            color: #333;
+        }
         #autocomplete-results {
             position: absolute;
             border: 1px solid #d4d4d4;
             border-top: none;
             z-index: 99;
-            /*position the autocomplete items to be the same width as the container:*/
             top: 100%;
             left: 0;
             right: 0;
@@ -701,16 +719,42 @@
 
 
         /* --- Bottom Sidebar Elements (Non-scrolling) --- */
-        #status-bar-container { /* New container for data source and API calls */
+        #status-bar-container {
             display: flex;
-            justify-content: space-between; /* Align items to ends */
-            align-items: center; /* Vertically align items */
+            justify-content: space-between;
+            align-items: center;
             font-size: 11px;
             padding: 8px 12px;
             color: #6c757d;
             border-top: 1px solid #e9ecef;
             flex-shrink: 0;
             background-color: #ffffff;
+            gap: 10px;
+        }
+        #status-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            text-align: left;
+        }
+        #cache-indicator {
+            display: flex; /* Changed from none to flex */
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+        }
+        #new-cache-count, #new-cache-count-label {
+            color: #28a745;
+            font-weight: bold;
+        }
+        #api-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            text-align: right;
+            flex-shrink: 1;
         }
         #data-source-indicator {
             text-align: left; /* Align text to the left */
@@ -933,7 +977,6 @@
 
         /* Hide non-selected years when one is expanded */
         #summaryView.expanded-year-active #summary-years .summary-year-item:not(.is-selected-year) {
-            /* display: none; */ /* Replaced with opacity for smoother transition */
             opacity: 0;
             pointer-events: none; /* Prevent interaction with hidden items */
             height: 0; /* Collapse height */
@@ -1049,9 +1092,162 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+
+        /* For API Key Modal */
+        #apiKeyModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            display: none; /* Use flex to center */
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        #apiKeyModal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #apiKeyModal button {
+            padding: 10px 20px;
+            background-color: #5A95F5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #apiKeyModal button:hover {
+            background-color: #4a85e5;
+        }
+        #apiKeyModal a {
+            color: #007bff;
+        }
+        
+        /*
+        ========================================
+        NEW RESPONSIVE STYLES
+        ========================================
+        */
+        
+        /* --- Mobile View Switcher --- */
+        #mobile-view-switcher {
+            display: none; /* Hidden on desktop */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            padding-bottom: env(safe-area-inset-bottom, 0); /* iOS notch/home bar support */
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            z-index: 500;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+
+        #mobile-view-switcher button {
+            flex: 1;
+            background: none;
+            border: none;
+            border-right: 1px solid #dee2e6;
+            font-size: 16px;
+            font-weight: 500;
+            color: #495057;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        #mobile-view-switcher button:last-child {
+            border-right: none;
+        }
+
+        #mobile-view-switcher button.active {
+            background-color: #e9ecef;
+            color: #007bff;
+        }
+
+        /* --- Main Responsive Layout --- */
+        @media (max-width: 768px) {
+            #container {
+                display: block; /* Remove flex, stack elements */
+            }
+
+            #mobile-view-switcher {
+                display: flex; /* Show the switcher on mobile */
+            }
+
+            #sidebar {
+                width: 100%;
+                height: 100vh; /* Take full viewport height */
+                border-right: none;
+                padding-bottom: 55px; /* Add space for the bottom switcher bar */
+                box-sizing: border-box; /* Include padding in height calculation */
+            }
+
+            #map {
+                position: fixed; /* Take map out of document flow */
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%; /* Map covers full screen behind sidebar */
+                z-index: 1; /* Keep it below the sidebar view */
+            }
+
+            .map-custom-controls {
+                /* Position map controls above the view switcher */
+                bottom: 70px; 
+                right: 15px;
+            }
+
+            #summaryView, #howToMessage {
+                left: 0; /* Make summary/howto view full-screen */
+                width: 100%;
+                box-sizing: border-box;
+                padding: 15px;
+                border-left: none;
+            }
+
+            /* Utility class to toggle views on mobile */
+            .mobile-hidden {
+                display: none !important;
+            }
+        }
     </style>
+
 </head>
 <body>
+<div id="apiKeyModal"><!-- not used atm. will fix later -->
+    <div class="modal-content">
+        <h3>Enter API Key</h3>
+        <p>A Google Maps API Key is required. Please enter it below to continue.</p>
+        <p><small>The key is only stored for this browser session.</small></p>
+        <input type="text" id="apiKeyInput" placeholder="Paste your API key here">
+        <button id="apiKeySubmit">Submit</button>
+        <p><small>For instructions on getting a key, see the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank" rel="noopener">project page</a>.</small></p>
+    </div>
+</div>
 <div id="container">
     <div id="sidebar">
 
@@ -1107,6 +1303,7 @@
                 <div id="search-controls">
                     <div id="autocomplete-suggestions-container">
                         <input type="text" id="searchInput" placeholder="Enter a place name..." autocomplete="off">
+                        <button id="clearSearchBtn" class="clear-search-btn">&times;</button>
                         <div id="autocomplete-results"></div>
                     </div>
                 </div>
@@ -1171,13 +1368,20 @@
         </div>
 
         <div id="status-bar-container">
-            <span id="data-source-indicator">No data loaded. Use "Load Data".</span>
-            <div style="text-align:right;">
-                <span id="api-call-counter">API Calls: 0</span>
-                <div id="cache-controls">
-                    <button id="disableApiBtn" class="cache-btn">Disable API</button>
-                    <button id="saveCacheBtn" class="cache-btn" disabled>Save Data</button>
+            <div id="status-info">
+                <span id="data-source-indicator">No data loaded. Use "Load Data".</span>
+                <div id="cache-indicator" style="display: none;">
+                    <span>
+                        Place cache:
+                        <span id="saved-cache-count">0</span> saved /
+                        <span id="new-cache-count">0</span><span id="new-cache-count-label"> new</span>
+                    </span>
+                    <button id="saveCacheBtn" class="cache-btn" disabled>Save</button>
                 </div>
+            </div>
+            <div id="api-controls">
+                <span id="api-call-counter">API Calls: 0</span>
+                <button id="disableApiBtn" class="cache-btn">Disable API</button>
             </div>
         </div>
     </div>
@@ -1246,6 +1450,7 @@
     let globalIndex = 0; // Global counter for unique data-index across map/timeline
     let uiEnabled = false; // Flag to track if UI is enabled (data loaded)
     let placeApiCallCount = 0; // Counter for Place API calls
+    let initialCacheSizeFromFile = 0;
     let apiCallsDisabled = false;
     let globalMinDate = null; // Earliest date in loaded data
     let globalMaxDate = null; // Latest date in loaded data
@@ -1642,6 +1847,20 @@
         }
     }
 
+    function updateCacheIndicator() {
+        const indicator = document.getElementById('cache-indicator');
+        if (Object.keys(timelineData).length === 0) {
+            indicator.style.display = 'none';
+            return;
+        }
+        const currentCacheSize = Object.keys(placeDetailsCache).length;
+        const newCount = Math.max(0, currentCacheSize - initialCacheSizeFromFile);
+        document.getElementById('saved-cache-count').textContent = initialCacheSizeFromFile;
+        document.getElementById('new-cache-count').textContent = newCount;
+        indicator.style.display = 'flex';
+    }
+
+
     // --- Timeline Rendering ---
 
     // Creates a single timeline item element for the sidebar
@@ -1962,7 +2181,6 @@
 
     // Fetches place details using the new Place.fetchFields method
     async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index, sidebarItem = null) {
-
         if (apiCallsDisabled) {
             console.log("API calls disabled. Skipping fetchPlaceDetails, rendering basic marker.");
             const lat = placeVisit.location.latitudeE7 / 1e7;
@@ -1985,20 +2203,12 @@
         ];
 
         try {
-            const place = new Place({
-                id: placeId,
-                requestedLanguage: "en", // optional
-            });
+            const place = new Place({ id: placeId }); // , requestedLanguage: "en"
+            await place.fetchFields({ fields: fields });
+            incrementApiCallCount();
 
-            await place.fetchFields({
-                fields: fields
-            });
-            incrementApiCallCount(); // Increment API counter for basic details
-
-            //console.log("Place details fetched successfully:", place);
-            // Cache the result
             placeDetailsCache[placeId] = place;
-            // Render the marker and info window with the fetched details
+            updateCacheIndicator();
             renderPlaceDetails(place, placeVisit, index, sidebarItem);
 
         } catch (error) {
@@ -2983,22 +3193,35 @@
     function initSearch() {
         const searchBtn = document.getElementById('searchBtn');
         const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn'); // Get the new button
+        const searchResults = document.getElementById('searchResults');
 
         searchBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
             showSidebarTab('search');
         });
 
-
         // Autocomplete logic using Places API (New)
         searchInput.addEventListener('input', debounce(async (e) => {
             const query = e.target.value;
-            if (query.length < 3) { // Don't search for very short strings
+            // Show/hide clear button based on input
+            clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
+            if (query.length < 3) {
                 clearAutocompleteSuggestions();
                 return;
             }
             await getAutocompleteSuggestions(query);
         }, 300)); // 300ms debounce delay
+
+        // Add click listener for the new clear button
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchResults.innerHTML = '';
+            clearAutocompleteSuggestions();
+            clearSearchBtn.style.display = 'none';
+            searchInput.focus();
+        });
+
         // Close suggestions when clicking outside
         document.addEventListener('click', function(event) {
             const container = document.getElementById('autocomplete-suggestions-container');
@@ -3008,11 +3231,15 @@
         });
     }
     async function getAutocompleteSuggestions(query) {
+        if (apiCallsDisabled) {
+            console.log("API calls are disabled, skipping autocomplete search.");
+            return;
+        }
+
         const apiKey = window.GOOGLE_MAPS_API_KEY;
         const url = `https://places.googleapis.com/v1/places:autocomplete`;
         incrementApiCallCount(); // Count this as an API call
 
-        // Prepare the request body
         const requestBody = {
             'input': query,
             'languageCode': 'en'
@@ -3044,7 +3271,6 @@
             if (!response.ok) {
                 const errorBody = await response.json();
                 console.error('Places Autocomplete API error:', errorBody);
-                // Check for a common error when the new API is not enabled
                 if (errorBody.error?.message.includes("is not enabled")) {
                     alert("Error: The Places API (New) is not enabled for your project. Please enable it in the Google Cloud Console.");
                 }
@@ -3856,20 +4082,18 @@
             document.getElementById('reloadBtn'),
             document.getElementById('searchBtn')
         ];
-        elementsToToggle.forEach(el => { if(el) el.disabled = !enabled; });
+        elementsToToggle.forEach(el => {
+            if (el) el.disabled = !enabled;
+        });
 
-        // Explicitly set the "Save Data" button state based on API calls
-        document.getElementById('saveCacheBtn').disabled = !enabled || (placeApiCallCount === 0);
+        document.getElementById('saveCacheBtn').disabled = !enabled || (Object.keys(placeDetailsCache).length - initialCacheSizeFromFile <= 0);
 
-        // Special case for reload button - it should only be enabled if a handle exists
         if (enabled && storedDirHandle) {
             document.getElementById('reloadBtn').disabled = false;
         } else {
             document.getElementById('reloadBtn').disabled = true;
         }
 
-
-        // Also enable/disable settings filter checkboxes
         const settingsCheckboxes = document.querySelectorAll('#settingsView input[type="checkbox"]');
         settingsCheckboxes.forEach(cb => cb.disabled = !enabled);
         document.getElementById('timezone-select').disabled = !enabled;
@@ -3878,6 +4102,7 @@
         if (!enabled) {
             // Reset state when UI is disabled (e.g., no data loaded)
             document.getElementById('data-source-indicator').textContent = 'No data loaded. Use "Load Data".';
+            document.getElementById('cache-indicator').style.display = 'none';
             clearMap();
             clearTimeline();
             document.getElementById('summaryView').style.display = 'none'; // Hide summary view
@@ -3895,7 +4120,10 @@
             document.getElementById('summary-months').style.display = 'none';
             document.getElementById('backToYearsBtn').style.display = 'none';
         } else {
-            updateViewToggleButtons(); // Ensure correct button is active when enabled
+            // Update the cache button state whenever UI is enabled
+            const newCount = Object.keys(placeDetailsCache).length - initialCacheSizeFromFile;
+            document.getElementById('saveCacheBtn').disabled = newCount <= 0;
+            updateViewToggleButtons();
         }
     }
 
@@ -3910,17 +4138,17 @@
         if (!isRecursive) {
             console.log("Initial call to readFilesFromDirectory, resetting globals...");
             globalIndex = 0;
-            timelineData = {}; // Reset main data object
-            activityTypes = new Set(); // Reset activity types
-            //placeDetailsCache = {}; // Reset cache
-            allYearlySummaries = null; // Reset summary data
+            timelineData = {};
+            activityTypes = new Set();
+            allYearlySummaries = null;
             allMonthlySummaries = null;
             selectedSummaryYear = null;
             globalMinDate = null;
             globalMaxDate = null;
             locationBias = null;
             lastAreaSearchResults = [];
-            placeApiCallCount = 0; // Reset API counter on new folder load
+            placeApiCallCount = 0;
+            initialCacheSizeFromFile = 0;
             updateApiCallDisplay();
             // Show loading overlay and disable UI only on initial call
             document.getElementById('loading-overlay').style.display = "flex";
@@ -3949,20 +4177,27 @@
                         const content = await file.text();
                         const cachedData = JSON.parse(content);
                         if (typeof cachedData === 'object' && cachedData !== null) {
-                            placeDetailsCache = cachedData; // Load into global cache
-                            console.log(`Successfully loaded ${Object.keys(placeDetailsCache).length} entries from TimelinePlaceCache.json.`);
+                            placeDetailsCache = cachedData;
+                            // Set initial cache size from file
+                            initialCacheSizeFromFile = Object.keys(placeDetailsCache).length;
+                            console.log(`Successfully loaded ${initialCacheSizeFromFile} entries from cache.`);
                         } else {
                             console.warn("TimelinePlaceCache.json does not contain a valid JSON object. Ignoring.");
                             placeDetailsCache = {};
+                            initialCacheSizeFromFile = 0;
                         }
                     } catch (cacheError) {
                         console.error("Error reading or parsing TimelinePlaceCache.json:", cacheError);
-                        alert("Error loading TimelinePlaceCache.json. It might be corrupted. Proceeding without cached place data.");
+                        alert("Error loading TimelinePlaceCache.json. It might be corrupted.");
                         placeDetailsCache = {};
+                        initialCacheSizeFromFile = 0;
                     }
                 } else {
-                    console.log("TimelinePlaceCache.json not found. Will rely on API calls or existing session cache.");
-                    if (!isRecursive) placeDetailsCache = {};
+                    console.log("TimelinePlaceCache.json not found.");
+                    if (!isRecursive) {
+                        placeDetailsCache = {};
+                        initialCacheSizeFromFile = 0;
+                    }
                 }
             }
 
@@ -3976,7 +4211,7 @@
 
                 // --- Handle iOS JSON Array Format ---
                 if (Array.isArray(jsonData)) {
-                    dataSourceText = 'Local Timeline.json (iOS Format)';
+                    dataSourceText = 'Timeline.json (iOS)';
                     console.log('Processing iOS Format Timeline.json...');
 
                     // --- Step 1 - Pre-process timelinePath objects ---
@@ -4108,7 +4343,7 @@
 
                     // --- Handle Standard Timeline Object Format ---
                 } else if (jsonData.timelineObjects) {
-                    dataSourceText = 'Local Timeline.json (Standard Format)';
+                    dataSourceText = 'Timeline.json (Standard)';
                     console.log('Processing Standard Format Timeline.json...');
                     jsonData.timelineObjects.forEach(item => {
                         const endTimestamp = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp;
@@ -4144,7 +4379,7 @@
 
                     // --- Handle Semantic History Format ---
                 } else if (jsonData.semanticSegments) {
-                    dataSourceText = 'Local Timeline.json (Semantic Format)';
+                    dataSourceText = 'Timeline.json (Semantic)';
                     console.log('Processing Semantic History format...');
                     // Populate the timelinePath points from every timelinePath object first
                     const allPathPoints = []; // Array to hold all path points with time
@@ -4300,7 +4535,7 @@
 
             } else {
                 // --- Step 3: Fallback to recursive directory reading (Takeout Monthly Files) ---
-                dataSourceText = 'Google Takeout (Monthly Files)';
+                dataSourceText = 'Google Takeout';
                 console.log("Timeline.json not found at top level, scanning for YYYY_MONTH.json files...");
                 let fileFoundInThisLevel = false; // Track if files are found at the current level/recursion
 
@@ -4375,17 +4610,17 @@
                         console.log(`Set search location bias to latest data point:`, locationBias);
                     }
                     console.log("Data loading complete. Enabling UI.");
-                    document.getElementById('data-source-indicator').innerHTML = 'Data source: ' + dataSourceText + '<br>' +
-                        (placeCacheFile ? ` (Cache: ${Object.keys(placeDetailsCache).length} entries)` : ' (No cache file loaded)');
 
-                    // Save the handle to IndexedDB for the "Reload Last" button
+                    // Update the data source indicator text
+                    document.getElementById('data-source-indicator').textContent = `Data source: ${dataSourceText}`;
+                    updateCacheIndicator(); // Display the initial cache counts
+
                     await saveDirectoryHandle(dirHandle);
-                    storedDirHandle = dirHandle; // Update in-memory handle
-                    //document.getElementById('reloadBtn').style.display = 'inline-block';
+                    storedDirHandle = dirHandle;
 
-                    populateActivityFilters(); // Populate filters based on loaded data
-                    displayMinMaxDates(); // Show the first/last dates
-                    setUIEnabled(true); // Enable UI elements
+                    populateActivityFilters();
+                    displayMinMaxDates();
+                    setUIEnabled(true);
 
                     // Perform initial data load for the default date range
                     const startDate = new Date(document.getElementById('startDatePicker').value);
@@ -4395,7 +4630,7 @@
                 } else {
                     // No data was successfully loaded
                     document.getElementById('data-source-indicator').innerHTML = 'No valid timeline data found.';
-                    setUIEnabled(false); // Keep UI disabled
+                    setUIEnabled(false);
                     alert("No valid timeline data could be loaded from the selected folder.");
                 }
             }
@@ -4845,8 +5080,7 @@
     }
 
 
-    // --- Window Load ---
-    window.onload = async () => {
+    async function initializeApp() {
         // Check if the API key placeholder is still present
         if (window.GOOGLE_MAPS_API_KEY === "YOUR_API_KEY" || window.GOOGLE_MAPS_API_KEY === "") {
             alert("Please replace 'YOUR_API_KEY' in the HTML (near the top of the <script> block) with your actual Google Maps API Key.");
@@ -4860,19 +5094,20 @@
             return; // Stop further execution
         }
 
-        // Load stored settings from IndexedDB before initializing everything else
-        const storedTimezone = await getSetting('displayTimezone');
-        if (storedTimezone) {
-            displayTimezone = storedTimezone;
-            console.log(`Loaded timezone setting from DB: ${displayTimezone}`);
-        }
-        const storedUnit = await getSetting('distanceUnit');
-        if (storedUnit) {
-            distanceUnit = storedUnit;
-            console.log(`Loaded distance unit setting from DB: ${distanceUnit}`);
-        }
-
         try {
+            // Load stored settings from IndexedDB first
+            const storedTimezone = await getSetting('displayTimezone');
+            if (storedTimezone) {
+                displayTimezone = storedTimezone;
+                console.log(`Loaded timezone setting from DB: ${displayTimezone}`);
+            }
+            const storedUnit = await getSetting('distanceUnit');
+            if (storedUnit) {
+                distanceUnit = storedUnit;
+                console.log(`Loaded distance unit setting from DB: ${distanceUnit}`);
+            }
+
+            // Initialize the map and all UI components
             await initMap();
             initDatePicker();
             initFolderPicker();
@@ -4885,17 +5120,16 @@
             populateTimezoneSelector();
             initDistanceUnitSelector();
             setUIEnabled(false);
-            showSidebarTab('date'); // Start on the date tab
+            showSidebarTab('date');
             updateApiCallDisplay();
 
+            // --- Attach event listeners ---
             document.getElementById('calendarBtn').addEventListener('click', () => showSidebarTab('date'));
             document.getElementById('areaBtn').addEventListener('click', () => showSidebarTab('area'));
             document.getElementById('findInAreaBtn').addEventListener('click', findPlacesInMapArea);
             document.getElementById('newAreaSearchBtn').addEventListener('click', () => {
-                // Hide results and the "New Search" button
                 document.getElementById('areaResults').innerHTML = '<p class="area-placeholder">Pan and zoom the map to your desired location, then click the button above to find all recorded visits in that area.</p>';
                 document.getElementById('newAreaSearchBtn').style.display = 'none';
-                // Show the options and the "Find" button
                 document.getElementById('area-options-container').style.display = 'flex';
                 document.getElementById('findInAreaBtn').style.display = 'flex';
                 clearMap();
@@ -4905,25 +5139,22 @@
             storedDirHandle = await getDirectoryHandle();
             if (storedDirHandle) {
                 console.log("Found stored directory handle.");
-                //document.getElementById('reloadBtn').style.display = 'inline-block';
             }
 
             // Add global key listeners for date navigation
             document.addEventListener('keydown', (e) => {
-                if (!uiEnabled) return; // Only act if UI is enabled
-
+                if (!uiEnabled) return;
                 // Check if the event target is an input field to avoid interference
                 const targetTagName = e.target.tagName.toLowerCase();
                 if (targetTagName === 'input' || targetTagName === 'textarea' || targetTagName === 'select') {
                     return; // Don't navigate if typing in an input
                 }
-
                 // Navigate using arrow keys
                 if (e.key === 'ArrowLeft') {
-                    e.preventDefault(); // Prevent default browser behavior (like scrolling)
+                    e.preventDefault();
                     document.getElementById("prevDayBtn").click();
                 } else if (e.key === 'ArrowRight') {
-                    e.preventDefault(); // Prevent default browser behavior
+                    e.preventDefault();
                     document.getElementById("nextDayBtn").click();
                 }
             });
@@ -4933,7 +5164,6 @@
                 const action = e.target.dataset.action;
                 const date = contextMenu.dataset.date;
                 if (!action || !date) return;
-
                 if (action === 'set-start') {
                     document.getElementById('startDatePicker').value = date;
                 } else if (action === 'set-end') {
@@ -4942,7 +5172,7 @@
                     document.getElementById('startDatePicker').value = date;
                     document.getElementById('endDatePicker').value = date;
                 }
-                contextMenu.style.display = 'none'; // Hide menu after action
+                contextMenu.style.display = 'none';
             });
 
             // Add a global listener to hide the menu when clicking elsewhere
@@ -4958,9 +5188,68 @@
 
         } catch (error) {
             console.error("Error during initialization:", error);
-            alert("An error occurred during map initialization. Please check your API key and network connection.");
+            const modal = document.getElementById('apiKeyModal');
+            if (modal.style.display !== 'flex') { // Only alert if the modal isn't already showing
+                alert("An error occurred during map initialization. Your API key may be invalid or missing required permissions (Maps JavaScript API). Please check the console for details.");
+            }
         }
+    }
+
+    window.onload = function() {
+        initializeApp();
     };
+
 </script>
+
+
+
+
+<div id="mobile-view-switcher">
+    <button id="show-sidebar-btn" class="active">📋 Controls & Details</button>
+    <button id="show-map-btn">🌍 Visual</button>
+</div>
+
+<script>
+	// --- Mobile View Switcher Logic ---
+	document.addEventListener('DOMContentLoaded', () => {
+		const showSidebarBtn = document.getElementById('show-sidebar-btn');
+		const showMapBtn = document.getElementById('show-map-btn');
+		const sidebar = document.getElementById('sidebar');
+		const mapContainer = document.getElementById('map');
+
+		// This logic only applies if the switcher elements are present
+		if (!showSidebarBtn || !showMapBtn || !sidebar || !mapContainer) {
+			return;
+		}
+
+		const switchView = (viewToShow) => {
+			// This function should only run on mobile-sized screens where the switcher is visible
+			if (window.getComputedStyle(showSidebarBtn.parentElement).display !== 'flex') {
+				return;
+			}
+
+			if (viewToShow === 'map') {
+				sidebar.classList.add('mobile-hidden');
+				mapContainer.classList.remove('mobile-hidden');
+				showMapBtn.classList.add('active');
+				showSidebarBtn.classList.remove('active');
+			} else { // 'sidebar'
+				sidebar.classList.remove('mobile-hidden');
+				mapContainer.classList.add('mobile-hidden');
+				showMapBtn.classList.remove('active');
+				showSidebarBtn.classList.add('active');
+			}
+		};
+		
+		showSidebarBtn.addEventListener('click', () => switchView('sidebar'));
+		showMapBtn.addEventListener('click', () => switchView('map'));
+
+		// Set the initial view state when the page loads on a mobile device
+		if (window.innerWidth <= 768) {
+			mapContainer.classList.add('mobile-hidden');
+		}
+	});
+</script>
+
 </body>
 </html>
