@@ -4,7 +4,7 @@
 <!-- -----
         Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 
-        Version: July 21, 2025
+        Version: July 31, 2025
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -181,14 +181,14 @@
             margin-bottom: 10px;
         }
         #settingsView h4 {
-            margin-top: 10px;
-            margin-bottom: 10px;
+            margin-top: 25px;
+            margin-bottom: 15px;
             font-weight: 500;
             border-bottom: 1px solid #e9ecef;
             padding-bottom: 5px;
         }
         #settingsView h4:first-of-type {
-            margin-top: 0;
+            margin-top: 20px;
         }
         #settingsView label {
             display: block;
@@ -206,6 +206,7 @@
         #activityFilters {
             margin-left: 20px;
             padding-top: 5px;
+            padding-bottom: 40px;
         }
         #timezone-select,
         #distance-unit-select {
@@ -3954,27 +3955,30 @@
         summaryBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
 
-            if (!summaryViewVisible) {
-                // Calculate summaries if not already done
-                if (!allYearlySummaries) {
-                    calculateSummaries();
+            const mobileSwitcher = document.getElementById('mobile-view-switcher');
+            if (window.getComputedStyle(mobileSwitcher).display === 'flex') { // Check if on mobile
+                document.getElementById('show-map-btn').click();
+            } else {
+                if (!summaryViewVisible) {
+                    // Calculate summaries if not already done
+                    if (!allYearlySummaries) {
+                        calculateSummaries();
+                    }
+                    // Display the summary sections
+                    displaySelectedDatesSummary( // Display selected range summary
+                        new Date(document.getElementById('startDatePicker').value),
+                        new Date(document.getElementById('endDatePicker').value)
+                    );
+                    // Display years, reset expanded view state
+                    displayYearSummary();
+                    summaryView.classList.remove('expanded-year-active'); // Ensure not expanded initially
+
+                    summaryView.style.display = 'block';
+                    mapElement.classList.add('hidden');
+                    summaryViewVisible = true;
                 }
-                // Display the summary sections
-                displaySelectedDatesSummary( // Display selected range summary
-                    new Date(document.getElementById('startDatePicker').value),
-                    new Date(document.getElementById('endDatePicker').value)
-                );
-                // Display years, reset expanded view state
-                displayYearSummary();
-                summaryView.classList.remove('expanded-year-active'); // Ensure not expanded initially
-
-                summaryView.style.display = 'block';
-                mapElement.classList.add('hidden');
-                summaryViewVisible = true;
+                updateViewToggleButtons(); // Update button active state
             }
-            // No else needed, clicking again doesn't hide it, use close or map button
-
-            updateViewToggleButtons(); // Update button active state
         });
 
         // Close Summary View
