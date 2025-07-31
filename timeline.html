@@ -3955,29 +3955,29 @@
         summaryBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
 
+            if (!summaryViewVisible) {
+                // Calculate summaries if not already done
+                if (!allYearlySummaries) {
+                    calculateSummaries();
+                }
+                // Display the summary sections
+                displaySelectedDatesSummary( // Display selected range summary
+                    new Date(document.getElementById('startDatePicker').value),
+                    new Date(document.getElementById('endDatePicker').value)
+                );
+                // Display years, reset expanded view state
+                displayYearSummary();
+                summaryView.classList.remove('expanded-year-active'); // Ensure not expanded initially
+
+                summaryView.style.display = 'block';
+                mapElement.classList.add('hidden');
+                summaryViewVisible = true;
+            }
+            updateViewToggleButtons(); // Update button active state
+
             const mobileSwitcher = document.getElementById('mobile-view-switcher');
             if (window.getComputedStyle(mobileSwitcher).display === 'flex') { // Check if on mobile
                 document.getElementById('show-map-btn').click();
-            } else {
-                if (!summaryViewVisible) {
-                    // Calculate summaries if not already done
-                    if (!allYearlySummaries) {
-                        calculateSummaries();
-                    }
-                    // Display the summary sections
-                    displaySelectedDatesSummary( // Display selected range summary
-                        new Date(document.getElementById('startDatePicker').value),
-                        new Date(document.getElementById('endDatePicker').value)
-                    );
-                    // Display years, reset expanded view state
-                    displayYearSummary();
-                    summaryView.classList.remove('expanded-year-active'); // Ensure not expanded initially
-
-                    summaryView.style.display = 'block';
-                    mapElement.classList.add('hidden');
-                    summaryViewVisible = true;
-                }
-                updateViewToggleButtons(); // Update button active state
             }
         });
 
