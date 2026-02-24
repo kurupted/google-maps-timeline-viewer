@@ -1241,6 +1241,60 @@
 			}
 		}
 
+		/* --- Debug Overlay --- */
+        #debugOverlay {
+            display: none;
+            position: absolute;
+            bottom: 30px;
+            left: 370px; /* Sidebar width + padding */
+            width: 450px;
+            max-height: 60%;
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid #adb5bd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            flex-direction: column;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        #debugOverlayHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        #closeDebugOverlayBtn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #6c757d;
+            line-height: 1;
+        }
+        #closeDebugOverlayBtn:hover {
+            color: #343a40;
+        }
+        #debugOverlayContent {
+            padding: 12px;
+            margin: 0;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            #debugOverlay {
+                left: 10px;
+                right: 10px;
+                width: auto;
+                bottom: 70px;
+            }
+        }
 
         /* For API Key Modal */
         #apiKeyModal {
@@ -1415,6 +1469,11 @@
                 <div id="activityFilters" style="margin-left: 20px;"></div>
                 
                 <h4>Advanced Settings</h4>
+                
+				<label class="settings-option" style="margin-bottom: 15px;">
+                    <input type="checkbox" id="debugModeToggle" class="settings-checkbox"> Enable Debug Mode
+                </label>
+                
 				<label for="homePlaceIdsInput">Home Place IDs (comma-separated):</label>
 				<input type="text" id="homePlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
 
@@ -1424,7 +1483,7 @@
 				<div style="display: flex; gap: 5px; margin-top: 5px;">
 					<button id="saveAdvancedSettingsBtn" class="control-btn" style="flex: 1; padding: 6px;">Save IDs</button>
 				</div>
-
+				
 				<h4 style="margin-top: 15px;">Data & Settings</h4>
 				<div style="display: flex; gap: 5px; padding-bottom: 30px;">
 					<button id="exportSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Export Settings</button>
@@ -1491,6 +1550,14 @@
     </div>
 
     <div id="map" class=""></div>
+    
+    <div id="debugOverlay">
+        <div id="debugOverlayHeader">
+            <strong>Item Debug Info</strong>
+            <button id="closeDebugOverlayBtn">×</button>
+        </div>
+        <pre id="debugOverlayContent"></pre>
+    </div>
 
     <div class="map-custom-controls">
         <button id="fitMapBtn" class="map-overlay-btn" title="Fit Map to Data" disabled>⤢</button>
@@ -1545,6 +1612,7 @@
     let lastAreaSearchResults = [];
     let lastAreaSearchMode = 'all';
     let lastTimelineItemToHighlight = null;
+    let isDebugMode = false;
     let homePlaceIds = [];
     let workPlaceIds = [];
 
@@ -2024,15 +2092,12 @@
         timelineItem.className = 'timeline-item';
         timelineItem.dataset.index = index; // Use the global index
         // --- DEBUG START: Add raw data ---
-        /*try {
-                // Select the relevant part of the item (visit or activity)
-                const rawData = item;
-                const jsonString = JSON.stringify(rawData);
-                timelineItem.dataset.rawJson = escapeHtml(jsonString); // Add as data attribute
-            } catch (e) {
-                console.error("Error stringifying or escaping raw data for item:", item, e);
-                timelineItem.dataset.rawJson = escapeHtml('{"error": "Could not serialize data"}'); // Add error indicator
-            }*/
+		try {
+            timelineItem.dataset.rawJson = JSON.stringify(item);
+        } catch (e) {
+            console.error("Error stringifying raw data for item:", item, e);
+            timelineItem.dataset.rawJson = '{"error": "Could not serialize data"}';
+        }
         // --- DEBUG END: Add raw data ---
 
         // Check if a date header needs to be added for this date
@@ -2652,7 +2717,6 @@
             <div style="max-width: 250px;">
                 <h3 style="margin: 5px 0;">${locationName}</h3>
                 <p style="margin: 3px 0; font-size: 0.9em;">${place.formattedAddress || ""}</p>
-                <p style="margin: 3px; font-size: 0.85em;">Place ID: ${placeId}</p>
                 <div class="photo-container" data-place-id="${placeId}">
                     ${photoHtml}
                 </div>
@@ -2934,6 +2998,17 @@
             // Scroll the item into view within its container
             if (!isElementInViewport(targetItem, container)) {
                 targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            if (isDebugMode && targetItem.dataset.rawJson) {
+                try {
+                    const rawObj = JSON.parse(targetItem.dataset.rawJson);
+                    document.getElementById('debugOverlayContent').textContent = JSON.stringify(rawObj, null, 2);
+                    document.getElementById('debugOverlay').style.display = 'flex';
+                } catch(e) {
+                    document.getElementById('debugOverlayContent').textContent = "Error parsing raw data: " + e.message;
+                    document.getElementById('debugOverlay').style.display = 'flex';
+                }
             }
         }
     }
@@ -3362,6 +3437,10 @@
         const resultItem = document.createElement('div');
         resultItem.className = 'timeline-item place-visit-item';
         resultItem.dataset.index = index;
+        
+        try {
+            resultItem.dataset.rawJson = JSON.stringify(item);
+        } catch (e) {}
 
         let locationName, visitTimestamp, endTimestamp, placeId;
 
@@ -3415,6 +3494,10 @@
         const resultItem = document.createElement('div');
         resultItem.className = 'timeline-item place-visit-item consolidated';
         resultItem.dataset.index = index;
+        
+        try {
+            resultItem.dataset.rawJson = JSON.stringify(placeData);
+        } catch (e) {}
 
         const placeId = placeData.placeId;
         const locationName = placeDetailsCache[placeId]?.displayName || placeData.locationName;
@@ -5176,6 +5259,19 @@
     function initAdvancedSettings() {
         const homeInput = document.getElementById('homePlaceIdsInput');
         const workInput = document.getElementById('workPlaceIdsInput');
+        
+        // --- ADD DEBUG LISTENERS ---
+        const debugModeToggle = document.getElementById('debugModeToggle');
+        debugModeToggle.addEventListener('change', async (e) => {
+            isDebugMode = e.target.checked;
+            await saveSetting('debugMode', isDebugMode);
+            if (!isDebugMode) {
+                document.getElementById('debugOverlay').style.display = 'none';
+            }
+        });
+        document.getElementById('closeDebugOverlayBtn').addEventListener('click', () => {
+            document.getElementById('debugOverlay').style.display = 'none';
+        });
 
         // Populate initial values
         homeInput.value = homePlaceIds.join(', ');
@@ -5770,6 +5866,11 @@ Departed: ${end}</description>
             const storedWorkIds = await getSetting('workPlaceIds');
             if (storedWorkIds) {
                 workPlaceIds = storedWorkIds;
+            }
+            const storedDebugMode = await getSetting('debugMode');
+            if (storedDebugMode !== undefined) {
+                isDebugMode = storedDebugMode;
+                document.getElementById('debugModeToggle').checked = isDebugMode;
             }
 
             // Initialize the map and all UI components
