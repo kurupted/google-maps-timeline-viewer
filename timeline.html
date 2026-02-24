@@ -4,7 +4,7 @@
 <!-- -----
         Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 
-        Version: July 31, 2025
+        Version: February 25, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -47,6 +47,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body, html {
@@ -166,8 +167,8 @@
         /* --- Settings View --- */
         #settingsView {
             display: none; /* Initially hidden */
-            width: 100%;    /* Fill the wrapper */
-            height: 100%;   /* Fill the wrapper */
+            width: 100%;   /* Fill the wrapper */
+            height: 100%;  /* Fill the wrapper */
             overflow-y: auto; /* Make this section scrollable */
             padding: 10px 12px;
             border-bottom: 1px solid #e9ecef;
@@ -206,7 +207,6 @@
         #activityFilters {
             margin-left: 20px;
             padding-top: 5px;
-            padding-bottom: 40px;
         }
         #timezone-select,
         #distance-unit-select {
@@ -929,16 +929,18 @@
         #backToYearsBtn {
             display: none; /* Hide back button initially */
             margin-bottom: 15px;
-            padding: 5px 10px;
+            padding: 10px 15px;
             font-size: 12px;
+            font-weight:bold;
             cursor: pointer;
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 4px;
             color: #495057;
+            background-color: #e9ecef;
         }
         #backToYearsBtn:hover {
-            background-color: #e9ecef;
+            background-color: #c9cccf;
         }
 
         .summary-selected-item,
@@ -1093,57 +1095,51 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-
-        /* For API Key Modal */
-        #apiKeyModal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 2000;
-            display: none; /* Use flex to center */
-            align-items: center;
-            justify-content: center;
-            color: #333;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-        .modal-content {
-            background: #fff;
-            padding: 20px 30px;
-            border-radius: 8px;
-            text-align: center;
-            max-width: 400px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        #apiKeyModal input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        #apiKeyModal button {
-            padding: 10px 20px;
-            background-color: #5A95F5;
-            color: white;
-            border: none;
+        
+        
+        /* For Charts */
+        #summary-charts-container {
+            background-color: #ffffff;
+            border: 1px solid #ced4da;
             border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .chart-filter-label {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
             cursor: pointer;
-            font-size: 16px;
+            background: #f1f3f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
         }
-        #apiKeyModal button:hover {
-            background-color: #4a85e5;
+        .view-map-btn {
+            margin-top: 8px;
+            width: 100%;
+            padding: 5px;
+            font-size: 11px;
+            cursor: pointer;
+            background-color: #e7f1ff;
+            border: 1px solid #007bff;
+            color: #0056b3;
+            border-radius: 4px;
+            transition: background-color 0.2s;
         }
-        #apiKeyModal a {
-            color: #007bff;
+        .view-map-btn:hover {
+            background-color: #007bff;
+            color: white;
         }
         
-        /*
+		/*
 		========================================
 		RESPONSIVE STYLES
 		========================================
@@ -1235,8 +1231,56 @@
 				display: none !important;
 			}
 		}
-    </style>
 
+
+        /* For API Key Modal */
+        #apiKeyModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            display: none; /* Use flex to center */
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        #apiKeyModal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #apiKeyModal button {
+            padding: 10px 20px;
+            background-color: #5A95F5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #apiKeyModal button:hover {
+            background-color: #4a85e5;
+        }
+        #apiKeyModal a {
+            color: #007bff;
+        }
+    </style>
 </head>
 <body>
 <div id="apiKeyModal"><!-- not used atm. will fix later -->
@@ -1405,7 +1449,18 @@
         <h4>Monthly Summary <span id="summary-selected-year"></span></h4>
         <div id="summary-months">
             <p>Select a year above.</p>
-        </div>
+        </div><br>
+		<div id="summary-charts-container" style="display: none;">
+            <h4 id="chart-section-title">Activity Charts</h4>
+            <div id="chart-filters" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                </div>
+            <div class="chart-wrapper">
+                <canvas id="distanceChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="visitsChart"></canvas>
+            </div>
+        </div><br>
     </div>
 
     <div id="map" class=""></div>
@@ -1468,28 +1523,33 @@
     let allMonthlySummaries = null; // Calculated monthly summaries
     let selectedSummaryYear = null; // Track which year's months are shown
     let summaryViewVisible = false; // Track summary view state
+    
+    let distanceChartInstance = null;
+	let visitsChartInstance = null;
+	let currentChartStartDate = null;
+	let currentChartEndDate = null;
 
-    // --- Activity Type Mapping ---
+	// --- Activity Type Mapping ---
     // Groups similar activity types for display and filtering
     const activityGroupMapping = {
-        'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE', 'DRIVE'],
-        'TAXI': ['IN_TAXI'],
+        'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE', 'DRIVE', 'DRIVING'],
+        'TAXI': ['IN_TAXI', 'TAXI'],
         'MOTORCYCLING': ['MOTORCYCLING'],
         'CYCLING': ['ON_BICYCLE', 'CYCLING', 'BICYCLE'],
         'WALKING': ['ON_FOOT', 'WALKING', 'WALKING_NORDIC', 'WALK'],
         'HIKING': ['HIKING'],
-        'RUNNING': ['RUNNING'],
-        'BUS': ['IN_BUS'],
-        'SUBWAY': ['IN_SUBWAY'],
-        'TRAIN': ['IN_TRAIN'],
-        'TRAM': ['IN_TRAM'],
-        'FERRY': ['IN_FERRY'],
-        'STATIONARY': ['STILL'],
-        'FLYING': ['FLYING'],
-        'CABLECAR': ['IN_CABLECAR'],
-        'FUNICULAR': ['IN_FUNICULAR'],
-        'GONDOLA_LIFT': ['IN_GONDOLA_LIFT'],
-        'WHEELCHAIR': ['IN_WHEELCHAIR'],
+        'RUNNING': ['RUNNING', 'JOGGING'],
+        'BUS': ['IN_BUS', 'BUS'],
+        'SUBWAY': ['IN_SUBWAY', 'SUBWAY'],
+        'TRAIN': ['IN_TRAIN', 'TRAIN'],
+        'TRAM': ['IN_TRAM', 'TRAM'],
+        'FERRY': ['IN_FERRY', 'FERRY'],
+        'STATIONARY': ['STILL', 'STATIONARY'],
+        'FLYING': ['FLYING', 'IN_FLIGHT'],
+        'CABLECAR': ['IN_CABLECAR', 'CABLECAR'],
+        'FUNICULAR': ['IN_FUNICULAR', 'FUNICULAR'],
+        'GONDOLA_LIFT': ['IN_GONDOLA_LIFT', 'GONDOLA_LIFT'],
+        'WHEELCHAIR': ['IN_WHEELCHAIR', 'WHEELCHAIR'],
         'SNOWMOBILE': ['SNOWMOBILE'],
         'BOATING': ['BOATING'],
         'CATCHING_POKEMON': ['CATCHING_POKEMON'],
@@ -1517,34 +1577,75 @@
             rawToGroupMapping[rawType] = groupName;
         });
     }
+
     // Function to get the grouped activity type from a raw type
     function getGroupedActivityType(rawType) {
+        // If the passed type is ALREADY a master group name, return it directly
+        if (activityGroupMapping.hasOwnProperty(rawType)) {
+            return rawType;
+        }
         return rawToGroupMapping[rawType] || 'UNKNOWN'; // Default to UNKNOWN if not found
     }
 
-    // --- Place Type to Color/Icon Mapping (for sidebar) ---
+    // --- Place Type to Color/Icon Mapping (for sidebar and charts) ---
     const placeTypeStyles = {
-        'restaurant': { color: '#FFA500', icon: '🍽️' }, // Orange
-        'cafe': { color: '#D2691E', icon: '☕' }, // Chocolate
-        'bar': { color: '#FF4500', icon: '🍹' }, // OrangeRed
-        'store': { color: '#4682B4', icon: '🛍️' }, // SteelBlue
-        'grocery_or_supermarket': { color: '#32CD32', icon: '🛒' }, // LimeGreen
-        'park': { color: '#228B22', icon: '🌳' }, // ForestGreen
-        'lodging': { color: '#800080', icon: '🏨' }, // Purple (Hotel)
-        'transit_station': { color: '#A9A9A9', icon: '🚉' }, // DarkGray
-        // Add more types as needed
-        'default': { color: '#707070', icon: '📍' } // Default
+        'restaurant': { color: '#FFA500', icon: '🍽️', label: 'Restaurant' },
+        'cafe': { color: '#D2691E', icon: '☕', label: 'Cafe' },
+        'bar': { color: '#FF4500', icon: '🍹', label: 'Bar' },
+        'store': { color: '#4682B4', icon: '🛍️', label: 'Store' },
+        'grocery_or_supermarket': { color: '#32CD32', icon: '🛒', label: 'Grocery' },
+        'park': { color: '#228B22', icon: '🌳', label: 'Park' },
+        'lodging': { color: '#800080', icon: '🏨', label: 'Lodging' },
+        'transit_station': { color: '#A9A9A9', icon: '🚉', label: 'Transit' },
+        'home': { color: '#4285F4', icon: '🏠', label: 'Home' },
+        'work': { color: '#0F9D58', icon: '💼', label: 'Work' },
+        'other': { color: '#9E9E9E', icon: '📍', label: 'Other' } // Combined catch-all
     };
 
     function getPlaceStyle(placeTypes) {
         if (placeTypes && placeTypes.length > 0) {
             for (const type of placeTypes) {
-                if (placeTypeStyles[type]) {
+                if (placeTypeStyles[type] && type !== 'other') {
                     return placeTypeStyles[type];
                 }
             }
         }
-        return placeTypeStyles['default'];
+        return placeTypeStyles['other']; // Use 'other' as the default fallback
+    }
+
+    // Helper to determine the category for the visits chart
+    function getVisitCategory(item) {
+        let placeId, types = [], semantic;
+
+        if (item.placeVisit) {
+            placeId = item.placeVisit.location?.placeId;
+            types = item.placeVisit.location?.placeTypes || [];
+            semantic = item.placeVisit.location?.semanticType;
+        } else if (item.visit) {
+            placeId = item.visit.topCandidate?.placeID;
+            semantic = item.visit.topCandidate?.semanticType;
+            types = item.visit.topCandidate?.placeTypes || [];
+        }
+
+        // Catch explicitly marked homes and workplaces
+        if (semantic === 'TYPE_HOME' || semantic?.toUpperCase() === 'HOME') return 'home';
+        if (semantic === 'TYPE_WORK' || semantic?.toUpperCase() === 'WORK') return 'work';
+
+        // Prefer cached types if available (since they are fetched via Place API)
+        if (placeId && placeDetailsCache[placeId] && placeDetailsCache[placeId].types) {
+            types = placeDetailsCache[placeId].types;
+        }
+
+        if (types && types.length > 0) {
+            for (const type of types) {
+                if (placeTypeStyles[type] && type !== 'other') {
+                    return type;
+                }
+            }
+        }
+
+        // Return 'other' for anything that has no types, or types we aren't tracking
+        return 'other'; 
     }
 
     // --- Map Initialization ---
@@ -1673,18 +1774,20 @@
             case 'MOTORCYCLING': return '#1E90FF'; // Dodger Blue
             case 'CYCLING': return '#0F9D58'; // Google Green
             case 'WALKING': return '#DB4437'; // Google Red
-            case 'RUNNING': return '#DB4437'; // Google Red
-            case 'HIKING': return '#0F9D58'; // Google Green (for nature)
-            case 'BUS': return '#9C27B0'; // Purple
-            case 'SUBWAY': case 'TRAIN': case 'TRAM': case 'FERRY': return '#673AB7'; // Deep Purple
+            case 'RUNNING': return '#FF3329'; // Brighter Red
+            case 'HIKING': return '#0DBD25'; // Brighter Green (for nature)
+            case 'BUS': return '#B026B0'; // Purple
+            case 'SUBWAY': case 'TRAM': return '#673AB7'; // Deep Purple
+            case 'FERRY': return '#87CEEB'; // Sky Blue
+            case 'TRAIN': return '#FF9800'; // Orange
             case 'STATIONARY': return '#757575'; // Grey
             case 'FLYING': return '#03A9F4'; // Light Blue
             case 'CABLECAR': case 'FUNICULAR': case 'GONDOLA_LIFT': case 'WHEELCHAIR': return '#607D8B'; // Blue Grey
             case 'BOATING': case 'KAYAKING': case 'ROWING': case 'SAILING': case 'SURFING': case 'SWIMMING': return '#00BCD4'; // Cyan
-            case 'CATCHING_POKEMON': return '#FFEB3B'; // Yellow
+            case 'CATCHING_POKEMON': return '#795548'; // Brown
             case 'HORSEBACK_RIDING': return '#795548'; // Brown
             case 'KITESURFING': case 'PARAGLIDING': return '#87CEEB'; // Sky Blue
-            case 'SKATEBOARDING': case 'SKATING': return '#FF9800'; // Orange
+            case 'SKATEBOARDING': case 'SKATING': return '#795548'; // Brown
             case 'SKIING': case 'SLEDDING': case 'SNOWBOARDING': case 'SNOWSHOEING': case 'SNOWMOBILE': return '#B0E0E6'; // Powder Blue
             case 'UNKNOWN': default: return '#9E9E9E'; // Darker Grey
         }
@@ -3451,15 +3554,15 @@
 
             if (isNaN(year)) continue; // Skip invalid keys
 
-            // Initialize summary objects if they don't exist
+            // Initialize summary objects if they don't exist (Added cachedVisits)
             if (!yearly[year]) {
-                yearly[year] = { visits: 0, distanceMeters: 0, distanceByActivity: {} };
+                yearly[year] = { visits: 0, cachedVisits: 0, distanceMeters: 0, distanceByActivity: {} };
             }
             if (!monthly[year]) {
                 monthly[year] = {};
             }
             if (!monthly[year][monthIndex]) {
-                monthly[year][monthIndex] = { visits: 0, distanceMeters: 0, distanceByActivity: {} };
+                monthly[year][monthIndex] = { visits: 0, cachedVisits: 0, distanceMeters: 0, distanceByActivity: {} };
             }
 
             // Process each item in the month's data
@@ -3467,6 +3570,21 @@
                 if (item.placeVisit || item.visit) { // Count both visit types
                     yearly[year].visits++;
                     monthly[year][monthIndex].visits++;
+
+                    // --- NEW: Check if this visit is in our cache ---
+                    let placeId;
+                    if (item.placeVisit) {
+                        placeId = item.placeVisit.location?.placeId;
+                    } else if (item.visit) {
+                        placeId = item.visit.topCandidate?.placeID;
+                    }
+
+                    if (placeId && placeDetailsCache[placeId]) {
+                        yearly[year].cachedVisits++;
+                        monthly[year][monthIndex].cachedVisits++;
+                    }
+                    // ------------------------------------------------
+
                 } else if (item.activitySegment) {
                     const segment = item.activitySegment;
                     const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
@@ -3551,7 +3669,8 @@
         return summary;
     }
 
-    // Displays the summary for the currently selected date range
+	// Displays the summary for the currently selected date range
+	// Displays the summary for the currently selected date range
     function displaySelectedDatesSummary(startDate, endDate) {
         const container = document.getElementById('summary-selected-dates');
         container.innerHTML = ''; // Clear previous
@@ -3563,7 +3682,7 @@
         const title = startStr === endStr ? startStr : `${startStr} to ${endStr}`;
 
         const item = document.createElement('div');
-        item.className = 'summary-selected-item'; // Use a specific class
+        item.className = 'summary-selected-item'; 
 
         let activityHtml = '<ul>';
         const sortedActivities = Object.keys(summaryData.distanceByActivity).sort((a, b) => summaryData.distanceByActivity[b] - summaryData.distanceByActivity[a]);
@@ -3582,145 +3701,171 @@
         activityHtml += '</ul>';
 
         item.innerHTML = `
-                  <strong>${title}</strong>
-                  <div class="summary-details">Visits: <span>${summaryData.visits.toLocaleString()}</span></div>
-                  <div class="summary-details">Total Dist: <span>${formatDistance(summaryData.distanceMeters)}</span></div>
-                  ${activityHtml}
-                 `;
+            <strong>${title}</strong>
+            <div class="summary-details">Visits: <span>${summaryData.visits.toLocaleString()}</span></div>
+            <div class="summary-details">Total Dist: <span>${formatDistance(summaryData.distanceMeters)}</span></div>
+            ${activityHtml}
+        `;
         container.appendChild(item);
     }
 
-    // Displays the yearly summary items
-    function displayYearSummary() {
-        const yearContainer = document.getElementById('summary-years'); // Target the inner div
-        const summaryView = document.getElementById('summaryView');
-        yearContainer.innerHTML = ''; // Clear previous years
+	// Displays the yearly summary items
+	function displayYearSummary() {
+		const yearContainer = document.getElementById('summary-years'); 
+		const summaryView = document.getElementById('summaryView');
+		yearContainer.innerHTML = ''; // Clear previous years
 
-        if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
-            yearContainer.innerHTML = '<p>No summary data available.</p>';
-            document.getElementById('summary-months').style.display = 'none';
-            document.getElementById('summary-selected-year').textContent = '';
-            document.getElementById('backToYearsBtn').style.display = 'none';
-            summaryView.classList.remove('expanded-year-active');
-            return;
-        }
+		if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
+			yearContainer.innerHTML = '<p>No summary data available.</p>';
+			document.getElementById('summary-months').style.display = 'none';
+			document.getElementById('summary-selected-year').textContent = '';
+			document.getElementById('backToYearsBtn').style.display = 'none';
+			summaryView.classList.remove('expanded-year-active');
+			return;
+		}
 
-        const sortedYears = Object.keys(allYearlySummaries).map(Number).sort((a, b) => b - a); // Sort descending
+		const sortedYears = Object.keys(allYearlySummaries).map(Number).sort((a, b) => b - a); // Sort descending
 
-        sortedYears.forEach(year => {
-            const data = allYearlySummaries[year];
-            const item = document.createElement('div');
-            item.className = 'summary-year-item';
-            item.dataset.year = year;
+		sortedYears.forEach(year => {
+			const data = allYearlySummaries[year];
+			const item = document.createElement('div');
+			item.className = 'summary-year-item';
+			item.dataset.year = year;
 
-            // Generate activity breakdown HTML for the year
-            let activityHtml = '<ul>';
-            const sortedActivities = Object.keys(data.distanceByActivity || {}).sort((a, b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
+			let activityHtml = '<ul>';
+			const sortedActivities = Object.keys(data.distanceByActivity || {}).sort((a, b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
 
-            if (sortedActivities.length > 0) {
-                sortedActivities.forEach(activityGroup => {
-                    const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    const icon = getActivityIcon(activityGroup);
-                    activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
-                });
-            } else if (data.distanceMeters > 0) {
-                activityHtml += '<li>No distance breakdown available</li>';
-            } else {
-                activityHtml += '<li>No distance recorded</li>';
-            }
-            activityHtml += '</ul>';
-
-            item.innerHTML = `
-                        <strong>${year}</strong>
-                        <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
-                        <div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
-                        ${activityHtml}
-                       `;
-
-            // --- Year Click Listener ---
-            item.addEventListener('click', () => {
-                // Mark this year as selected and expand it
-                yearContainer.querySelectorAll('.summary-year-item').forEach(el => el.classList.remove('is-selected-year'));
-                item.classList.add('is-selected-year');
-
-                // Add class to parent to control visibility via CSS
-                summaryView.classList.add('expanded-year-active');
-
-                // Show months for this year
-                displayMonthSummary(year);
-
-                // Scroll to the top of the summary view might be helpful
-                summaryView.scrollTop = 0;
-            });
-            // --- End Year Click Listener ---
-
-            yearContainer.appendChild(item);
-        });
-
-        // Initially, ensure the view is not in expanded mode
-        summaryView.classList.remove('expanded-year-active');
-        document.getElementById('summary-months').style.display = 'none';
-        document.getElementById('backToYearsBtn').style.display = 'none';
-    }
-
-    // Displays the monthly summary items for a given year
-    function displayMonthSummary(year) {
-        selectedSummaryYear = year; // Store the currently selected year
-        document.getElementById('summary-selected-year').textContent = '('+year+')'; // Update header
-        const container = document.getElementById('summary-months');
-        container.innerHTML = ''; // Clear previous months
-
-        if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
-            container.innerHTML = `<p>No monthly data available for ${year}.</p>`;
-            return;
-        }
-
-        // Sort months chronologically (0-11)
-        const sortedMonths = Object.keys(allMonthlySummaries[year]).map(Number).sort((a, b) => a - b);
-
-        sortedMonths.forEach(monthIndex => {
-            const data = allMonthlySummaries[year][monthIndex];
-            const monthName = moment().month(monthIndex).format("MMMM"); // Get month name
-            const item = document.createElement('div');
-            item.className = 'summary-month-item';
-            item.dataset.year = year;
-            item.dataset.month = monthIndex;
-
-            // Generate activity breakdown HTML
-            let activityHtml = '<ul>';
-            const sortedActivities = Object.keys(data.distanceByActivity).sort((a,b) => data.distanceByActivity[b] - data.distanceByActivity[a]); // Sort by distance desc
-
-            if (sortedActivities.length > 0) {
-                sortedActivities.forEach(activityGroup => {
-                    const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    const icon = getActivityIcon(activityGroup);
-                    activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
-                });
-            } else if (data.distanceMeters > 0) {
-                activityHtml += '<li>No distance breakdown available</li>';
-            } else {
-                activityHtml += '<li>No distance recorded</li>';
-            }
-            activityHtml += '</ul>';
+			if (sortedActivities.length > 0) {
+				sortedActivities.forEach(activityGroup => {
+					const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+					const icon = getActivityIcon(activityGroup);
+					activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
+				});
+			} else if (data.distanceMeters > 0) {
+				activityHtml += '<li>No distance breakdown available</li>';
+			} else {
+				activityHtml += '<li>No distance recorded</li>';
+			}
+			activityHtml += '</ul>';
 
             item.innerHTML = `
-                        <strong>${monthName}</strong>
-                        <div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
-                        <div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
-                        ${activityHtml}
-                       `;
+					<strong>${year}</strong>
+					<div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
+					${activityHtml}
+					<div class="summary-details" style="margin-top: 8px; border-top: 1px dashed #ced4da; padding-top: 6px; color: #989898;">
+						Cached Places: <span>${data.cachedVisits.toLocaleString()} / ${data.visits.toLocaleString()}</span>
+					</div>
+            `;
 
-            // Add click listener to navigate to this month on the map
-            item.addEventListener('click', () => navigateToMonth(year, monthIndex));
+			// --- Year Click Listener ---
+			item.addEventListener('click', () => {
+				// Mark this year as selected and expand it
+				yearContainer.querySelectorAll('.summary-year-item').forEach(el => el.classList.remove('is-selected-year'));
+				item.classList.add('is-selected-year');
 
-            container.appendChild(item);
-        });
-        // Ensure the months container is visible (handled by CSS .expanded-year-active)
-        document.getElementById('summary-months').style.display = 'flex';
-        // Ensure the back button is visible (handled by CSS .expanded-year-active)
-        document.getElementById('backToYearsBtn').style.display = 'flex';
+				// Add class to parent to control visibility via CSS
+				summaryView.classList.add('expanded-year-active');
 
-    }
+				// Show months for this year
+				displayMonthSummary(year);
+
+				// Update Chart to show the selected year's data
+				const tz = getSelectedTimezone();
+				const yearStart = moment.tz({ year: year }, tz).startOf('year').toDate();
+				const yearEnd = moment.tz({ year: year }, tz).endOf('year').toDate();
+				updateCharts(yearStart, yearEnd);
+
+				// Scroll to the top of the summary view
+				summaryView.scrollTop = 0;
+			});
+
+			yearContainer.appendChild(item);
+		});
+
+		summaryView.classList.remove('expanded-year-active');
+		document.getElementById('summary-months').style.display = 'none';
+		document.getElementById('backToYearsBtn').style.display = 'none';
+	}
+
+		// Displays the monthly summary items for a given year
+	function displayMonthSummary(year) {
+		selectedSummaryYear = year; 
+		document.getElementById('summary-selected-year').textContent = '('+year+')'; 
+		const container = document.getElementById('summary-months');
+		container.innerHTML = ''; 
+
+		if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
+			container.innerHTML = `<p>No monthly data available for ${year}.</p>`;
+			return;
+		}
+
+		const sortedMonths = Object.keys(allMonthlySummaries[year]).map(Number).sort((a, b) => a - b);
+
+		sortedMonths.forEach(monthIndex => {
+			const data = allMonthlySummaries[year][monthIndex];
+			const monthName = moment().month(monthIndex).format("MMMM"); 
+			const item = document.createElement('div');
+			item.className = 'summary-month-item';
+			item.dataset.year = year;
+			item.dataset.month = monthIndex;
+
+			let activityHtml = '<ul>';
+			const sortedActivities = Object.keys(data.distanceByActivity).sort((a,b) => data.distanceByActivity[b] - data.distanceByActivity[a]); 
+
+			if (sortedActivities.length > 0) {
+				sortedActivities.forEach(activityGroup => {
+					const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+					const icon = getActivityIcon(activityGroup);
+					activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
+				});
+			} else if (data.distanceMeters > 0) {
+				activityHtml += '<li>No distance breakdown available</li>';
+			} else {
+				activityHtml += '<li>No distance recorded</li>';
+			}
+			activityHtml += '</ul>';
+
+            item.innerHTML = `
+					<strong>${monthName}</strong>
+					<div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
+					${activityHtml}
+					<div class="summary-details" style="margin-top: 8px; margin-bottom: 8px; border-top: 1px dashed #ced4da; padding-top: 6px; color: #989898;">
+						Cached Places: <span>${data.cachedVisits.toLocaleString()} / ${data.visits.toLocaleString()}</span>
+					</div>
+					<button class="view-map-btn" data-year="${year}" data-month="${monthIndex}">View on Map</button>
+				`;
+
+			// Click listener for the whole month card (Updates Chart or goes to map)
+			item.addEventListener('click', (e) => {
+				// If they clicked the button specifically, go to map
+				if (e.target.classList.contains('view-map-btn')) {
+					navigateToMonth(year, monthIndex);
+					return;
+				}
+				
+				// Otherwise, update charts for this month
+				const tz = getSelectedTimezone();
+				const monthStart = moment.tz({ year: year, month: monthIndex }, tz).startOf('month').toDate();
+				const monthEnd = moment.tz({ year: year, month: monthIndex }, tz).endOf('month').toDate();
+				
+				updateCharts(monthStart, monthEnd);
+
+				// Highlight the selected month card
+				container.querySelectorAll('.summary-month-item').forEach(el => el.style.borderColor = '#ced4da');
+				item.style.borderColor = '#007bff';
+				
+				// Scroll up to see the chart
+				document.getElementById('summaryView').scrollTop = 0;
+			});
+
+			container.appendChild(item);
+		});
+		
+		document.getElementById('summary-months').style.display = 'flex';
+		document.getElementById('backToYearsBtn').style.display = 'flex';
+	}
 
     // Navigates from the summary view to the map view for a specific month
     function navigateToMonth(year, monthIndex) {
@@ -3943,12 +4088,13 @@
     }
 
     // Initializes the Summary View buttons and interactions
+    // Initializes the Summary View buttons and interactions
     function initSummaryView() {
         const summaryBtn = document.getElementById('summaryBtn');
         const closeSummaryBtn = document.getElementById('closeSummaryBtn');
         const summaryView = document.getElementById('summaryView');
         const mapElement = document.getElementById('map');
-        const mapBtn = document.getElementById('mapBtn'); // Get map button
+        const mapBtn = document.getElementById('mapBtn'); 
         const backBtn = document.getElementById('backToYearsBtn');
 
         // Toggle Summary View on button click
@@ -3956,24 +4102,30 @@
             if (!uiEnabled) return;
 
             if (!summaryViewVisible) {
-                // Calculate summaries if not already done
                 if (!allYearlySummaries) {
                     calculateSummaries();
                 }
-                // Display the summary sections
-                displaySelectedDatesSummary( // Display selected range summary
+                
+                renderChartFilters();
+                
+                displaySelectedDatesSummary( 
                     new Date(document.getElementById('startDatePicker').value),
                     new Date(document.getElementById('endDatePicker').value)
                 );
-                // Display years, reset expanded view state
+                
                 displayYearSummary();
-                summaryView.classList.remove('expanded-year-active'); // Ensure not expanded initially
+                summaryView.classList.remove('expanded-year-active'); 
+                
+                // Set the default chart to ALL TIME when summary view is opened
+                if (globalMinDate && globalMaxDate) {
+                    updateCharts(globalMinDate, globalMaxDate);
+                }
 
                 summaryView.style.display = 'block';
                 mapElement.classList.add('hidden');
                 summaryViewVisible = true;
             }
-            updateViewToggleButtons(); // Update button active state
+            updateViewToggleButtons(); 
 
             const mobileSwitcher = document.getElementById('mobile-view-switcher');
             if (window.getComputedStyle(mobileSwitcher).display === 'flex') { // Check if on mobile
@@ -3986,32 +4138,36 @@
             summaryView.style.display = 'none';
             mapElement.classList.remove('hidden');
             summaryViewVisible = false;
-            updateViewToggleButtons(); // Update button active state
+            updateViewToggleButtons(); 
         });
 
         // Switch to Map View using Map button
         mapBtn.addEventListener('click', () => {
-            if (!uiEnabled) return; // Only if UI is enabled
-            if (summaryViewVisible) { // Only act if summary is currently visible
+            if (!uiEnabled) return; 
+            if (summaryViewVisible) { 
                 summaryView.style.display = 'none';
                 mapElement.classList.remove('hidden');
                 summaryViewVisible = false;
-                updateViewToggleButtons(); // Update button active state
+                updateViewToggleButtons(); 
             }
         });
 
         // Back to Years button listener
         backBtn.addEventListener('click', () => {
             summaryView.classList.remove('expanded-year-active');
-            // Remove specific selected class from the year item
             const selectedYearItem = summaryView.querySelector('.summary-year-item.is-selected-year');
             if (selectedYearItem) {
                 selectedYearItem.classList.remove('is-selected-year');
             }
-            // No need to re-display years, they are just hidden/shown by CSS
-            document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>'; // Clear months
-            document.getElementById('summary-selected-year').textContent = ''; // Clear month header
+            
+            document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>'; 
+            document.getElementById('summary-selected-year').textContent = ''; 
             document.getElementById('backToYearsBtn').style.display = 'none';
+
+            // Revert chart to ALL TIME
+            if (globalMinDate && globalMaxDate) {
+                updateCharts(globalMinDate, globalMaxDate);
+            }
         });
     }
 
@@ -5082,6 +5238,242 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
     }
+    
+    
+    // Generates the toggle checkboxes for the charts
+    function renderChartFilters() {
+        const container = document.getElementById('chart-filters');
+        container.innerHTML = '';
+        const uniqueGroups = new Set();
+
+        activityTypes.forEach(act => uniqueGroups.add(getGroupedActivityType(act)));
+        const sortedGroups = Array.from(uniqueGroups).sort();
+
+        sortedGroups.forEach(group => {
+            if(group === 'STATIONARY' || group === 'UNKNOWN') return;
+            
+            const color = getActivityColor(group);
+            // Enforce strict Title Case
+            const formattedName = group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            const label = document.createElement('label');
+            label.className = 'chart-filter-label';
+            label.dataset.color = color; // Store the color for toggling
+            
+            label.innerHTML = `
+                <input type="checkbox" class="chart-filter-checkbox" value="${group}" checked>
+                <span style="color: #000;">${getActivityIcon(group)}</span>
+                <strong style="color: #000; font-weight: 600;">${formattedName}</strong>
+            `;
+            
+            // Set initial inline styles
+            label.style.backgroundColor = color;
+            label.style.color = '#000';
+            label.style.borderColor = color;
+
+            // Handle manual toggles
+            label.querySelector('input').addEventListener('change', (e) => {
+                if(e.target.checked) {
+                    label.style.backgroundColor = color;
+                    label.style.borderColor = color;
+                } else {
+                    label.style.backgroundColor = '#f1f3f4';
+                    label.style.borderColor = '#ced4da';
+                }
+
+                if (currentChartStartDate && currentChartEndDate) {
+                    // Pass false so it doesn't auto-uncheck other boxes when user manually clicks
+                    updateCharts(currentChartStartDate, currentChartEndDate, false); 
+                }
+            });
+            
+            container.appendChild(label);
+        });
+    }
+
+    // Gathers data and draws the charts
+    function updateCharts(startDate, endDate, autoUncheck = true) {
+        currentChartStartDate = startDate;
+        currentChartEndDate = endDate;
+        
+        const chartContainer = document.getElementById('summary-charts-container');
+        if (chartContainer) chartContainer.style.display = 'block';
+
+        const tz = getSelectedTimezone();
+        const startMoment = moment.tz(startDate, tz).startOf('day');
+        const endMoment = moment.tz(endDate, tz).endOf('day');
+        const dayDiff = endMoment.diff(startMoment, 'days');
+        
+        const titleEl = document.getElementById('chart-section-title');
+        if (titleEl) {
+            titleEl.textContent = `Activity Charts (${startMoment.format('MMM DD, YYYY')} - ${endMoment.format('MMM DD, YYYY')})`;
+        }
+
+        let groupBy = 'day';
+        let formatStr = 'MMM DD';
+        if (dayDiff > 730) { groupBy = 'year'; formatStr = 'YYYY'; } 
+        else if (dayDiff > 90) { groupBy = 'month'; formatStr = 'MMM YYYY'; } 
+
+        // 1. Initialize data structures
+        const allPossibleGroups = Array.from(document.querySelectorAll('.chart-filter-checkbox')).map(cb => cb.value);
+        const distanceDataByGroup = {};
+        const activityTotals = {};
+        allPossibleGroups.forEach(g => {
+            distanceDataByGroup[g] = [];
+            activityTotals[g] = 0;
+        });
+
+        // Initialize category structures for Visits
+        const allVisitGroups = Object.keys(placeTypeStyles);
+        const visitsDataByGroup = {};
+        const visitTotals = {};
+        allVisitGroups.forEach(g => {
+            visitsDataByGroup[g] = [];
+            visitTotals[g] = 0;
+        });
+        
+        const labels = [];
+
+        // 2. Loop to gather ALL data in the range
+        let current = startMoment.clone();
+        while (current.isSameOrBefore(endMoment, groupBy)) {
+            labels.push(current.format(formatStr));
+
+            let periodDistances = {};
+            allPossibleGroups.forEach(g => periodDistances[g] = 0);
+            
+            let periodVisits = {};
+            allVisitGroups.forEach(g => periodVisits[g] = 0);
+
+            const periodStart = current.clone().startOf(groupBy);
+            const periodEnd = current.clone().endOf(groupBy);
+            
+            let monthWalker = periodStart.clone().startOf('month');
+            while(monthWalker.isSameOrBefore(periodEnd, 'month')) {
+                const monthKey = `${monthWalker.year()}_${monthWalker.format('MMMM').toUpperCase()}`;
+                
+                if (timelineData[monthKey] && timelineData[monthKey].timelineObjects) {
+                    timelineData[monthKey].timelineObjects.forEach(item => {
+                        let itemStart, itemEnd;
+                        if (item.placeVisit) { itemStart = item.placeVisit.duration?.startTimestamp; itemEnd = item.placeVisit.duration?.endTimestamp; }
+                        else if (item.activitySegment) { itemStart = item.activitySegment.duration?.startTimestamp; itemEnd = item.activitySegment.duration?.endTimestamp; }
+                        else if (item.visit || item.activity) { itemStart = item.startTime; itemEnd = item.endTime; }
+
+                        if (!itemStart || !itemEnd) return;
+                        
+                        const iStart = moment(itemStart);
+                        const iEnd = moment(itemEnd);
+
+                        if (iEnd.isBefore(periodStart) || iStart.isAfter(periodEnd)) return;
+
+                        if (item.placeVisit || item.visit) {
+                            // Bucket the visit by Category instead of just a raw total
+                            const cat = getVisitCategory(item);
+                            periodVisits[cat]++;
+                            visitTotals[cat]++;
+                        } else if (item.activitySegment) {
+                            const actType = getGroupedActivityType(item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities[0]?.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN');
+                            
+                            if (allPossibleGroups.includes(actType)) {
+                                let dist = parseFloat(item.activitySegment.distance || item.activitySegment.simplifiedRawPath?.distanceMeters || item.activitySegment.waypointPath?.distanceMeters || 0);
+                                if (isNaN(dist)) dist = 0;
+                                dist = distanceUnit === 'mi' ? dist * 0.000621371 : dist / 1000;
+                                
+                                periodDistances[actType] += dist;
+                                activityTotals[actType] += dist; 
+                            }
+                        }
+                    });
+                }
+                monthWalker.add(1, 'month');
+            }
+
+            allVisitGroups.forEach(g => visitsDataByGroup[g].push(periodVisits[g]));
+            allPossibleGroups.forEach(g => distanceDataByGroup[g].push(periodDistances[g]));
+            current.add(1, groupBy === 'month' ? 'months' : (groupBy === 'year' ? 'years' : 'days'));
+        }
+
+        // 3. Apply Distance chart UI filters
+        allPossibleGroups.forEach(g => {
+            const cb = document.querySelector(`.chart-filter-checkbox[value="${g}"]`);
+            const label = cb.closest('.chart-filter-label');
+            
+            if (autoUncheck) cb.checked = activityTotals[g] > 0;
+            
+            if (cb.checked) {
+                label.style.backgroundColor = label.dataset.color;
+                label.style.borderColor = label.dataset.color;
+            } else {
+                label.style.backgroundColor = '#f1f3f4';
+                label.style.borderColor = '#ced4da';
+            }
+        });
+
+        // 4. Map Dataset format arrays
+        const activeFilters = allPossibleGroups.filter(g => document.querySelector(`.chart-filter-checkbox[value="${g}"]`).checked);
+        const distanceDatasets = activeFilters.map(act => ({
+            label: act.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            backgroundColor: getActivityColor(act),
+            data: distanceDataByGroup[act],
+            borderWidth: 1
+        }));
+
+        // Filter out place categories that have 0 visits in this range entirely so the legend stays clean
+        const activeVisitFilters = allVisitGroups.filter(g => visitTotals[g] > 0);
+        const visitsDatasets = activeVisitFilters.map(cat => ({
+            label: placeTypeStyles[cat].label,
+            backgroundColor: placeTypeStyles[cat].color,
+            data: visitsDataByGroup[cat],
+            borderWidth: 1
+        }));
+
+        // --- Render Distance Chart ---
+        if (distanceChartInstance) distanceChartInstance.destroy();
+        const ctxDist = document.getElementById('distanceChart').getContext('2d');
+        distanceChartInstance = new Chart(ctxDist, {
+            type: 'bar',
+            data: { labels, datasets: distanceDatasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Distance (' + distanceUnit + ')' } } },
+                plugins: { 
+                    legend: { display: false }, 
+                    title: { display: true, text: 'Distance by Activity' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' ' + distanceUnit;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Render Visits Chart ---
+        if (visitsChartInstance) visitsChartInstance.destroy();
+        const ctxVis = document.getElementById('visitsChart').getContext('2d');
+        visitsChartInstance = new Chart(ctxVis, {
+            type: 'bar',
+            data: { labels, datasets: visitsDatasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { 
+                    x: { stacked: true }, // Add stacked to X
+                    y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Visits' }, ticks: { stepSize: 1 } } // Add stacked to Y
+                },
+                plugins: { 
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }, // Show legend
+                    title: { display: true, text: 'Places Visited by Category' } 
+                }
+            }
+        });
+    }
 
 
     async function initializeApp() {
@@ -5208,6 +5600,7 @@
 
 
 
+
 <div id="mobile-view-switcher">
     <button id="show-sidebar-btn" class="active">📋 Controls & Details</button>
     <button id="show-map-btn">🌍 Visual</button>
@@ -5254,6 +5647,7 @@
 		}
 	});
 </script>
+
 
 </body>
 </html>
