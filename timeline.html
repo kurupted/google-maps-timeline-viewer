@@ -217,6 +217,15 @@
             border: 1px solid #ced4da;
             font-size: 14px;
         }
+		.settings-text-input {
+			width: 100%;
+			padding: 8px;
+			margin-bottom: 10px;
+			border-radius: 4px;
+			border: 1px solid #ced4da;
+			font-size: 13px;
+			box-sizing: border-box;
+		}
 
         /* --- Date Picker --- */
         #datePickerContainer {
@@ -1404,6 +1413,24 @@
                     <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
                 </label>
                 <div id="activityFilters" style="margin-left: 20px;"></div>
+                
+                <h4>Advanced Settings</h4>
+				<label for="homePlaceIdsInput">Home Place IDs (comma-separated):</label>
+				<input type="text" id="homePlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
+
+				<label for="workPlaceIdsInput">Work Place IDs (comma-separated):</label>
+				<input type="text" id="workPlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
+
+				<div style="display: flex; gap: 5px; margin-top: 5px;">
+					<button id="saveAdvancedSettingsBtn" class="control-btn" style="flex: 1; padding: 6px;">Save IDs</button>
+				</div>
+
+				<h4 style="margin-top: 15px;">Data & Settings</h4>
+				<div style="display: flex; gap: 5px; padding-bottom: 30px;">
+					<button id="exportSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Export Settings</button>
+					<button id="importSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Import Settings</button>
+				</div>
+				<input type="file" id="importSettingsFile" accept=".json" style="display: none;">
             </div>
         </div>
 
@@ -1518,6 +1545,8 @@
     let lastAreaSearchResults = [];
     let lastAreaSearchMode = 'all';
     let lastTimelineItemToHighlight = null;
+    let homePlaceIds = [];
+    let workPlaceIds = [];
 
     // Summary View Globals
     let allYearlySummaries = null; // Calculated yearly summaries
@@ -1600,18 +1629,26 @@
         'transit_station': { color: '#A9A9A9', icon: '🚉', label: 'Transit' },
         'home': { color: '#4285F4', icon: '🏠', label: 'Home' },
         'work': { color: '#0F9D58', icon: '💼', label: 'Work' },
-        'other': { color: '#454545', icon: '📍', label: 'Other' } // Combined catch-all
+        'other': { color: '#454545', icon: '📍', label: 'Other (Known)' },
+        'unknown_place': { color: '#C3C3C3', icon: '❓', label: 'Unknown (Not Fetched)' }
     };
 
-    function getPlaceStyle(placeTypes) {
+    function getPlaceStyle(placeTypes, isFetched = false, semanticType = null) {
+        // First check semantic type for Home/Work overrides to ensure the correct icon
+        if (semanticType) {
+            const upperSemantic = semanticType.toUpperCase();
+            if (upperSemantic === 'TYPE_HOME' || upperSemantic === 'HOME') return placeTypeStyles['home'];
+            if (upperSemantic === 'TYPE_WORK' || upperSemantic === 'WORK') return placeTypeStyles['work'];
+        }
+
         if (placeTypes && placeTypes.length > 0) {
             for (const type of placeTypes) {
-                if (placeTypeStyles[type] && type !== 'other') {
+                if (placeTypeStyles[type] && type !== 'other' && type !== 'unknown_place') {
                     return placeTypeStyles[type];
                 }
             }
         }
-        return placeTypeStyles['other']; // Use 'other' as the default fallback
+        return isFetched ? placeTypeStyles['other'] : placeTypeStyles['unknown_place']; // Use fallback based on fetch status
     }
 
     // Helper to determine the category for the visits chart
@@ -1628,25 +1665,33 @@
             types = item.visit.topCandidate?.placeTypes || [];
         }
 
+        semantic = getCustomSemanticType(placeId, semantic);
+
         // Catch explicitly marked homes and workplaces
         if (semantic === 'TYPE_HOME' || semantic?.toUpperCase() === 'HOME') return 'home';
         if (semantic === 'TYPE_WORK' || semantic?.toUpperCase() === 'WORK') return 'work';
 
+        // Check if we've fetched this place via the API
+        let isFetched = false;
         // Prefer cached types if available (since they are fetched via Place API)
-        if (placeId && placeDetailsCache[placeId] && placeDetailsCache[placeId].types) {
-            types = placeDetailsCache[placeId].types;
+        if (placeId && placeDetailsCache[placeId]) {
+            isFetched = true;
+            if (placeDetailsCache[placeId].types) {
+                types = placeDetailsCache[placeId].types;
+            }
         }
 
         if (types && types.length > 0) {
             for (const type of types) {
-                if (placeTypeStyles[type] && type !== 'other') {
+                if (placeTypeStyles[type] && type !== 'other' && type !== 'unknown_place') {
                     return type;
                 }
             }
+            return 'other'; // Has types, but none match
         }
 
         // Return 'other' for anything that has no types, or types we aren't tracking
-        return 'other'; 
+        return isFetched ? 'other' : 'unknown_place'; 
     }
 
     // --- Map Initialization ---
@@ -1782,7 +1827,7 @@
             case 'FERRY': return '#87CEEB'; // Sky Blue
             case 'TRAIN': return '#FF9800'; // Orange
             case 'STATIONARY': return '#757575'; // Grey
-            case 'FLYING': return '#03A9F4'; // Light Blue
+            case 'FLYING': return '#03C9FF'; // Light Blue
             case 'CABLECAR': case 'FUNICULAR': case 'GONDOLA_LIFT': case 'WHEELCHAIR': return '#607D8B'; // Blue Grey
             case 'BOATING': case 'KAYAKING': case 'ROWING': case 'SAILING': case 'SURFING': case 'SWIMMING': return '#00BCD4'; // Cyan
             case 'CATCHING_POKEMON': return '#795548'; // Brown
@@ -1963,6 +2008,7 @@
         document.getElementById('saved-cache-count').textContent = initialCacheSizeFromFile;
         document.getElementById('new-cache-count').textContent = newCount;
         indicator.style.display = 'flex';
+        // Enable save button if this is the first API call and the UI is active
         if (newCount > 0 && uiEnabled) {
             document.getElementById('saveCacheBtn').disabled = false;
         }
@@ -1971,6 +2017,7 @@
 
     // --- Timeline Rendering ---
 
+    // Creates a single timeline item element for the sidebar
     // Creates a single timeline item element for the sidebar
     function createTimelineItem(item, index, currentDate) {
         const timelineItem = document.createElement('div');
@@ -2011,7 +2058,9 @@
             startTimestamp = isIOS ? item.startTime : visitData.duration.startTimestamp;
             endTimestamp = isIOS ? item.endTime : visitData.duration.endTimestamp;
 
-            const semanticType = (isIOS ? locationData?.semanticType : locationData.semanticType)?.toUpperCase();
+            const placeId = isIOS ? locationData?.placeID : locationData.placeId;
+            const semanticType = getCustomSemanticType(placeId, (isIOS ? locationData?.semanticType : locationData.semanticType))?.toUpperCase();
+            
             if (semanticType === "HOME" || semanticType === "TYPE_HOME") {
                 locationName = "Home";
             } else if (semanticType === "WORK" || semanticType === "TYPE_WORK") {
@@ -2021,7 +2070,6 @@
             }
 
             placeTypesForStyle = locationData.placeTypes || [];
-            const placeId = isIOS ? locationData?.placeID : locationData.placeId;
 
             // Add data attributes for later finding/scrolling
             if (placeId) {
@@ -2029,8 +2077,9 @@
             }
             timelineItem.dataset.startTimestamp = startTimestamp;
 
-
-            const placeStyle = getPlaceStyle(placeTypesForStyle);
+            const isFetched = placeId ? !!placeDetailsCache[placeId] : false;
+            const placeStyle = getPlaceStyle(placeTypesForStyle, isFetched, semanticType);
+            
             timelineItem.classList.add('place-visit-item');
             timelineItem.innerHTML = `
                 <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
@@ -2142,7 +2191,8 @@
         // Adapt based on data structure (standard vs. iOS)
         if (itemData.placeVisit) { // Standard format
             const placeVisit = itemData.placeVisit;
-            semanticTypeStr = placeVisit.location.semanticType; // e.g., "TYPE_HOME"
+            placeId = placeVisit.location.placeId; // Grab placeId first for custom check
+            semanticTypeStr = getCustomSemanticType(placeId, placeVisit.location.semanticType); // e.g., "TYPE_HOME"
             if (semanticTypeStr === "TYPE_HOME" || placeVisit.location.name?.toLowerCase() === "home") {
                 locationName = "Home";
             } else if (semanticTypeStr === "TYPE_WORK" || placeVisit.location.name?.toLowerCase() === "work") {
@@ -2150,7 +2200,6 @@
             } else {
                 locationName = placeVisit.location.name;
             }
-            placeId = placeVisit.location.placeId;
             lat = placeVisit.location.latitudeE7 / 1e7;
             lng = placeVisit.location.longitudeE7 / 1e7;
             startTimestamp = placeVisit.duration.startTimestamp;
@@ -2158,15 +2207,15 @@
             originalVisitData = placeVisit;
         } else if (itemData.visit) { // iOS format (itemData is the raw timeline object)
             const visit = itemData.visit; // The 'visit' sub-object
-            semanticTypeStr = visit.topCandidate?.semanticType; // e.g., "Home", "Work"
-            if (semanticTypeStr?.toUpperCase() === "HOME") {
+            placeId = visit.topCandidate?.placeID;
+            semanticTypeStr = getCustomSemanticType(placeId, visit.topCandidate?.semanticType); // e.g., "Home", "Work"
+            if (semanticTypeStr?.toUpperCase() === "HOME" || semanticTypeStr === "TYPE_HOME") {
                 locationName = "Home";
-            } else if (semanticTypeStr?.toUpperCase() === "WORK") {
+            } else if (semanticTypeStr?.toUpperCase() === "WORK" || semanticTypeStr === "TYPE_WORK") {
                 locationName = "Work";
             } else {
                 locationName = visit.topCandidate?.name || visit.topCandidate?.semanticType;
             }
-            placeId = visit.topCandidate?.placeID;
 
             const geoCoords = parseGeoString(visit.topCandidate?.placeLocation);
             if (geoCoords) {
@@ -2189,7 +2238,7 @@
                     placeId: placeId,
                     latitudeE7: lat ? lat * 1e7 : undefined,
                     longitudeE7: lng ? lng * 1e7 : undefined,
-                    semanticType: semanticTypeStr // Store the original semantic type
+                    semanticType: semanticTypeStr // Store the original/overridden semantic type
                 },
                 duration: { startTimestamp: startTimestamp, endTimestamp: endTimestamp }
             };
@@ -2207,7 +2256,7 @@
                 if (placeDetailsCache[placeId].isMissing) {
                     console.log(`Using cached 'missing' status for placeId: ${placeId}`);
                     renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
-                    updateSidebarItem(index, fallbackName, null, []);
+                    updateSidebarItem(index, fallbackName, null, [], true, semanticTypeStr);
                 } else {
                     // Use cached details (either original or replacement)
                     console.log(`Using cached details for placeId: ${placeId}`);
@@ -2216,7 +2265,7 @@
             } else if (apiCallsDisabled) {
                 console.log(`API calls disabled. Rendering basic marker for placeId: ${placeId}`);
                 renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
-                updateSidebarItem(index, fallbackName, null); // Update sidebar with basic info
+                updateSidebarItem(index, fallbackName, null, [], false, semanticTypeStr); // Update sidebar with basic info
             } else {
                 // Fetch details using the API
                 console.log(`Fetching details for placeId: ${placeId}`);
@@ -2227,7 +2276,7 @@
             console.log(`Rendering basic marker for: ${fallbackName}`);
             renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
             // Update sidebar with basic info
-            updateSidebarItem(index, fallbackName, null, []);
+            updateSidebarItem(index, fallbackName, null, [], false, semanticTypeStr);
         } else {
             console.warn(`Skipping marker render due to invalid coordinates for: ${fallbackName}`);
         }
@@ -2298,13 +2347,12 @@
     async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index, sidebarItem = null) {
 		const lat = placeVisit.location && placeVisit.location.latitudeE7 ? placeVisit.location.latitudeE7 / 1e7 : NaN;
         const lng = placeVisit.location && placeVisit.location.longitudeE7 ? placeVisit.location.longitudeE7 / 1e7 : NaN;
+        const customSemanticType = getCustomSemanticType(placeId, placeVisit.location && placeVisit.location.semanticType);
         
         if (apiCallsDisabled) {
             console.log("API calls disabled. Skipping fetchPlaceDetails, rendering basic marker.");
-            const lat = placeVisit.location.latitudeE7 / 1e7;
-            const lng = placeVisit.location.longitudeE7 / 1e7;
             renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-            updateSidebarItem(index, fallbackName, null, []);
+            updateSidebarItem(index, fallbackName, null, [], false, customSemanticType);
             return;
         }
 
@@ -2332,8 +2380,15 @@
                     if (sidebarItem) {
                         const nametag = sidebarItem.querySelector('strong');
                         if (nametag) nametag.textContent = fallbackName;
+                        // NEW: apply fetched (but missing) style
+                        const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
+                        if(iconContainer) {
+                            const style = getPlaceStyle([], true, customSemanticType);
+                            iconContainer.innerHTML = style.icon;
+                            sidebarItem.style.setProperty('--activity-color', style.color);
+                        }
                     } else {
-                        updateSidebarItem(index, fallbackName, null, []);
+                        updateSidebarItem(index, fallbackName, null, [], true, customSemanticType);
                     }
                 } else {
                     renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index, sidebarItem);
@@ -2401,8 +2456,15 @@
                 if (sidebarItem) {
                     const nametag = sidebarItem.querySelector('strong');
                     if (nametag) nametag.textContent = fallbackName;
+                    // NEW: apply unfetched style
+                    const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
+                    if(iconContainer) {
+                        const style = getPlaceStyle([], false, customSemanticType);
+                        iconContainer.innerHTML = style.icon;
+                        sidebarItem.style.setProperty('--activity-color', style.color);
+                    }
                 } else {
-                    updateSidebarItem(index, fallbackName, null, []);
+                    updateSidebarItem(index, fallbackName, null, [], false, customSemanticType);
                 }
             }
         })();
@@ -2423,8 +2485,10 @@
      * @param {string} locationName - The new name for the location.
      * @param {string|null} svgIconMaskURI - The URI for the Google icon.
      * @param {Array<string>} placeTypes - Array of place types for styling.
+     * @param {boolean} isFetched - Whether the place data was successfully fetched/cached.
+     * @param {string|null} semanticType - The semantic type (e.g. TYPE_HOME).
      */
-    function updateSidebarItem(index, locationName, svgIconMaskURI, placeTypes = []) {
+    function updateSidebarItem(index, locationName, svgIconMaskURI, placeTypes = [], isFetched = false, semanticType = null) {
         // This querySelector works globally, finding the item whether it's
         // in the #timeline or the #areaResults container.
         const sidebarItem = document.querySelector(`.timeline-item[data-index="${index}"]`);
@@ -2444,7 +2508,7 @@
         // Update the icon
         const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
         if (iconContainer) {
-            const placeStyle = getPlaceStyle(placeTypes);
+            const placeStyle = getPlaceStyle(placeTypes, isFetched, semanticType);
             let finalIconHtml;
 
             // Prefer Google's icon from the API if it's available and not generic
@@ -2465,7 +2529,9 @@
     async function renderPlaceDetails(place, placeVisit, index, sidebarItem = null) {
         // Determine the display name, prioritizing "Home" or "Work" if applicable
         let displayName = place.displayName;
-        const originalSemanticType = placeVisit.location.semanticType; // From original data (e.g., TYPE_HOME or "Home")
+        const placeId = place.id; // Use place.id
+        
+        const originalSemanticType = getCustomSemanticType(placeId, placeVisit.location.semanticType); // From original data (e.g., TYPE_HOME or "Home")
         if (originalSemanticType) {
             const upperSemanticType = originalSemanticType.toUpperCase();
             if (upperSemanticType === "HOME" || upperSemanticType === "TYPE_HOME") {
@@ -2476,7 +2542,6 @@
         }
         const locationName = displayName || placeVisit.location.name || 'Unknown Location';
         const position = place.location;
-        const placeId = place.id; // Use place.id
 
         // Find the sidebar item to update, preferring the directly passed element from Area View.
         const itemToUpdate = sidebarItem || document.querySelector(`.timeline-item[data-index="${index}"]`);
@@ -2491,7 +2556,7 @@
 
             const iconContainer = itemToUpdate.querySelector('.timeline-icon-container');
             if (iconContainer) {
-                const placeStyle = getPlaceStyle(place.types || []);
+                const placeStyle = getPlaceStyle(place.types || [], true, originalSemanticType);
                 let finalIconHtml;
 
                 if (place.svgIconMaskURI && !place.svgIconMaskURI.includes('generic')) {
@@ -3800,10 +3865,14 @@
 		const summaryView = document.getElementById('summaryView');
 		yearContainer.innerHTML = ''; // Clear previous years
 
+        // BUG FIX: Ensure monthly view and selected year label are fully reset
+        document.getElementById('summary-selected-year').textContent = '';
+        document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
+        selectedSummaryYear = null;
+
 		if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
 			yearContainer.innerHTML = '<p>No summary data available.</p>';
 			document.getElementById('summary-months').style.display = 'none';
-			document.getElementById('summary-selected-year').textContent = '';
 			document.getElementById('backToYearsBtn').style.display = 'none';
 			summaryView.classList.remove('expanded-year-active');
 			return;
@@ -3873,7 +3942,7 @@
 		document.getElementById('backToYearsBtn').style.display = 'none';
 	}
 
-		// Displays the monthly summary items for a given year
+	// Displays the monthly summary items for a given year
 	function displayMonthSummary(year) {
 		selectedSummaryYear = year; 
 		document.getElementById('summary-selected-year').textContent = '('+year+')'; 
@@ -5093,6 +5162,92 @@
             }
         });
     }
+    
+    function initAdvancedSettings() {
+        const homeInput = document.getElementById('homePlaceIdsInput');
+        const workInput = document.getElementById('workPlaceIdsInput');
+
+        // Populate initial values
+        homeInput.value = homePlaceIds.join(', ');
+        workInput.value = workPlaceIds.join(', ');
+
+        const saveAdvancedBtn = document.getElementById('saveAdvancedSettingsBtn');
+        saveAdvancedBtn.addEventListener('click', async () => {
+            homePlaceIds = homeInput.value.split(',').map(s => s.trim()).filter(s => s);
+            workPlaceIds = workInput.value.split(',').map(s => s.trim()).filter(s => s);
+            
+            await saveSetting('homePlaceIds', homePlaceIds);
+            await saveSetting('workPlaceIds', workPlaceIds);
+            alert('Custom Home and Work IDs saved! If data is already loaded, you may need to reload the date range or summary to see all changes.');
+        });
+
+        const exportBtn = document.getElementById('exportSettingsBtn');
+        const importBtn = document.getElementById('importSettingsBtn');
+        const importFile = document.getElementById('importSettingsFile');
+
+        exportBtn.addEventListener('click', async () => {
+            const settingsToExport = {
+                displayTimezone: await getSetting('displayTimezone') || 'default',
+                distanceUnit: await getSetting('distanceUnit') || 'km',
+                homePlaceIds: await getSetting('homePlaceIds') || [],
+                workPlaceIds: await getSetting('workPlaceIds') || []
+            };
+
+            const blob = new Blob([JSON.stringify(settingsToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'TimelineViewerSettings.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        importBtn.addEventListener('click', () => {
+            importFile.click();
+        });
+
+        importFile.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const importedSettings = JSON.parse(e.target.result);
+                    
+                    if (importedSettings.displayTimezone) {
+                        displayTimezone = importedSettings.displayTimezone;
+                        await saveSetting('displayTimezone', displayTimezone);
+                        document.getElementById('timezone-select').value = displayTimezone;
+                    }
+                    if (importedSettings.distanceUnit) {
+                        distanceUnit = importedSettings.distanceUnit;
+                        await saveSetting('distanceUnit', distanceUnit);
+                        document.getElementById('distance-unit-select').value = distanceUnit;
+                    }
+                    if (importedSettings.homePlaceIds) {
+                        homePlaceIds = importedSettings.homePlaceIds;
+                        await saveSetting('homePlaceIds', homePlaceIds);
+                        homeInput.value = homePlaceIds.join(', ');
+                    }
+                    if (importedSettings.workPlaceIds) {
+                        workPlaceIds = importedSettings.workPlaceIds;
+                        await saveSetting('workPlaceIds', workPlaceIds);
+                        workInput.value = workPlaceIds.join(', ');
+                    }
+
+                    alert('Settings imported successfully! Reload data to fully apply changes.');
+                } catch (err) {
+                    console.error("Error importing settings:", err);
+                    alert("Failed to parse settings file. Please make sure it is a valid JSON settings file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input to allow loading same file again
+        });
+    }
 
     // --- Min/Max Date Display ---
     function displayMinMaxDates() {
@@ -5203,7 +5358,8 @@
 
                 // Determine the best available name
                 let placeName = place.location.name || 'Unknown Location'; // Default name from file
-                const semanticType = place.location.semanticType;
+                let semanticType = place.location.semanticType;
+                semanticType = getCustomSemanticType(placeId, semanticType); // Override check
 
                 // 1. Check for special "Home" or "Work" semantic types
                 if (semanticType === "TYPE_HOME" || placeName.toLowerCase() === "home") {
@@ -5223,7 +5379,8 @@
                 kmlPlacemarks += `
 					  <Placemark>
 						<name>${name}</name>
-						<description>Arrived: ${start}&#10;Departed: ${end}</description>
+						<description>Arrived: ${start}
+Departed: ${end}</description>
 						<styleUrl>#placeVisitStyle</styleUrl>
 						<Point>
 						  <coordinates>${lng},${lat},0</coordinates>
@@ -5559,6 +5716,15 @@
             }
         });
     }
+    
+    
+    // Helper to override semantic type based on user-defined Home/Work Place IDs
+    function getCustomSemanticType(placeId, originalSemantic) {
+        if (!placeId) return originalSemantic;
+        if (homePlaceIds.includes(placeId)) return 'TYPE_HOME';
+        if (workPlaceIds.includes(placeId)) return 'TYPE_WORK';
+        return originalSemantic;
+    }
 
 
     async function initializeApp() {
@@ -5587,6 +5753,14 @@
                 distanceUnit = storedUnit;
                 console.log(`Loaded distance unit setting from DB: ${distanceUnit}`);
             }
+            const storedHomeIds = await getSetting('homePlaceIds');
+            if (storedHomeIds) {
+                homePlaceIds = storedHomeIds;
+            }
+            const storedWorkIds = await getSetting('workPlaceIds');
+            if (storedWorkIds) {
+                workPlaceIds = storedWorkIds;
+            }
 
             // Initialize the map and all UI components
             await initMap();
@@ -5600,6 +5774,7 @@
             initCurrentLocationButton();
             populateTimezoneSelector();
             initDistanceUnitSelector();
+            initAdvancedSettings(); // Initialize the new settings pane controls
             setUIEnabled(false);
             showSidebarTab('date');
             updateApiCallDisplay();
