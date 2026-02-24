@@ -1501,14 +1501,14 @@
         <h3>How to use:</h3>
         First, complete the initial setup as explained on the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">Github project page</a>.<br><br>
         Click "Load Data" on the left and navigate to the folder that contains your Timeline data.<br>
-        <h4>For Google Takeout data:</h4>
-        The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History".<br>
-        Navigate into the "Semantic Location History" folder, and then click "Select Folder" on the dialog.<br>
-        (Do not navigate into one of the yearly subfolders.)<br>
         <h4>For On-Device exported data:</h4>
         Simply choose the folder that contains your exported Timeline.json file.<br>
         (On non-English systems, the filename may be different -- rename the file to Timeline.json)<br>
         If you have a previously saved "TimelinePlaceCache.json" file, be sure it's in the same folder. This can speed up loading and reduce API calls.
+        <h4>For Google Takeout data:</h4>
+        The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History".<br>
+        Navigate into the "Semantic Location History" folder, and then click "Select Folder" on the dialog.<br>
+        (Do not navigate into one of the yearly subfolders.)<br>
         <br><br><br><br>
         After the data has loaded, use the date picker to choose a date or date range that contains timeline data.<br>
     </div>
@@ -2059,11 +2059,13 @@
             endTimestamp = isIOS ? item.endTime : visitData.duration.endTimestamp;
 
             const placeId = isIOS ? locationData?.placeID : locationData.placeId;
-            const semanticType = getCustomSemanticType(placeId, (isIOS ? locationData?.semanticType : locationData.semanticType))?.toUpperCase();
+            const rawSemantic = isIOS ? locationData?.semanticType : locationData.semanticType;
+            const semanticType = getCustomSemanticType(placeId, rawSemantic)?.toUpperCase();
+            const lowerName = locationData?.name?.toLowerCase();
             
-            if (semanticType === "HOME" || semanticType === "TYPE_HOME") {
+            if (semanticType === "HOME" || semanticType === "TYPE_HOME" || lowerName === "home") {
                 locationName = "Home";
-            } else if (semanticType === "WORK" || semanticType === "TYPE_WORK") {
+            } else if (semanticType === "WORK" || semanticType === "TYPE_WORK" || lowerName === "work") {
                 locationName = "Work";
             } else {
                 locationName = locationData?.name || 'Unknown Location';
@@ -2192,10 +2194,14 @@
         if (itemData.placeVisit) { // Standard format
             const placeVisit = itemData.placeVisit;
             placeId = placeVisit.location.placeId; // Grab placeId first for custom check
-            semanticTypeStr = getCustomSemanticType(placeId, placeVisit.location.semanticType); // e.g., "TYPE_HOME"
-            if (semanticTypeStr === "TYPE_HOME" || placeVisit.location.name?.toLowerCase() === "home") {
+            semanticTypeStr = getCustomSemanticType(placeId, placeVisit.location.semanticType); 
+            
+            const upperSemantic = semanticTypeStr?.toUpperCase();
+            const lowerName = placeVisit.location.name?.toLowerCase();
+
+            if (upperSemantic === "TYPE_HOME" || upperSemantic === "HOME" || lowerName === "home") {
                 locationName = "Home";
-            } else if (semanticTypeStr === "TYPE_WORK" || placeVisit.location.name?.toLowerCase() === "work") {
+            } else if (upperSemantic === "TYPE_WORK" || upperSemantic === "WORK" || lowerName === "work") {
                 locationName = "Work";
             } else {
                 locationName = placeVisit.location.name;
@@ -2208,10 +2214,14 @@
         } else if (itemData.visit) { // iOS format (itemData is the raw timeline object)
             const visit = itemData.visit; // The 'visit' sub-object
             placeId = visit.topCandidate?.placeID;
-            semanticTypeStr = getCustomSemanticType(placeId, visit.topCandidate?.semanticType); // e.g., "Home", "Work"
-            if (semanticTypeStr?.toUpperCase() === "HOME" || semanticTypeStr === "TYPE_HOME") {
+            semanticTypeStr = getCustomSemanticType(placeId, visit.topCandidate?.semanticType); 
+            
+            const upperSemantic = semanticTypeStr?.toUpperCase();
+            const lowerName = visit.topCandidate?.name?.toLowerCase();
+
+            if (upperSemantic === "HOME" || upperSemantic === "TYPE_HOME" || lowerName === "home") {
                 locationName = "Home";
-            } else if (semanticTypeStr?.toUpperCase() === "WORK" || semanticTypeStr === "TYPE_WORK") {
+            } else if (upperSemantic === "WORK" || upperSemantic === "TYPE_WORK" || lowerName === "work") {
                 locationName = "Work";
             } else {
                 locationName = visit.topCandidate?.name || visit.topCandidate?.semanticType;
