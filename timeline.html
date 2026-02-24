@@ -1508,6 +1508,7 @@
     let placeApiCallCount = 0; // Counter for Place API calls
     let initialCacheSizeFromFile = 0;
     let apiCallsDisabled = false;
+    let pendingPlaceRequests = {}; // Tracks in-flight API requests (CONCURRENCY LOCK)
     let globalMinDate = null; // Earliest date in loaded data
     let globalMaxDate = null; // Latest date in loaded data
     let displayTimezone = 'default'; // User-selected timezone
@@ -1592,14 +1593,14 @@
         'restaurant': { color: '#FFA500', icon: '🍽️', label: 'Restaurant' },
         'cafe': { color: '#D2691E', icon: '☕', label: 'Cafe' },
         'bar': { color: '#FF4500', icon: '🍹', label: 'Bar' },
-        'store': { color: '#4682B4', icon: '🛍️', label: 'Store' },
+        'store': { color: '#3B68A8', icon: '🛍️', label: 'Store' },
         'grocery_or_supermarket': { color: '#32CD32', icon: '🛒', label: 'Grocery' },
         'park': { color: '#228B22', icon: '🌳', label: 'Park' },
         'lodging': { color: '#800080', icon: '🏨', label: 'Lodging' },
         'transit_station': { color: '#A9A9A9', icon: '🚉', label: 'Transit' },
         'home': { color: '#4285F4', icon: '🏠', label: 'Home' },
         'work': { color: '#0F9D58', icon: '💼', label: 'Work' },
-        'other': { color: '#9E9E9E', icon: '📍', label: 'Other' } // Combined catch-all
+        'other': { color: '#454545', icon: '📍', label: 'Other' } // Combined catch-all
     };
 
     function getPlaceStyle(placeTypes) {
@@ -1962,6 +1963,9 @@
         document.getElementById('saved-cache-count').textContent = initialCacheSizeFromFile;
         document.getElementById('new-cache-count').textContent = newCount;
         indicator.style.display = 'flex';
+        if (newCount > 0 && uiEnabled) {
+            document.getElementById('saveCacheBtn').disabled = false;
+        }
     }
 
 
@@ -2199,15 +2203,22 @@
         // Attempt to fetch Place Details if placeId exists and not cached
         if (placeId && !isNaN(lat) && !isNaN(lng)) {
             if (placeDetailsCache[placeId]) {
-                // Use cached details
-                console.log(`Using cached details for placeId: ${placeId}`);
-                renderPlaceDetails(placeDetailsCache[placeId], originalVisitData, index, sidebarItem);
+                // Check if we previously marked this place as permanently missing
+                if (placeDetailsCache[placeId].isMissing) {
+                    console.log(`Using cached 'missing' status for placeId: ${placeId}`);
+                    renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
+                    updateSidebarItem(index, fallbackName, null, []);
+                } else {
+                    // Use cached details (either original or replacement)
+                    console.log(`Using cached details for placeId: ${placeId}`);
+                    renderPlaceDetails(placeDetailsCache[placeId], originalVisitData, index, sidebarItem);
+                }
             } else if (apiCallsDisabled) {
                 console.log(`API calls disabled. Rendering basic marker for placeId: ${placeId}`);
                 renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
                 updateSidebarItem(index, fallbackName, null); // Update sidebar with basic info
             } else {
-                // Fetch details using the new API
+                // Fetch details using the API
                 console.log(`Fetching details for placeId: ${placeId}`);
                 fetchPlaceDetails(placeId, fallbackName, originalVisitData, index, sidebarItem);
             }
@@ -2285,6 +2296,9 @@
 
     // Fetches place details using the new Place.fetchFields method
     async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index, sidebarItem = null) {
+		const lat = placeVisit.location && placeVisit.location.latitudeE7 ? placeVisit.location.latitudeE7 / 1e7 : NaN;
+        const lng = placeVisit.location && placeVisit.location.longitudeE7 ? placeVisit.location.longitudeE7 / 1e7 : NaN;
+        
         if (apiCallsDisabled) {
             console.log("API calls disabled. Skipping fetchPlaceDetails, rendering basic marker.");
             const lat = placeVisit.location.latitudeE7 / 1e7;
@@ -2297,38 +2311,108 @@
         // Define the fields to fetch (excluding 'photos')
         const fields = [
             'id',               // Basic identifier
-            'displayName',      // New name field
-            'formattedAddress',   // New address field
-            'location',           // New geometry field (lat/lng)
-            'svgIconMaskURI',     // New icon URL field
-            'iconBackgroundColor', // New icon background color field
+            'displayName',      
+            'formattedAddress', 
+            'location',           // geometry field (lat/lng)
+            'svgIconMaskURI',     // icon URL field
+            'iconBackgroundColor',
             'googleMapsURI',
             'types'
         ];
-
-        try {
-            const place = new Place({ id: placeId }); // , requestedLanguage: "en"
-            await place.fetchFields({ fields: fields });
-            incrementApiCallCount();
-
-            placeDetailsCache[placeId] = place;
-            updateCacheIndicator();
-            renderPlaceDetails(place, placeVisit, index, sidebarItem);
-
-        } catch (error) {
-            console.warn(`Error fetching place details with fetchFields for placeId ${placeId}:`, error);
-            // Fallback to basic marker if details fetch fails
-            const lat = placeVisit.location.latitudeE7 / 1e7;
-            const lng = placeVisit.location.longitudeE7 / 1e7;
-            renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-            // Note: sidebarItem is likely null here if called from date view, so we still need the original updateSidebarItem as a fallback.
-            if (sidebarItem) {
-                const nametag = sidebarItem.querySelector('strong');
-                if (nametag) nametag.textContent = fallbackName;
-            } else {
-                updateSidebarItem(index, fallbackName, null, []);
+        
+        // --- CONCURRENCY LOCK ---
+        // Wait if this placeId is already being fetched right now
+        if (pendingPlaceRequests[placeId]) {
+            await pendingPlaceRequests[placeId];
+            
+            // Use the newly populated cache
+            if (placeDetailsCache[placeId]) {
+                if (placeDetailsCache[placeId].isMissing) {
+                    renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                    if (sidebarItem) {
+                        const nametag = sidebarItem.querySelector('strong');
+                        if (nametag) nametag.textContent = fallbackName;
+                    } else {
+                        updateSidebarItem(index, fallbackName, null, []);
+                    }
+                } else {
+                    renderPlaceDetails(placeDetailsCache[placeId], placeVisit, index, sidebarItem);
+                }
+                return;
             }
         }
+
+        // Create the promise for the fetch
+        const fetchPromise = (async () => {
+            try {
+                const place = new Place({ id: placeId }); 
+                await place.fetchFields({ fields: fields });
+                incrementApiCallCount();
+
+                placeDetailsCache[placeId] = place;
+                updateCacheIndicator();
+                renderPlaceDetails(place, placeVisit, index, sidebarItem);
+
+            } catch (error) {
+                console.warn(`Error fetching full details for ${placeId}:`, error);
+                
+                // Intercept 404 NOT_FOUND errors
+                if (error && error.message && error.message.includes("NOT_FOUND")) {
+                    console.log(`Place ID ${placeId} returned 404. Attempting ID refresh...`);
+                    
+                    try {
+                        // --- FALLBACK: Official ID Refresh ---
+                        const refreshPlace = new Place({ id: placeId });
+                        await refreshPlace.fetchFields({ fields: ['id'] });
+                        incrementApiCallCount(); 
+                        
+                        const newPlaceId = refreshPlace.id;
+                        console.log(`Refresh successful. Old ID: ${placeId} -> New ID: ${newPlaceId}. Fetching full details...`);
+                        
+                        // Fetch full details using the NEW ID
+                        const newPlace = new Place({ id: newPlaceId });
+                        await newPlace.fetchFields({ fields: fields });
+                        incrementApiCallCount();
+                        
+                        // Cache the new place under the OLD placeId
+                        placeDetailsCache[placeId] = newPlace;
+                        placeDetailsCache[placeId].originalPlaceId = placeId; 
+                        placeDetailsCache[placeId].isReplacement = true;
+                        
+                        updateCacheIndicator();
+                        renderPlaceDetails(newPlace, placeVisit, index, sidebarItem);
+                        return; // Success! Stop execution here.
+
+                    } catch (refreshError) {
+                        console.log(`ID refresh failed for ${placeId}. Marking as permanently missing.`);
+                        // Refresh failed too, mark as missing
+                        placeDetailsCache[placeId] = {
+                            id: placeId,
+                            displayName: fallbackName,
+                            isMissing: true
+                        };
+                        updateCacheIndicator();
+                    }
+                }
+
+                // Fallback to basic marker if everything failed
+                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                
+                if (sidebarItem) {
+                    const nametag = sidebarItem.querySelector('strong');
+                    if (nametag) nametag.textContent = fallbackName;
+                } else {
+                    updateSidebarItem(index, fallbackName, null, []);
+                }
+            }
+        })();
+
+        // Store the promise in the global lock so duplicates wait on it
+        pendingPlaceRequests[placeId] = fetchPromise;
+        
+        // Wait for it to finish, then delete the lock
+        await fetchPromise;
+        delete pendingPlaceRequests[placeId];
     }
 
 
@@ -2493,6 +2577,7 @@
             <div style="max-width: 250px;">
                 <h3 style="margin: 5px 0;">${locationName}</h3>
                 <p style="margin: 3px 0; font-size: 0.9em;">${place.formattedAddress || ""}</p>
+                <p style="margin: 3px; font-size: 0.85em;">Place ID: ${placeId}</p>
                 <div class="photo-container" data-place-id="${placeId}">
                     ${photoHtml}
                 </div>
