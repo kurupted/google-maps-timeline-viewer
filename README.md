@@ -23,7 +23,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 ![Alt text](/screenshot.png?raw=true "Screenshot")
 #
 
-![Alt text](/screenshot2.png?raw=true "Screenshot 2")
+![Alt text](/screenshot2.jpg?raw=true "Screenshot 2")
 
 
 
