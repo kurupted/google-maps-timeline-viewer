@@ -1487,7 +1487,7 @@
                     <option value="km" selected>Kilometers</option>
                     <option value="mi">Miles</option>
                 </select>
-                <h4>Display Options</h4>
+				<h4>Display Options</h4>
                 <label class="settings-option">
                     <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
                 </label>
@@ -1496,6 +1496,14 @@
                 </label>
                 <div id="activityFilters" style="margin-left: 20px;"></div>
                 
+				<h4>Map Theme</h4>
+                <label for="map-theme-select">Select map style:</label>
+                <select id="map-theme-select" style="width: 100%; padding: 8px; margin-bottom:10px; border-radius: 4px; border: 1px solid #ced4da; font-size: 14px;">
+                    <option value="FOLLOW_SYSTEM" selected>System Default</option>
+                    <option value="LIGHT">Light</option>
+                    <option value="DARK">Dark</option>
+                </select>
+
                 <h4>Advanced Settings</h4>
                 
 				<label class="settings-option" style="margin-bottom: 15px;">
@@ -1575,8 +1583,13 @@
             <h4 id="chart-section-title">Activity Charts</h4>
             <div id="chart-filters" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
                 </div>
-            <div class="chart-wrapper">
+			<div class="chart-wrapper">
                 <canvas id="distanceChart"></canvas>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; margin-top: 15px;">
+                <label style="font-size: 12px; cursor: pointer; color: #495057;">
+                    <input type="checkbox" id="uniqueVisitsToggle"> Show Unique Places Only (First Visit)
+                </label>
             </div>
             <div class="chart-wrapper">
                 <canvas id="visitsChart"></canvas>
@@ -1691,6 +1704,7 @@
 <script>
     // --- Global Variables ---
     let map;
+	let currentMapTheme = 'standard';
     let markers = [];
     let polylines = [];
     let infoWindows = [];
@@ -1887,7 +1901,7 @@
                 center: { lat: 25.034170, lng: 121.564560 },
                 zoom: 12,
                 mapId: "TIMELINE_MAP",
-                colorScheme: ColorScheme.FOLLOW_SYSTEM,
+                colorScheme: ColorScheme[currentMapTheme] || ColorScheme.FOLLOW_SYSTEM,
                 zoomControl: true,
                 mapTypeControl: true,
                 streetViewControl: true,
@@ -4471,6 +4485,15 @@
         const mapElement = document.getElementById('map');
         const mapBtn = document.getElementById('mapBtn'); 
         const backBtn = document.getElementById('backToYearsBtn');
+        const uniqueVisitsToggle = document.getElementById('uniqueVisitsToggle');
+
+        // Toggle Unique Visits Chart Update
+        uniqueVisitsToggle.addEventListener('change', () => {
+            if (currentChartStartDate && currentChartEndDate) {
+                // Pass false to prevent resetting the activity checkboxes
+                updateCharts(currentChartStartDate, currentChartEndDate, false);
+            }
+        });
 
         // Toggle Summary View on button click
         summaryBtn.addEventListener('click', () => {
@@ -5952,6 +5975,7 @@
     function initAdvancedSettings() {
         const homeInput = document.getElementById('homePlaceIdsInput');
         const workInput = document.getElementById('workPlaceIdsInput');
+        const themeSelect = document.getElementById('map-theme-select');
         
         // --- ADD DEBUG LISTENERS ---
         const debugModeToggle = document.getElementById('debugModeToggle');
@@ -5984,6 +6008,36 @@
         const importBtn = document.getElementById('importSettingsBtn');
         const importFile = document.getElementById('importSettingsFile');
 
+        themeSelect.addEventListener('change', async (e) => {
+            currentMapTheme = e.target.value;
+            await saveSetting('mapTheme', currentMapTheme);
+            
+            if (map) {
+                // The API strictly requires recreating the map to change the color scheme
+                const { Map } = await google.maps.importLibrary("maps");
+                const { ColorScheme } = await google.maps.importLibrary("core");
+                
+                const currentCenter = map.getCenter();
+                const currentZoom = map.getZoom();
+                
+                map = new Map(document.getElementById('map'), {
+                    center: currentCenter,
+                    zoom: currentZoom,
+                    mapId: "TIMELINE_MAP",
+                    colorScheme: ColorScheme[currentMapTheme],
+                    zoomControl: true,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true,
+                    cameraControl: false
+                });
+                
+                // Re-attach existing markers and polylines to the new map instance
+                markers.forEach(marker => marker.map = map);
+                polylines.forEach(polyline => polyline.setMap(map));
+            }
+        });
+        
         exportBtn.addEventListener('click', async () => {
             const settingsToExport = {
                 displayTimezone: await getSetting('displayTimezone') || 'default',
@@ -6433,6 +6487,8 @@ Departed: ${end}</description>
         });
         
         const labels = [];
+        const isUniqueOnly = document.getElementById('uniqueVisitsToggle')?.checked;
+        const seenPlaceIds = new Set();
 
         // 2. Loop to gather ALL data in the range
         let current = startMoment.clone();
@@ -6467,10 +6523,19 @@ Departed: ${end}</description>
                         if (iEnd.isBefore(periodStart) || iStart.isAfter(periodEnd)) return;
 
                         if (item.placeVisit || item.visit) {
+                            // Check for unique restriction
+                            if (isUniqueOnly) {
+                                const placeId = item.placeVisit?.location?.placeId || item.visit?.topCandidate?.placeID;
+                                if (placeId) {
+                                    if (seenPlaceIds.has(placeId)) return; // Skip this item entirely
+                                    seenPlaceIds.add(placeId);
+                                }
+                            }
                             // Bucket the visit by Category instead of just a raw total
                             const cat = getVisitCategory(item);
                             periodVisits[cat]++;
                             visitTotals[cat]++;
+                            
                         } else if (item.activitySegment) {
                             const actType = getGroupedActivityType(item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities[0]?.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN');
                             
@@ -6623,6 +6688,14 @@ Departed: ${end}</description>
             if (storedDebugMode !== undefined) {
                 isDebugMode = storedDebugMode;
                 document.getElementById('debugModeToggle').checked = isDebugMode;
+            }
+
+            // Load the theme BEFORE initMap() runs
+            const storedTheme = await getSetting('mapTheme');
+            if (storedTheme) {
+                currentMapTheme = storedTheme;
+                const themeSelect = document.getElementById('map-theme-select');
+                if (themeSelect) themeSelect.value = currentMapTheme;
             }
 
             // Initialize the map and all UI components
