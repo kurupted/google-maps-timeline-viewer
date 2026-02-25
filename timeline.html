@@ -1618,13 +1618,16 @@
             <input type="text" id="editPlaceName" style="width: 100%; margin-bottom: 10px; padding: 5px;">
         </div>
 
-        <div id="editActivityFields" style="display: none;">
+		<div id="editActivityFields" style="display: none;">
             <label>Activity Type:</label>
             <select id="editActivityType" style="width: 100%; margin-bottom: 10px; padding: 5px;">
                 </select>
             
             <label>Distance (meters):</label>
             <input type="number" id="editActivityDistance" style="width: 100%; margin-bottom: 10px; padding: 5px;" min="0" step="1">
+
+            <button id="editPathOnMapBtn" type="button" style="width: 100%; margin-bottom: 10px; padding: 8px; background: #5A95F5; color: white; border: none; border-radius: 4px; cursor: pointer;">Edit Path on Map 🗺️</button>
+            <input type="hidden" id="editModifiedPath" value="">
         </div>
 
         <label>Start Time:</label>
@@ -1674,6 +1677,17 @@
     <div class="context-menu-item" data-action="set-both">Set as Start & End</div>
 </div>
 
+<div id="pathEditOverlay" style="display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2000; text-align: center; width: 300px;">
+	<h3 style="margin-top: 0; margin-bottom: 5px;">Editing Path</h3>
+	<p style="font-size: 12px; color: #666; margin-bottom: 15px;">Drag white dots to move points.<br>Drag faded midpoints to add points.<br><strong>Right-click</strong> a dot to delete it.</p>
+	<div style="display: flex; justify-content: space-between;">
+		<button id="cancelPathEditBtn" style="background: #ccc; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; flex-grow: 1; margin-right: 5px;">Cancel</button>
+		<button id="savePathEditBtn" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; flex-grow: 1;">Done</button>
+	</div>
+</div>
+
+
+
 <script>
     // --- Global Variables ---
     let map;
@@ -1702,6 +1716,7 @@
     let isDebugMode = false;
     let timelineEdits = { additions: [], modifications: [], deletions: [] };
     let initialEditsCount = 0;
+	let savedEditsSnapshot = JSON.stringify({ additions: [], modifications: [], deletions: [] });
     let editModeActiveItem = null; // Stores original timestamps when editing an item
     let editModeActiveFullItem = null;
     let homePlaceIds = [];
@@ -1865,6 +1880,8 @@
             // First import the maps library
             const { Map } = await google.maps.importLibrary("maps");
             const {ColorScheme} = await google.maps.importLibrary("core")
+            const geometryModule = await google.maps.importLibrary("geometry");
+			window.googleGeometry = geometryModule;
             GoogleMap = Map;
             map = new GoogleMap(document.getElementById('map'), {
                 center: { lat: 25.034170, lng: 121.564560 },
@@ -4695,6 +4712,7 @@
                         timelineEdits = JSON.parse(content);
                         console.log(`Loaded ${timelineEdits.additions?.length || 0} additions, ${timelineEdits.modifications?.length || 0} mods, ${timelineEdits.deletions?.length || 0} deletions.`);
                         initialEditsCount = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
+                        savedEditsSnapshot = JSON.stringify(timelineEdits);
                         updateEditsIndicator();
                     } catch (e) {
                         console.error("Error reading TimelineEdits.json", e);
@@ -5203,6 +5221,7 @@
         document.getElementById('editPlaceSearch').value = '';
         document.getElementById('edit-autocomplete-results').innerHTML = '';
         document.getElementById('editPlaceTypes').value = '[]';
+        document.getElementById('editModifiedPath').value = '';
 
         if (item) {
             // Editing existing
@@ -5275,139 +5294,185 @@
         
         // Treat current edits as 'saved' for the remainder of the session
         initialEditsCount = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
+        savedEditsSnapshot = JSON.stringify(timelineEdits);
         updateEditsIndicator();
     }
 
-    document.getElementById('deleteEntryBtn').addEventListener('click', () => {
-        if (!editModeActiveItem) return;
-        if (!confirm("Remove this entry?")) return;
+	document.getElementById('deleteEntryBtn').addEventListener('click', () => {
+		if (!editModeActiveItem) return;
+		if (!confirm("Remove this entry?")) return;
 
-        // Ensure we target the original unedited timestamps
-        const origTimes = editModeActiveFullItem.isEdited ? {
-            startTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.startTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.startTimestamp || editModeActiveFullItem.originalItem.startTime,
-            endTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.endTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.endTimestamp || editModeActiveFullItem.originalItem.endTime
-        } : editModeActiveItem;
+		// Ensure we target the original unedited timestamps
+		const origTimes = editModeActiveFullItem.isEdited ? {
+			startTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.startTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.startTimestamp || editModeActiveFullItem.originalItem.startTime,
+			endTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.endTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.endTimestamp || editModeActiveFullItem.originalItem.endTime
+		} : editModeActiveItem;
 
-        if (!timelineEdits.deletions) timelineEdits.deletions = [];
-        
-        timelineEdits.deletions.push({
-            match: {
-                startTimestamp: origTimes.startTimestamp,
-                endTimestamp: origTimes.endTimestamp
-            }
-        });
+		if (editModeActiveFullItem.isAdded) {
+			// If it was a manually added entry, just remove it from the additions array
+			timelineEdits.additions = timelineEdits.additions.filter(a => {
+				const aStart = a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime;
+				const aEnd = a.placeVisit?.duration?.endTimestamp || a.activitySegment?.duration?.endTimestamp || a.endTime;
+				return !(aStart === origTimes.startTimestamp && aEnd === origTimes.endTimestamp);
+			});
+		} else {
+			// Otherwise, it's a base entry (edited or not). Add it to deletions.
+			if (!timelineEdits.deletions) timelineEdits.deletions = [];
+			timelineEdits.deletions.push({
+				match: {
+					startTimestamp: origTimes.startTimestamp,
+					endTimestamp: origTimes.endTimestamp
+				}
+			});
 
-        // If we delete an item we previously modified, remove it from the modifications list to keep the file clean
-        if (editModeActiveFullItem.isEdited) {
-            timelineEdits.modifications = timelineEdits.modifications.filter(m => 
-                !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
-            );
-        }
+			// If we delete an item we previously modified, remove it from the modifications list to keep the file clean
+			if (editModeActiveFullItem.isEdited) {
+				timelineEdits.modifications = timelineEdits.modifications.filter(m => 
+					!(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
+				);
+			}
+		}
 
-        liveUpdateTimelineData('delete', null, editModeActiveItem);
-        document.getElementById('editEntryModal').style.display = 'none';
-        
-        updateEditsIndicator(); 
-        if (uiEnabled) document.getElementById('goBtn').click();
-    });
+		liveUpdateTimelineData('delete', null, editModeActiveItem);
+		document.getElementById('editEntryModal').style.display = 'none';
+		
+		updateEditsIndicator(); 
+		if (uiEnabled) document.getElementById('goBtn').click();
+	});
 
     document.getElementById('saveEditBtn').addEventListener('click', () => {
-        const tz = getSelectedTimezone();
-        const type = document.getElementById('editEntryType').value;
-        const newStart = moment.tz(document.getElementById('editStartTime').value, tz).utc().toISOString();
-        const newEnd = moment.tz(document.getElementById('editEndTime').value, tz).utc().toISOString();
+		const tz = getSelectedTimezone();
+		const type = document.getElementById('editEntryType').value;
+		const newStart = moment.tz(document.getElementById('editStartTime').value, tz).utc().toISOString();
+		const newEnd = moment.tz(document.getElementById('editEndTime').value, tz).utc().toISOString();
 
-        let newObj = {};
+		let newObj = {};
 
-        if (type === 'placeVisit') {
-            const typesStr = document.getElementById('editPlaceTypes').value;
-            const placeTypes = typesStr ? JSON.parse(typesStr) : [];
-            
-            // Preserve coordinates if placeId hasn't changed to prevent map marker issues
-            let existingLatE7, existingLngE7;
-            if (editModeActiveFullItem && editModeActiveFullItem.placeVisit) {
-                if (editModeActiveFullItem.placeVisit.location.placeId === document.getElementById('editPlaceId').value) {
-                    existingLatE7 = editModeActiveFullItem.placeVisit.location.latitudeE7;
-                    existingLngE7 = editModeActiveFullItem.placeVisit.location.longitudeE7;
-                }
-            }
-            
-            newObj = {
-                placeVisit: {
-                    location: {
-                        placeId: document.getElementById('editPlaceId').value,
-                        name: document.getElementById('editPlaceName').value,
-                        placeTypes: placeTypes,
-                        latitudeE7: existingLatE7,
-                        longitudeE7: existingLngE7
-                    },
-                    duration: { startTimestamp: newStart, endTimestamp: newEnd },
-                    editConfirmationStatus: "CONFIRMED"
-                }
-            };
-        } else {
-            const distance = parseFloat(document.getElementById('editActivityDistance').value) || 0;
-            
-            let existingPath = { distanceMeters: distance, points: [] };
-            let existingStartLoc = {};
-            let existingEndLoc = {};
+		if (type === 'placeVisit') {
+			const typesStr = document.getElementById('editPlaceTypes').value;
+			const placeTypes = typesStr ? JSON.parse(typesStr) : [];
+			
+			// Preserve coordinates if placeId hasn't changed to prevent map marker issues
+			let existingLatE7, existingLngE7;
+			if (editModeActiveFullItem && editModeActiveFullItem.placeVisit) {
+				if (editModeActiveFullItem.placeVisit.location.placeId === document.getElementById('editPlaceId').value) {
+					existingLatE7 = editModeActiveFullItem.placeVisit.location.latitudeE7;
+					existingLngE7 = editModeActiveFullItem.placeVisit.location.longitudeE7;
+					existingSemantic = editModeActiveFullItem.placeVisit.location.semanticType;
+				}
+			}
+			
+			newObj = {
+				placeVisit: {
+					location: {
+						placeId: document.getElementById('editPlaceId').value,
+						name: document.getElementById('editPlaceName').value,
+						placeTypes: placeTypes,
+						latitudeE7: existingLatE7,
+						longitudeE7: existingLngE7,
+						semanticType: existingSemantic
+					},
+					duration: { startTimestamp: newStart, endTimestamp: newEnd },
+					editConfirmationStatus: "CONFIRMED"
+				}
+			};
+		} else {
+			const distance = parseFloat(document.getElementById('editActivityDistance').value) || 0;
+			
+			let existingPath = { distanceMeters: distance, points: [] };
+			let existingStartLoc = {};
+			let existingEndLoc = {};
 
-            if (editModeActiveFullItem && editModeActiveFullItem.activitySegment) {
-                existingPath = editModeActiveFullItem.activitySegment.simplifiedRawPath || editModeActiveFullItem.activitySegment.waypointPath || editModeActiveFullItem.activitySegment.path || existingPath;
-                existingStartLoc = editModeActiveFullItem.activitySegment.startLocation || {};
-                existingEndLoc = editModeActiveFullItem.activitySegment.endLocation || {};
-            }
-            existingPath = { ...existingPath, distanceMeters: distance };
+			if (editModeActiveFullItem && editModeActiveFullItem.activitySegment) {
+				existingPath = editModeActiveFullItem.activitySegment.simplifiedRawPath || editModeActiveFullItem.activitySegment.waypointPath || editModeActiveFullItem.activitySegment.path || existingPath;
+				existingStartLoc = editModeActiveFullItem.activitySegment.startLocation || {};
+				existingEndLoc = editModeActiveFullItem.activitySegment.endLocation || {};
+			}
 
-            newObj = {
-                activitySegment: {
-                    activityType: document.getElementById('editActivityType').value,
-                    distance: distance,
-                    duration: { startTimestamp: newStart, endTimestamp: newEnd },
-                    editConfirmationStatus: "CONFIRMED",
-                    startLocation: existingStartLoc,
-                    endLocation: existingEndLoc,
-                    simplifiedRawPath: existingPath
-                }
-            };
-        }
+			// Override with visually modified path if one exists
+			const modifiedPathStr = document.getElementById('editModifiedPath').value;
+			if (modifiedPathStr) {
+				const coords = JSON.parse(modifiedPathStr);
+				if (coords.length >= 2) {
+					const start = coords[0];
+					const end = coords[coords.length - 1];
+					
+					existingStartLoc = { latitudeE7: Math.round(start.lat * 1e7), longitudeE7: Math.round(start.lng * 1e7) };
+					existingEndLoc = { latitudeE7: Math.round(end.lat * 1e7), longitudeE7: Math.round(end.lng * 1e7) };
+					
+					existingPath.points = coords.map(c => ({ 
+						latE7: Math.round(c.lat * 1e7), 
+						lngE7: Math.round(c.lng * 1e7) 
+					}));
+				}
+			}
+			existingPath = { ...existingPath, distanceMeters: distance };
 
-        if (editModeActiveItem) {
-            newObj.isEdited = true;
-            newObj.originalItem = editModeActiveFullItem.isEdited ? editModeActiveFullItem.originalItem : editModeActiveFullItem;
+			newObj = {
+				activitySegment: {
+					activityType: document.getElementById('editActivityType').value,
+					distance: distance,
+					duration: { startTimestamp: newStart, endTimestamp: newEnd },
+					editConfirmationStatus: "CONFIRMED",
+					startLocation: existingStartLoc,
+					endLocation: existingEndLoc,
+					simplifiedRawPath: existingPath
+				}
+			};
+		}
 
-            // Use the TRUE original timestamps for the match block
-            const origTimes = {
-                startTimestamp: newObj.originalItem.placeVisit?.duration?.startTimestamp || newObj.originalItem.activitySegment?.duration?.startTimestamp || newObj.originalItem.startTime,
-                endTimestamp: newObj.originalItem.placeVisit?.duration?.endTimestamp || newObj.originalItem.activitySegment?.duration?.endTimestamp || newObj.originalItem.endTime
-            };
+		if (editModeActiveFullItem && editModeActiveFullItem.isAdded) {
+			// Modifying a previously ADDED item
+			newObj.isAdded = true;
+			if (!timelineEdits.additions) timelineEdits.additions = [];
+			// Strip out the old version of this addition
+			timelineEdits.additions = timelineEdits.additions.filter(a => {
+				const aStart = a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime;
+				const aEnd = a.placeVisit?.duration?.endTimestamp || a.activitySegment?.duration?.endTimestamp || a.endTime;
+				return !(aStart === editModeActiveItem.startTimestamp && aEnd === editModeActiveItem.endTimestamp);
+			});
+			// Push the corrected version
+			timelineEdits.additions.push(newObj);
+			liveUpdateTimelineData('modify', newObj, editModeActiveItem);
 
-            if (!timelineEdits.modifications) timelineEdits.modifications = [];
-            
-            timelineEdits.modifications = timelineEdits.modifications.filter(m => 
-                !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
-            );
+		} else if (editModeActiveItem) {
+			newObj.isEdited = true;
+			newObj.originalItem = editModeActiveFullItem.isEdited ? editModeActiveFullItem.originalItem : editModeActiveFullItem;
 
-            timelineEdits.modifications.push({
-                match: { startTimestamp: origTimes.startTimestamp, endTimestamp: origTimes.endTimestamp },
-                replaceWith: newObj
-            });
-            liveUpdateTimelineData('modify', newObj, editModeActiveItem);
-        } else {
-            newObj.isAdded = true;
-            if (!timelineEdits.additions) timelineEdits.additions = [];
-            timelineEdits.additions.push(newObj);
-            liveUpdateTimelineData('add', newObj, null);
-        }
+			// Use the TRUE original timestamps for the match block
+			const origTimes = {
+				startTimestamp: newObj.originalItem.placeVisit?.duration?.startTimestamp || newObj.originalItem.activitySegment?.duration?.startTimestamp || newObj.originalItem.startTime,
+				endTimestamp: newObj.originalItem.placeVisit?.duration?.endTimestamp || newObj.originalItem.activitySegment?.duration?.endTimestamp || newObj.originalItem.endTime
+			};
 
-        document.getElementById('editEntryModal').style.display = 'none';
-        
-        updateEditsIndicator(); 
-        if (uiEnabled) {
-            populateActivityFilters(); 
-            document.getElementById('goBtn').click();
-        }
-    });
+			if (!timelineEdits.modifications) timelineEdits.modifications = [];
+			
+			timelineEdits.modifications = timelineEdits.modifications.filter(m => 
+				!(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
+			);
+
+			timelineEdits.modifications.push({
+				match: { startTimestamp: origTimes.startTimestamp, endTimestamp: origTimes.endTimestamp },
+				replaceWith: newObj
+			});
+			liveUpdateTimelineData('modify', newObj, editModeActiveItem);
+			
+		} else {
+			// ADDING a brand new item from scratch
+			newObj.isAdded = true;
+			if (!timelineEdits.additions) timelineEdits.additions = [];
+			timelineEdits.additions.push(newObj);
+			liveUpdateTimelineData('add', newObj, null);
+		}
+
+		document.getElementById('editEntryModal').style.display = 'none';
+		
+		updateEditsIndicator(); 
+		if (uiEnabled) {
+			populateActivityFilters(); 
+			document.getElementById('goBtn').click();
+		}
+	});
     
 	document.getElementById('restoreEntryBtn').addEventListener('click', () => {
         if (!editModeActiveItem || !editModeActiveFullItem || !editModeActiveFullItem.originalItem) return;
@@ -5427,6 +5492,103 @@
         
         updateEditsIndicator(); 
         if (uiEnabled) document.getElementById('goBtn').click();
+    });
+    
+	let editingPolyline = null;
+
+
+    document.getElementById('editPathOnMapBtn').addEventListener('click', () => {
+        document.getElementById('editEntryModal').style.display = 'none';
+        document.getElementById('pathEditOverlay').style.display = 'block';
+
+        let pathCoords = [];
+
+        // 1. Check if we already modified it in this session
+        const modifiedPathStr = document.getElementById('editModifiedPath').value;
+        if (modifiedPathStr) {
+            pathCoords = JSON.parse(modifiedPathStr);
+        } 
+        // 2. Otherwise, extract from the existing item
+        else if (editModeActiveFullItem && editModeActiveFullItem.activitySegment) {
+            const seg = editModeActiveFullItem.activitySegment;
+            const rawPoints = seg.simplifiedRawPath?.points || seg.waypointPath?.waypoints || seg.path || [];
+
+            const startLat = seg.startLocation?.latitudeE7 / 1e7 || seg.startLocation?.lat;
+            const startLng = seg.startLocation?.longitudeE7 / 1e7 || seg.startLocation?.lng;
+            if (startLat && startLng) pathCoords.push({ lat: startLat, lng: startLng });
+
+            rawPoints.forEach(p => {
+                const lat = p.latE7 !== undefined ? p.latE7 / 1e7 : p.lat;
+                const lng = p.lngE7 !== undefined ? p.lngE7 / 1e7 : p.lng;
+                if (lat && lng) pathCoords.push({ lat, lng });
+            });
+
+            const endLat = seg.endLocation?.latitudeE7 / 1e7 || seg.endLocation?.lat;
+            const endLng = seg.endLocation?.longitudeE7 / 1e7 || seg.endLocation?.lng;
+            if (endLat && endLng) {
+                const lastPoint = pathCoords[pathCoords.length - 1];
+                if (!lastPoint || lastPoint.lat !== endLat || lastPoint.lng !== endLng) {
+                    pathCoords.push({ lat: endLat, lng: endLng });
+                }
+            }
+        }
+
+        // 3. Fallback: Draw a default line in the center of the map if creating from scratch
+        if (pathCoords.length === 0) {
+            const center = map.getCenter();
+            pathCoords = [
+                { lat: center.lat() - 0.005, lng: center.lng() - 0.005 },
+                { lat: center.lat() + 0.005, lng: center.lng() + 0.005 }
+            ];
+        }
+
+        // Create the editable polyline
+        editingPolyline = new google.maps.Polyline({
+            path: pathCoords,
+            editable: true,
+            strokeColor: '#007bff',
+            strokeWeight: 6,
+            zIndex: 2000,
+            map: map
+        });
+
+        // Allow deleting points with a right-click
+        google.maps.event.addListener(editingPolyline, 'rightclick', function(e) {
+            if (e.vertex != null && this.getPath().getLength() > 2) {
+                this.getPath().removeAt(e.vertex);
+            }
+        });
+
+        // Fit map bounds to the path
+        const bounds = new google.maps.LatLngBounds();
+        pathCoords.forEach(p => bounds.extend(p));
+        map.fitBounds(bounds, 50);
+    });
+
+    // Handle "Cancel" from the overlay
+    document.getElementById('cancelPathEditBtn').addEventListener('click', () => {
+        if (editingPolyline) editingPolyline.setMap(null);
+        document.getElementById('pathEditOverlay').style.display = 'none';
+        document.getElementById('editEntryModal').style.display = 'block';
+    });
+
+    // Handle "Done" from the overlay
+    document.getElementById('savePathEditBtn').addEventListener('click', () => {
+        if (editingPolyline) {
+            const pathArray = editingPolyline.getPath().getArray();
+            const newCoords = pathArray.map(p => ({ lat: p.lat(), lng: p.lng() }));
+            document.getElementById('editModifiedPath').value = JSON.stringify(newCoords);
+            
+            // Auto-calculate the new distance
+            if (window.googleGeometry && window.googleGeometry.spherical) {
+                const newDist = Math.round(window.googleGeometry.spherical.computeLength(editingPolyline.getPath()));
+                document.getElementById('editActivityDistance').value = newDist;
+            }
+            
+            editingPolyline.setMap(null);
+        }
+        document.getElementById('pathEditOverlay').style.display = 'none';
+        document.getElementById('editEntryModal').style.display = 'block';
     });
     
     // Helper to safely apply edits to the running data without reloading files
@@ -5470,23 +5632,39 @@
     }
     
 	function updateEditsIndicator() {
-        const indicator = document.getElementById('edits-indicator');
-        const savedSpan = document.getElementById('saved-edits-count');
-        const newSpan = document.getElementById('new-edits-count');
-        const saveBtn = document.getElementById('saveEditsBtn');
-        
-        const currentTotal = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
-        const newCount = currentTotal - initialEditsCount;
-        
-        if (currentTotal > 0 || initialEditsCount > 0) {
-            indicator.style.display = 'flex';
-            savedSpan.textContent = initialEditsCount;
-            newSpan.textContent = newCount;
-            saveBtn.disabled = newCount <= 0; // Disable if no new edits
-        } else {
-            indicator.style.display = 'none';
-        }
-    }
+		const indicator = document.getElementById('edits-indicator');
+		const savedSpan = document.getElementById('saved-edits-count');
+		const newSpan = document.getElementById('new-edits-count');
+		const saveBtn = document.getElementById('saveEditsBtn');
+		
+		const currentTotal = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
+		const newCount = currentTotal - initialEditsCount;
+		
+		// Check for ACTUAL changes by comparing the current state to the last saved snapshot
+		const hasUnsavedChanges = JSON.stringify(timelineEdits) !== savedEditsSnapshot;
+		
+		if (currentTotal > 0 || initialEditsCount > 0 || hasUnsavedChanges) {
+			indicator.style.display = 'flex';
+			savedSpan.textContent = initialEditsCount;
+			
+			// Update the text to be less confusing based on what action was taken
+			if (newCount < 0) {
+				newSpan.textContent = Math.abs(newCount);
+				newSpan.nextElementSibling.textContent = " removed";
+			} else if (newCount === 0 && hasUnsavedChanges) {
+				newSpan.textContent = "Modified";
+				newSpan.nextElementSibling.textContent = "";
+			} else {
+				newSpan.textContent = newCount;
+				newSpan.nextElementSibling.textContent = " new";
+			}
+			
+			// Enable save button based on true differences
+			saveBtn.disabled = !hasUnsavedChanges;
+		} else {
+			indicator.style.display = 'none';
+		}
+	}
 
 
     function initEditModal() {
