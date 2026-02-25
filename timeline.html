@@ -766,10 +766,6 @@
             text-align: right;
             flex-shrink: 1;
         }
-        #data-source-indicator {
-            text-align: left; /* Align text to the left */
-            flex-grow: 1; /* Allow it to take available space */
-        }
         #api-call-counter {
             font-weight: bold;
             color: #343a40;
@@ -1105,6 +1101,38 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* --- Edit Controls --- */
+        .timeline-item .edit-item-btn {
+            display: none;
+            position: absolute; 
+            top: 5px; 
+            right: 5px; 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 14px;
+            opacity: 0.6;
+        }
+        .timeline-item .edit-item-btn:hover {
+            opacity: 1;
+        }
+        /* Show on hover or when highlighted */
+        .timeline-item:hover .edit-item-btn,
+        .timeline-item.highlighted .edit-item-btn {
+            display: block;
+        }
+        .edited-indicator {
+            position: absolute;
+            bottom: 5px;
+            right: 28px; /* positioned just to the left of the checkmark */
+            font-size: 10px;
+            font-style: italic;
+            color: #007bff;
+            opacity: 0.7;
+        }
+        .highlighted .edited-indicator {
+            opacity: 1;
+        }
         
         /* For Charts */
         #summary-charts-container {
@@ -1499,8 +1527,15 @@
         </div>
 
         <div id="status-bar-container">
-            <div id="status-info">
-                <span id="data-source-indicator">No data loaded. Use "Load Data".</span>
+			<div id="status-info">
+                <div id="edits-indicator" style="display: none; align-items: center; gap: 8px; font-size: 10px; margin-bottom: 2px;">
+                    <span>
+                        Timeline Edits:
+                        <span id="saved-edits-count">0</span> saved /
+                        <span id="new-edits-count" style="color: #007bff; font-weight: bold;">0</span><span style="color: #007bff; font-weight: bold;"> new</span>
+                    </span>
+                    <button id="saveEditsBtn" class="cache-btn" disabled>Save</button>
+                </div>
                 <div id="cache-indicator" style="display: none;">
                     <span>
                         Place cache:
@@ -1558,6 +1593,58 @@
         </div>
         <pre id="debugOverlayContent"></pre>
     </div>
+    
+    <div id="editEntryModal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2000; width: 350px;">
+        <h3 id="editEntryTitle" style="margin-top: 0;">Edit Entry</h3>
+        
+        <label>Entry Type:</label>
+        <select id="editEntryType" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+            <option value="placeVisit">Place Visit</option>
+            <option value="activitySegment">Activity / Travel</option>
+        </select>
+
+        <div id="editPlaceFields">
+            <input type="hidden" id="editPlaceTypes" value="[]">
+            <label>Search Place:</label>
+            <div style="position: relative;">
+                <input type="text" id="editPlaceSearch" style="width: 100%; margin-bottom: 5px; padding: 5px;" placeholder="Search for a place..." autocomplete="off">
+                <div id="edit-autocomplete-results" style="position: absolute; border: 1px solid #d4d4d4; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; background-color: #fff; max-height: 150px; overflow-y: auto;"></div>
+            </div>
+
+            <label>Place ID:</label>
+            <input type="text" id="editPlaceId" style="width: 100%; margin-bottom: 10px; padding: 5px; background-color: #f8f9fa;" readonly placeholder="ChIJ...">
+            
+            <label>Location Name (Fallback):</label>
+            <input type="text" id="editPlaceName" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+        </div>
+
+        <div id="editActivityFields" style="display: none;">
+            <label>Activity Type:</label>
+            <select id="editActivityType" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+                </select>
+            
+            <label>Distance (meters):</label>
+            <input type="number" id="editActivityDistance" style="width: 100%; margin-bottom: 10px; padding: 5px;" min="0" step="1">
+        </div>
+
+        <label>Start Time:</label>
+        <input type="datetime-local" id="editStartTime" style="width: 100%; margin-bottom: 10px; padding: 5px;" step="1">
+
+        <label>End Time:</label>
+        <input type="datetime-local" id="editEndTime" style="width: 100%; margin-bottom: 15px; padding: 5px;" step="1">
+
+		<div style="display: flex; justify-content: space-between;">
+            <div>
+                <button id="deleteEntryBtn" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Delete</button>
+                <button id="restoreEntryBtn" style="background: #ffc107; color: #333; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; display: none; margin-left: 5px;">Restore Original</button>
+            </div>
+            <div>
+                <button id="cancelEditBtn" style="background: #ccc; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Cancel</button>
+                <button id="saveEditBtn" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Save</button>
+            </div>
+        </div>        
+        
+    </div>
 
     <div class="map-custom-controls">
         <button id="fitMapBtn" class="map-overlay-btn" title="Fit Map to Data" disabled>⤢</button>
@@ -1613,6 +1700,10 @@
     let lastAreaSearchMode = 'all';
     let lastTimelineItemToHighlight = null;
     let isDebugMode = false;
+    let timelineEdits = { additions: [], modifications: [], deletions: [] };
+    let initialEditsCount = 0;
+    let editModeActiveItem = null; // Stores original timestamps when editing an item
+    let editModeActiveFullItem = null;
     let homePlaceIds = [];
     let workPlaceIds = [];
 
@@ -1678,11 +1769,13 @@
 
     // Function to get the grouped activity type from a raw type
     function getGroupedActivityType(rawType) {
+        if (!rawType) return 'UNKNOWN';
+        const upperType = rawType.toUpperCase();
         // If the passed type is ALREADY a master group name, return it directly
-        if (activityGroupMapping.hasOwnProperty(rawType)) {
-            return rawType;
+        if (activityGroupMapping.hasOwnProperty(upperType)) {
+            return upperType;
         }
-        return rawToGroupMapping[rawType] || 'UNKNOWN'; // Default to UNKNOWN if not found
+        return rawToGroupMapping[upperType] || 'UNKNOWN';
     }
 
     // --- Place Type to Color/Icon Mapping (for sidebar and charts) ---
@@ -1909,56 +2002,43 @@
 
     // Format activity type name for display (uses grouped type where appropriate)
     function formatActivityType(activityType) {
-        // Fallback to specific formatting for raw types
-        switch (activityType) {
-            case 'IN_VEHICLE': case 'DRIVE': return 'Driving';
+        if (!activityType) return 'Unknown Activity';
+
+        const upperType = activityType.toUpperCase();
+
+        // 1. Specific overrides for raw types or groups that need unique phrasing
+        switch (upperType) {
+            case 'IN_VEHICLE': case 'DRIVE': case 'DRIVING': return 'Driving';
             case 'IN_PASSENGER_VEHICLE': return 'In a Vehicle';
-            case 'IN_TAXI': return 'In a Taxi';
-            case 'MOTORCYCLING': return 'Motorcycling';
+            case 'IN_TAXI': case 'TAXI': return 'In a Taxi';
             case 'ON_BICYCLE': case 'CYCLING': case 'BICYCLE': return 'Biking';
             case 'ON_FOOT': case 'WALKING': case 'WALK': return 'Walking';
             case 'WALKING_NORDIC': return 'Nordic Walking';
-            case 'HIKING': return 'Hiking';
-            case 'RUNNING': return 'Running';
-            case 'IN_BUS': return 'On a Bus';
-            case 'IN_SUBWAY': return 'On the Subway';
-            case 'IN_TRAIN': return 'On a Train';
-            case 'IN_TRAM': return 'On a Tram';
-            case 'IN_FERRY': return 'On a Ferry';
-            case 'STILL': return 'Stationary';
-            case 'FLYING': return 'On a Plane';
-            case 'IN_CABLECAR': return 'On a Cable Car';
-            case 'IN_FUNICULAR': return 'On a Funicular';
-            case 'IN_GONDOLA_LIFT': return 'On a Gondola';
-            case 'IN_WHEELCHAIR': return 'In a Wheelchair';
-            case 'SNOWMOBILE': return 'On a Snowmobile';
-            case 'BOATING': return 'Boating';
+            case 'IN_BUS': case 'BUS': return 'On a Bus';
+            case 'IN_SUBWAY': case 'SUBWAY': return 'On the Subway';
+            case 'IN_TRAIN': case 'TRAIN': return 'On a Train';
+            case 'IN_TRAM': case 'TRAM': return 'On a Tram';
+            case 'IN_FERRY': case 'FERRY': return 'On a Ferry';
+            case 'STILL': case 'STATIONARY': return 'Stationary';
+            case 'FLYING': case 'IN_FLIGHT': return 'On a Plane';
+            case 'IN_CABLECAR': case 'CABLECAR': return 'On a Cable Car';
+            case 'IN_FUNICULAR': case 'FUNICULAR': return 'On a Funicular';
+            case 'IN_GONDOLA_LIFT': case 'GONDOLA_LIFT': return 'On a Gondola';
+            case 'IN_WHEELCHAIR': case 'WHEELCHAIR': return 'In a Wheelchair';
             case 'CATCHING_POKEMON': return 'Catching Pokémon';
-            case 'HORSEBACK_RIDING': return 'Horseback Riding';
-            case 'KAYAKING': return 'Kayaking';
-            case 'KITESURFING': return 'Kitesurfing';
-            case 'PARAGLIDING': return 'Paragliding';
-            case 'ROWING': return 'Rowing';
-            case 'SAILING': return 'Sailing';
-            case 'SKATEBOARDING': return 'Skateboarding';
-            case 'SKATING': return 'Skating';
-            case 'SKIING': return 'Skiing';
-            case 'SLEDDING': return 'Sledding';
-            case 'SNOWBOARDING': return 'Snowboarding';
-            case 'SNOWSHOEING': return 'Snowshoeing';
-            case 'SURFING': return 'Surfing';
-            case 'SWIMMING': return 'Swimming';
             case 'UNKNOWN': case 'UNKNOWN_ACTIVITY_TYPE': return 'Unknown Activity';
             case 'TILTING': return 'Device Tilt';
-            default:
-                const group = getGroupedActivityType(activityType);
-                // Use group name if it's not UNKNOWN
-                if (group !== 'UNKNOWN' && group !== activityType) {
-                    return group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                }else{
-                    return activityType ? activityType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Activity';
-                }
         }
+
+        // 2. Fallback to Group Name check
+        const group = getGroupedActivityType(upperType);
+        if (group !== 'UNKNOWN' && group !== upperType) {
+            // Recursively call to catch group-level overrides (like TAXI -> In a Taxi)
+            return formatActivityType(group);
+        }
+
+        // 3. Final Fallback: Convert UNDERSCORE_CASE to Title Case
+        return upperType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
     }
 
     function showSidebarTab(tabName) {
@@ -2086,29 +2166,34 @@
     // --- Timeline Rendering ---
 
     // Creates a single timeline item element for the sidebar
-    // Creates a single timeline item element for the sidebar
     function createTimelineItem(item, index, currentDate) {
         const timelineItem = document.createElement('div');
         timelineItem.className = 'timeline-item';
         timelineItem.dataset.index = index; // Use the global index
-        // --- DEBUG START: Add raw data ---
+        
 		try {
             timelineItem.dataset.rawJson = JSON.stringify(item);
         } catch (e) {
             console.error("Error stringifying raw data for item:", item, e);
             timelineItem.dataset.rawJson = '{"error": "Could not serialize data"}';
         }
-        // --- DEBUG END: Add raw data ---
 
-        // Check if a date header needs to be added for this date
+		// Check if a date header needs to be added for this date
         const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
         if (!existingHeader) {
             const dateHeader = document.createElement('div');
             dateHeader.className = 'date-header';
             dateHeader.dataset.date = currentDate;
-            dateHeader.textContent = formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY');
+            // UPDATE THIS LINE to include the Add button (+):
+            dateHeader.innerHTML = `<span>${formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY')}</span> <button class="add-entry-btn" style="margin-left:auto; background:none; border:none; cursor:pointer;" title="Add Entry">➕</button>`;
+            
             const timelineContainer = document.getElementById('timeline');
             timelineContainer.appendChild(dateHeader);
+            
+            // Add Listener
+            dateHeader.querySelector('.add-entry-btn').addEventListener('click', () => {
+                openEditModal(null, currentDate); // null item = Add New
+            });
         }
 
         let startTimestamp, endTimestamp;
@@ -2189,6 +2274,31 @@
             checkmark.className = 'confirmed-checkmark';
             checkmark.textContent = '✔️';
             timelineItem.appendChild(checkmark);
+        }
+
+		// Add Edit Button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-item-btn';
+        editBtn.textContent = '✏️';
+        editBtn.title = "Edit Entry";
+        
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent map fly-to when clicking edit
+            openEditModal(item, currentDate);
+        });
+        timelineItem.appendChild(editBtn);
+
+        // Add Edited / Added Indicator
+        if (item.isEdited) {
+            const indicator = document.createElement('span');
+            indicator.className = 'edited-indicator';
+            indicator.textContent = '(Edited)';
+            timelineItem.appendChild(indicator);
+        } else if (item.isAdded) {
+            const indicator = document.createElement('span');
+            indicator.className = 'edited-indicator';
+            indicator.textContent = '(Added)';
+            timelineItem.appendChild(indicator);
         }
 
         return timelineItem;
@@ -2325,12 +2435,12 @@
         const fallbackName = locationName || (lat && lng ? `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})` : 'Unknown Location');
 
         // Attempt to fetch Place Details if placeId exists and not cached
-        if (placeId && !isNaN(lat) && !isNaN(lng)) {
+        if (placeId) {
             if (placeDetailsCache[placeId]) {
                 // Check if we previously marked this place as permanently missing
                 if (placeDetailsCache[placeId].isMissing) {
                     console.log(`Using cached 'missing' status for placeId: ${placeId}`);
-                    renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
+                    if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
                     updateSidebarItem(index, fallbackName, null, [], true, semanticTypeStr);
                 } else {
                     // Use cached details (either original or replacement)
@@ -2339,7 +2449,7 @@
                 }
             } else if (apiCallsDisabled) {
                 console.log(`API calls disabled. Rendering basic marker for placeId: ${placeId}`);
-                renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
+                if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, originalVisitData, index);
                 updateSidebarItem(index, fallbackName, null, [], false, semanticTypeStr); // Update sidebar with basic info
             } else {
                 // Fetch details using the API
@@ -2426,7 +2536,7 @@
         
         if (apiCallsDisabled) {
             console.log("API calls disabled. Skipping fetchPlaceDetails, rendering basic marker.");
-            renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+            if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
             updateSidebarItem(index, fallbackName, null, [], false, customSemanticType);
             return;
         }
@@ -2451,7 +2561,7 @@
             // Use the newly populated cache
             if (placeDetailsCache[placeId]) {
                 if (placeDetailsCache[placeId].isMissing) {
-                    renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                    if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
                     if (sidebarItem) {
                         const nametag = sidebarItem.querySelector('strong');
                         if (nametag) nametag.textContent = fallbackName;
@@ -2526,7 +2636,7 @@
                 }
 
                 // Fallback to basic marker if everything failed
-                renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
+                if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
                 
                 if (sidebarItem) {
                     const nametag = sidebarItem.querySelector('strong');
@@ -3644,7 +3754,8 @@
             const prediction = suggestion.placePrediction;
             const placeId = prediction.placeId;
             const placeText = prediction.text.text;
-            item.innerHTML = `<span class="pac-icon"></span> <span>${escapeHtml(placeText)}</span>`;
+            const shortName = prediction.structuredFormat?.mainText?.text || prediction.text.text;
+            item.innerHTML = `<span class="pac-icon"></span> <span><b>${escapeHtml(shortName)}</b> ${escapeHtml(prediction.text.text)}</span>`;
             item.addEventListener('click', () => {
                 console.log("Place selected:", placeText, placeId);
                 document.getElementById('searchInput').value = placeText; // Populate input
@@ -4508,7 +4619,6 @@
 
         if (!enabled) {
             // Reset state when UI is disabled (e.g., no data loaded)
-            document.getElementById('data-source-indicator').textContent = 'No data loaded. Use "Load Data".';
             document.getElementById('cache-indicator').style.display = 'none';
             clearMap();
             clearTimeline();
@@ -4564,16 +4674,31 @@
 
         try {
             // --- Step 1: Scan for Timeline.json and TimelinePlaceCache.json at current level (non-recursive) ---
-            if (!isRecursive) {
+            let editsFile = null;
+			if (!isRecursive) {
                 for await (const entry of dirHandle.values()) {
                     if (entry.kind === 'file') {
                         if (entry.name.toLowerCase() === 'timeline.json') {
                             timelineJsonFile = entry;
                         } else if (entry.name.toLowerCase() === 'timelineplacecache.json') {
                             placeCacheFile = entry;
+                        } else if (entry.name.toLowerCase() === 'timelineedits.json') {
+                            editsFile = entry;
                         }
                     }
-                    if (timelineJsonFile && placeCacheFile) break; // Found both, no need to look further
+                }
+                
+                if (editsFile) {
+                    try {
+                        const file = await editsFile.getFile();
+                        const content = await file.text();
+                        timelineEdits = JSON.parse(content);
+                        console.log(`Loaded ${timelineEdits.additions?.length || 0} additions, ${timelineEdits.modifications?.length || 0} mods, ${timelineEdits.deletions?.length || 0} deletions.`);
+                        initialEditsCount = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
+                        updateEditsIndicator();
+                    } catch (e) {
+                        console.error("Error reading TimelineEdits.json", e);
+                    }
                 }
 
                 // Load Place Details Cache if found
@@ -5010,6 +5135,7 @@
 
             // --- Step 4: Post Loading (only on initial call) ---
             if (!isRecursive) {
+				applyTimelineEdits();
                 if (Object.keys(timelineData).length > 0) {
                     // Set the global locationBias from the latest found location
                     locationBias = latestLocation;
@@ -5019,7 +5145,6 @@
                     console.log("Data loading complete. Enabling UI.");
 
                     // Update the data source indicator text
-                    document.getElementById('data-source-indicator').textContent = `Data source: ${dataSourceText}`;
                     updateCacheIndicator(); // Display the initial cache counts
 
                     await saveDirectoryHandle(dirHandle);
@@ -5036,7 +5161,6 @@
 
                 } else {
                     // No data was successfully loaded
-                    document.getElementById('data-source-indicator').innerHTML = 'No valid timeline data found.';
                     setUIEnabled(false);
                     alert("No valid timeline data could be loaded from the selected folder.");
                 }
@@ -5056,6 +5180,397 @@
             }
         }
     }
+    
+    // --- Edit Modal Logic ---
+
+    document.getElementById('editEntryType').addEventListener('change', (e) => {
+        document.getElementById('editPlaceFields').style.display = e.target.value === 'placeVisit' ? 'block' : 'none';
+        document.getElementById('editActivityFields').style.display = e.target.value === 'activitySegment' ? 'block' : 'none';
+    });
+
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        document.getElementById('editEntryModal').style.display = 'none';
+    });
+
+	function openEditModal(item, baseDateStr) {
+        const modal = document.getElementById('editEntryModal');
+        const title = document.getElementById('editEntryTitle');
+        const deleteBtn = document.getElementById('deleteEntryBtn');
+        const tz = getSelectedTimezone();
+        editModeActiveFullItem = item;
+
+        // Reset search field
+        document.getElementById('editPlaceSearch').value = '';
+        document.getElementById('edit-autocomplete-results').innerHTML = '';
+        document.getElementById('editPlaceTypes').value = '[]';
+
+        if (item) {
+            // Editing existing
+            title.textContent = "Edit Entry";
+            deleteBtn.style.display = "block";
+            
+            const itemStart = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp || item.startTime;
+            const itemEnd = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp || item.endTime;
+            
+            editModeActiveItem = { startTimestamp: itemStart, endTimestamp: itemEnd };
+
+            document.getElementById('editStartTime').value = moment.tz(itemStart, tz).format('YYYY-MM-DDTHH:mm:ss');
+            document.getElementById('editEndTime').value = moment.tz(itemEnd, tz).format('YYYY-MM-DDTHH:mm:ss');
+
+            if (item.placeVisit || item.visit) {
+                document.getElementById('editEntryType').value = 'placeVisit';
+                document.getElementById('editPlaceId').value = item.placeVisit?.location?.placeId || item.visit?.topCandidate?.placeID || '';
+                document.getElementById('editPlaceName').value = item.placeVisit?.location?.name || item.visit?.topCandidate?.name || '';
+                // Grab existing types if available
+                const types = item.placeVisit?.location?.placeTypes || item.visit?.topCandidate?.placeTypes || [];
+                document.getElementById('editPlaceTypes').value = JSON.stringify(types);
+            } else {
+                document.getElementById('editEntryType').value = 'activitySegment';
+                const activityType = item.activitySegment?.activityType || 'UNKNOWN';
+                document.getElementById('editActivityType').value = getGroupedActivityType(activityType);
+                
+                const dist = item.activitySegment?.distance || item.activitySegment?.simplifiedRawPath?.distanceMeters || item.activitySegment?.waypointPath?.distanceMeters || 0;
+                document.getElementById('editActivityDistance').value = dist;
+            }
+            
+            // Show Restore button ONLY if it's currently an override
+            if (item.isEdited) {
+                document.getElementById('restoreEntryBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('restoreEntryBtn').style.display = 'none';
+            }
+        } else {
+            // Adding new
+            title.textContent = "Add Entry";
+            deleteBtn.style.display = "none";
+            editModeActiveItem = null; // Denotes Add Mode
+            
+            // Default to noon of the selected date
+            document.getElementById('editStartTime').value = moment.tz(baseDateStr, tz).set({hour:12, minute:0}).format('YYYY-MM-DDTHH:mm:ss');
+            document.getElementById('editEndTime').value = moment.tz(baseDateStr, tz).set({hour:13, minute:0}).format('YYYY-MM-DDTHH:mm:ss');
+            
+            document.getElementById('editEntryType').value = 'placeVisit';
+            document.getElementById('editPlaceId').value = '';
+            document.getElementById('editPlaceName').value = '';
+            document.getElementById('editActivityDistance').value = '0';
+            document.getElementById('restoreEntryBtn').style.display = 'none';
+        }
+
+        document.getElementById('editEntryType').dispatchEvent(new Event('change')); // Trigger UI toggle
+        modal.style.display = 'block';
+    }
+
+	function saveEditsToFile() {
+        const jsonData = JSON.stringify(timelineEdits, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'TimelineEdits.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log("TimelineEdits.json downloaded.");
+        
+        // Treat current edits as 'saved' for the remainder of the session
+        initialEditsCount = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
+        updateEditsIndicator();
+    }
+
+    document.getElementById('deleteEntryBtn').addEventListener('click', () => {
+        if (!editModeActiveItem) return;
+        if (!confirm("Remove this entry?")) return;
+
+        // Ensure we target the original unedited timestamps
+        const origTimes = editModeActiveFullItem.isEdited ? {
+            startTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.startTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.startTimestamp || editModeActiveFullItem.originalItem.startTime,
+            endTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.endTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.endTimestamp || editModeActiveFullItem.originalItem.endTime
+        } : editModeActiveItem;
+
+        if (!timelineEdits.deletions) timelineEdits.deletions = [];
+        
+        timelineEdits.deletions.push({
+            match: {
+                startTimestamp: origTimes.startTimestamp,
+                endTimestamp: origTimes.endTimestamp
+            }
+        });
+
+        // If we delete an item we previously modified, remove it from the modifications list to keep the file clean
+        if (editModeActiveFullItem.isEdited) {
+            timelineEdits.modifications = timelineEdits.modifications.filter(m => 
+                !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
+            );
+        }
+
+        liveUpdateTimelineData('delete', null, editModeActiveItem);
+        document.getElementById('editEntryModal').style.display = 'none';
+        
+        updateEditsIndicator(); 
+        if (uiEnabled) document.getElementById('goBtn').click();
+    });
+
+    document.getElementById('saveEditBtn').addEventListener('click', () => {
+        const tz = getSelectedTimezone();
+        const type = document.getElementById('editEntryType').value;
+        const newStart = moment.tz(document.getElementById('editStartTime').value, tz).utc().toISOString();
+        const newEnd = moment.tz(document.getElementById('editEndTime').value, tz).utc().toISOString();
+
+        let newObj = {};
+
+        if (type === 'placeVisit') {
+            const typesStr = document.getElementById('editPlaceTypes').value;
+            const placeTypes = typesStr ? JSON.parse(typesStr) : [];
+            
+            // Preserve coordinates if placeId hasn't changed to prevent map marker issues
+            let existingLatE7, existingLngE7;
+            if (editModeActiveFullItem && editModeActiveFullItem.placeVisit) {
+                if (editModeActiveFullItem.placeVisit.location.placeId === document.getElementById('editPlaceId').value) {
+                    existingLatE7 = editModeActiveFullItem.placeVisit.location.latitudeE7;
+                    existingLngE7 = editModeActiveFullItem.placeVisit.location.longitudeE7;
+                }
+            }
+            
+            newObj = {
+                placeVisit: {
+                    location: {
+                        placeId: document.getElementById('editPlaceId').value,
+                        name: document.getElementById('editPlaceName').value,
+                        placeTypes: placeTypes,
+                        latitudeE7: existingLatE7,
+                        longitudeE7: existingLngE7
+                    },
+                    duration: { startTimestamp: newStart, endTimestamp: newEnd },
+                    editConfirmationStatus: "CONFIRMED"
+                }
+            };
+        } else {
+            const distance = parseFloat(document.getElementById('editActivityDistance').value) || 0;
+            
+            let existingPath = { distanceMeters: distance, points: [] };
+            let existingStartLoc = {};
+            let existingEndLoc = {};
+
+            if (editModeActiveFullItem && editModeActiveFullItem.activitySegment) {
+                existingPath = editModeActiveFullItem.activitySegment.simplifiedRawPath || editModeActiveFullItem.activitySegment.waypointPath || editModeActiveFullItem.activitySegment.path || existingPath;
+                existingStartLoc = editModeActiveFullItem.activitySegment.startLocation || {};
+                existingEndLoc = editModeActiveFullItem.activitySegment.endLocation || {};
+            }
+            existingPath = { ...existingPath, distanceMeters: distance };
+
+            newObj = {
+                activitySegment: {
+                    activityType: document.getElementById('editActivityType').value,
+                    distance: distance,
+                    duration: { startTimestamp: newStart, endTimestamp: newEnd },
+                    editConfirmationStatus: "CONFIRMED",
+                    startLocation: existingStartLoc,
+                    endLocation: existingEndLoc,
+                    simplifiedRawPath: existingPath
+                }
+            };
+        }
+
+        if (editModeActiveItem) {
+            newObj.isEdited = true;
+            newObj.originalItem = editModeActiveFullItem.isEdited ? editModeActiveFullItem.originalItem : editModeActiveFullItem;
+
+            // Use the TRUE original timestamps for the match block
+            const origTimes = {
+                startTimestamp: newObj.originalItem.placeVisit?.duration?.startTimestamp || newObj.originalItem.activitySegment?.duration?.startTimestamp || newObj.originalItem.startTime,
+                endTimestamp: newObj.originalItem.placeVisit?.duration?.endTimestamp || newObj.originalItem.activitySegment?.duration?.endTimestamp || newObj.originalItem.endTime
+            };
+
+            if (!timelineEdits.modifications) timelineEdits.modifications = [];
+            
+            timelineEdits.modifications = timelineEdits.modifications.filter(m => 
+                !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
+            );
+
+            timelineEdits.modifications.push({
+                match: { startTimestamp: origTimes.startTimestamp, endTimestamp: origTimes.endTimestamp },
+                replaceWith: newObj
+            });
+            liveUpdateTimelineData('modify', newObj, editModeActiveItem);
+        } else {
+            newObj.isAdded = true;
+            if (!timelineEdits.additions) timelineEdits.additions = [];
+            timelineEdits.additions.push(newObj);
+            liveUpdateTimelineData('add', newObj, null);
+        }
+
+        document.getElementById('editEntryModal').style.display = 'none';
+        
+        updateEditsIndicator(); 
+        if (uiEnabled) {
+            populateActivityFilters(); 
+            document.getElementById('goBtn').click();
+        }
+    });
+    
+	document.getElementById('restoreEntryBtn').addEventListener('click', () => {
+        if (!editModeActiveItem || !editModeActiveFullItem || !editModeActiveFullItem.originalItem) return;
+        if (!confirm("Remove override and restore original entry?")) return;
+
+        const origTimes = {
+            startTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.startTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.startTimestamp || editModeActiveFullItem.originalItem.startTime,
+            endTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.endTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.endTimestamp || editModeActiveFullItem.originalItem.endTime
+        };
+
+        timelineEdits.modifications = timelineEdits.modifications.filter(m => 
+            !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
+        );
+
+        liveUpdateTimelineData('restore', editModeActiveFullItem.originalItem, editModeActiveItem);
+        document.getElementById('editEntryModal').style.display = 'none';
+        
+        updateEditsIndicator(); 
+        if (uiEnabled) document.getElementById('goBtn').click();
+    });
+    
+    // Helper to safely apply edits to the running data without reloading files
+    function liveUpdateTimelineData(action, newObj, originalTimestamps) {
+        // 1. Remove the old item
+        if (action === 'modify' || action === 'delete' || action === 'restore') {
+            const oldDate = new Date(originalTimestamps.startTimestamp);
+            const oldMonthKey = `${oldDate.getFullYear()}_${moment(oldDate).format('MMMM').toUpperCase()}`;
+            
+            if (timelineData[oldMonthKey]) {
+                const objs = timelineData[oldMonthKey].timelineObjects;
+                const idx = objs.findIndex(item => {
+                    const start = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp || item.startTime;
+                    const end = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp || item.endTime;
+                    return start === originalTimestamps.startTimestamp && end === originalTimestamps.endTimestamp;
+                });
+                if (idx !== -1) objs.splice(idx, 1);
+            }
+        }
+
+        // 2. Insert the new item (or the restored original item)
+        if (action === 'add' || action === 'modify' || action === 'restore') {
+            const newStart = newObj.placeVisit?.duration?.startTimestamp || newObj.activitySegment?.duration?.startTimestamp || newObj.startTime;
+            const newDate = new Date(newStart);
+            const newMonthKey = `${newDate.getFullYear()}_${moment(newDate).format('MMMM').toUpperCase()}`;
+            
+            if (!timelineData[newMonthKey]) timelineData[newMonthKey] = { timelineObjects: [] };
+            timelineData[newMonthKey].timelineObjects.push(newObj);
+            
+            timelineData[newMonthKey].timelineObjects.sort((a, b) => {
+                const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
+                const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+                return timeA - timeB;
+            });
+            
+            if (newObj.activitySegment) activityTypes.add(newObj.activitySegment.activityType);
+        }
+
+        allYearlySummaries = null; 
+        allMonthlySummaries = null;
+    }
+    
+	function updateEditsIndicator() {
+        const indicator = document.getElementById('edits-indicator');
+        const savedSpan = document.getElementById('saved-edits-count');
+        const newSpan = document.getElementById('new-edits-count');
+        const saveBtn = document.getElementById('saveEditsBtn');
+        
+        const currentTotal = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
+        const newCount = currentTotal - initialEditsCount;
+        
+        if (currentTotal > 0 || initialEditsCount > 0) {
+            indicator.style.display = 'flex';
+            savedSpan.textContent = initialEditsCount;
+            newSpan.textContent = newCount;
+            saveBtn.disabled = newCount <= 0; // Disable if no new edits
+        } else {
+            indicator.style.display = 'none';
+        }
+    }
+
+
+    function initEditModal() {
+        // 1. Populate Activity Dropdown
+        const editActivitySelect = document.getElementById('editActivityType');
+        editActivitySelect.innerHTML = '';
+        Object.keys(activityGroupMapping).sort().forEach(group => {
+            const option = document.createElement('option');
+            option.value = group;
+            option.textContent = formatActivityType(group);
+            editActivitySelect.appendChild(option);
+        });
+
+        // 2. Set up manual save button
+        document.getElementById('saveEditsBtn').addEventListener('click', saveEditsToFile);
+
+        // 3. Set up Place Search Autocomplete
+        const editPlaceSearch = document.getElementById('editPlaceSearch');
+        const editAutocompleteResults = document.getElementById('edit-autocomplete-results');
+
+        editPlaceSearch.addEventListener('input', debounce(async (e) => {
+            const query = e.target.value;
+            if (query.length < 3) {
+                editAutocompleteResults.innerHTML = '';
+                return;
+            }
+            if (apiCallsDisabled) return;
+
+            const apiKey = window.GOOGLE_MAPS_API_KEY;
+            const url = `https://places.googleapis.com/v1/places:autocomplete`;
+            incrementApiCallCount();
+
+            const requestBody = { 'input': query, 'languageCode': 'en' };
+            if (locationBias && locationBias.lat && locationBias.lng) {
+                requestBody.locationBias = {
+                    "circle": {
+                        "center": { "latitude": locationBias.lat, "longitude": locationBias.lng },
+                        "radius": 50000.0
+                    }
+                };
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': apiKey },
+                    body: JSON.stringify(requestBody)
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    displayEditAutocompleteSuggestions(data.suggestions || []);
+                }
+            } catch (error) {
+                console.error('Failed to fetch edit autocomplete suggestions:', error);
+            }
+        }, 300));
+
+        function displayEditAutocompleteSuggestions(suggestions) {
+            editAutocompleteResults.innerHTML = '';
+            suggestions.forEach(suggestion => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-suggestion-item';
+                const prediction = suggestion.placePrediction;
+                const shortName = prediction.structuredFormat?.mainText?.text || prediction.text.text;
+                item.innerHTML = `<span class="pac-icon"></span> <span><b>${escapeHtml(shortName)}</b> ${escapeHtml(prediction.text.text)}</span>`;
+                item.addEventListener('click', () => {
+                    document.getElementById('editPlaceId').value = prediction.placeId;
+                    document.getElementById('editPlaceName').value = shortName;
+                    document.getElementById('editPlaceSearch').value = prediction.text.text;
+                    document.getElementById('editPlaceTypes').value = JSON.stringify(prediction.types || []);
+                    editAutocompleteResults.innerHTML = '';
+                });
+                editAutocompleteResults.appendChild(item);
+            });
+        }
+
+        // Close edit suggestions when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!document.getElementById('editPlaceFields').contains(event.target)) {
+                editAutocompleteResults.innerHTML = '';
+            }
+        });
+    }
+    
 
     // Initializes the "Load Data" button
     async function initFolderPicker() {
@@ -5435,6 +5950,65 @@
             return timeA - timeB;
         });
         return allItemsInRange;
+    }
+    
+    
+    function applyTimelineEdits() {
+        if (!timelineEdits || (!timelineEdits.additions.length && !timelineEdits.modifications.length && !timelineEdits.deletions.length)) return;
+
+        console.log("Applying Timeline Edits...", timelineEdits);
+
+        // 1. Process Modifications & Deletions
+        for (const monthKey in timelineData) {
+            timelineData[monthKey].timelineObjects = timelineData[monthKey].timelineObjects.filter(item => {
+                const itemStart = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp || item.startTime;
+                const itemEnd = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp || item.endTime;
+
+                // Check Deletions
+                const isDeleted = timelineEdits.deletions.some(del => del.match.startTimestamp === itemStart && del.match.endTimestamp === itemEnd);
+                if (isDeleted) return false;
+
+                return true;
+            }).map(item => {
+                const itemStart = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp || item.startTime;
+                const itemEnd = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp || item.endTime;
+
+                // Check Modifications
+				const mod = timelineEdits.modifications.find(m => m.match.startTimestamp === itemStart && m.match.endTimestamp === itemEnd);
+                if (mod) {
+                    const replaced = { ...mod.replaceWith };
+                    replaced.isEdited = true;
+                    replaced.originalItem = item; // Stash the original so we can restore it!
+                    return replaced;
+                }
+                
+                return item;
+            });
+        }
+
+		// 2. Process Additions
+        timelineEdits.additions.forEach(addition => {
+            const addClone = { ...addition };
+            addClone.isAdded = true; // Tag it!
+
+            const addStart = addClone.placeVisit?.duration?.startTimestamp || addClone.activitySegment?.duration?.startTimestamp;
+            if (!addStart) return;
+            
+            const date = new Date(addStart);
+            const monthKey = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
+            
+            if (!timelineData[monthKey]) timelineData[monthKey] = { timelineObjects: [] };
+            timelineData[monthKey].timelineObjects.push(addClone);
+        });
+
+        // 3. Re-sort chronologically
+        for (const monthKey in timelineData) {
+            timelineData[monthKey].timelineObjects.sort((a, b) => {
+                const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
+                const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+                return timeA - timeB;
+            });
+        }
     }
 
 
@@ -5886,6 +6460,7 @@ Departed: ${end}</description>
             populateTimezoneSelector();
             initDistanceUnitSelector();
             initAdvancedSettings(); // Initialize the new settings pane controls
+            initEditModal();
             setUIEnabled(false);
             showSidebarTab('date');
             updateApiCallDisplay();
