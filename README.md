@@ -34,9 +34,9 @@ Setup procedure:
 
 ## Get Your Data: Option 1, On-Device data export
 1. For Android: Open the Settings app, tap "Location", then "Location services", then "Timeline" and then "Export Timeline data".   
-   For iOS: Open the Google Maps app, tap your profile picture, select "Your timeline," then tap the three-dots icon in the corner, choose "Settings and privacy", then under the "Timeline data" section, look for an option labeled "Export Timeline" or "Download your data".
-3. Save the exported file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
-4. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
+   For iOS: Open the Google Maps app, tap your profile picture, select "Settings" and then "Location & Privacy". Tap "Export Timeline data".
+2. Save the exported file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
+3. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
 
    
 ## Get Your Data: Option 2, Google Takeout (No longer available once you've started using on-device data)
