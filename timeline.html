@@ -1324,6 +1324,44 @@
             }
         }
 
+        /* --- World View Styles --- */
+        .world-details {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .world-details summary {
+            padding: 12px 15px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #343a40;
+            background-color: #f1f3f4;
+            cursor: pointer;
+            user-select: none;
+            outline: none;
+        }
+        .world-details summary:hover {
+            background-color: #e2e6ea;
+        }
+        .world-list {
+            list-style: none;
+            margin: 0;
+            padding: 10px 15px;
+            font-size: 13px;
+            color: #495057;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .world-list li {
+            padding: 4px 0;
+            border-bottom: 1px dashed #e9ecef;
+        }
+        .world-list li:last-child {
+            border-bottom: none;
+        }
+
         /* For API Key Modal */
         #apiKeyModal {
             position: fixed;
@@ -1418,8 +1456,11 @@
                         <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>
                             <span role="img" aria-label="Summary">📊</span> Summary
                         </button>
+                        <button id="worldBtn" class="icon-btn" title="Show World Map" disabled>
+                            <span role="img" aria-label="World">🌎</span> World
+                        </button>
                         <button id="kmlBtn" class="icon-btn" title="Export as KML" disabled>
-                            <span role="img" aria-label="Export">📤</span> Export KML
+                            <span role="img" aria-label="Export">📤</span> Export
                         </button>
                     </div>
                     <div id="icon-buttons-right"></div>
@@ -1429,6 +1470,40 @@
                 </div>
                 <div id="main-content-area">
                     <div id="timeline"></div>
+
+                    <div id="worldSidebarContent" style="display: none; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; padding: 15px; box-sizing: border-box; background: #f8f9fa;">
+
+                        <div id="worldUpdatePrompt" style="display: none; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin-bottom: 15px; width: 100%; box-sizing: border-box; flex-shrink: 0;">
+                            <strong style="color: #856404; display: block; margin-bottom: 5px;">Cache Update Required</strong>
+                            <p style="margin: 0 0 10px 0; font-size: 13px; color: #856404;">
+                                There are <strong id="legacyCacheCount">0</strong> places missing details. An API call will be needed for each place.
+                            </p>
+
+                            <div style="display: flex; gap: 8px;">
+                                <button id="updateLegacyCache100Btn" class="control-btn" style="flex: 1; background-color: #ffc107; color: #212529; font-weight: bold; padding: 10px 5px; cursor: pointer;">Update 100</button>
+                                <button id="updateLegacyCacheBtn" class="control-btn" style="flex: 1; background-color: #6c757d; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Update All</button>
+                            </div>
+
+                            <div id="updateCacheProgress" style="display: none; margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center; color: #d39e00;">
+                                Progress: <span id="updateCacheCurrent">0</span> / <span id="updateCacheTotal">0</span>
+                                <div id="updateCacheDone" style="display: none; color:#28a745">Updated. Be sure to Save the Place Cache!</div>
+                            </div>
+                        </div>
+                        <div id="worldListsContainer" style="display: none;">
+                            <details class="world-details" open>
+                                <summary>Countries (<span id="count-countries">0</span>)</summary>
+                                <ul id="list-countries" class="world-list"></ul>
+                            </details>
+                            <details class="world-details">
+                                <summary>US States (<span id="count-states">0</span>)</summary>
+                                <ul id="list-states" class="world-list"></ul>
+                            </details>
+                            <details class="world-details">
+                                <summary>Cities (<span id="count-cities">0</span>)</summary>
+                                <ul id="list-cities" class="world-list"></ul>
+                            </details>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1741,6 +1816,7 @@
     let allMonthlySummaries = null; // Calculated monthly summaries
     let selectedSummaryYear = null; // Track which year's months are shown
     let summaryViewVisible = false; // Track summary view state
+    let worldViewVisible = false;
     
     let distanceChartInstance = null;
 	let visitsChartInstance = null;
@@ -2100,6 +2176,13 @@
         if (tabName === 'date') {
             dateView.style.display = 'flex';
             calendarBtn.classList.add('active');
+
+            document.getElementById('timeline').style.display = 'block';
+            const worldSidebar = document.getElementById('worldSidebarContent');
+            if (worldSidebar) worldSidebar.style.display = 'none';
+            worldViewVisible = false;
+            updateViewToggleButtons();
+
             // When switching to date view, re-fit the map to that day's data
             fitMapToData();
         } else if (tabName === 'area') {
@@ -2575,7 +2658,8 @@
         // Define the fields to fetch (excluding 'photos')
         const fields = [
             'id',               // Basic identifier
-            'displayName',      
+            'displayName',
+            'addressComponents',
             'formattedAddress', 
             'location',           // geometry field (lat/lng)
             'svgIconMaskURI',     // icon URL field
@@ -2620,6 +2704,11 @@
                 await place.fetchFields({ fields: fields });
                 incrementApiCallCount();
 
+                const extracted = extractLocationDetails(place.addressComponents);
+                place.extractedCity = extracted.city;
+                place.extractedState = extracted.state;
+                place.extractedCountry = extracted.country;
+
                 placeDetailsCache[placeId] = place;
                 updateCacheIndicator();
                 renderPlaceDetails(place, placeVisit, index, sidebarItem);
@@ -2635,7 +2724,7 @@
                         // --- FALLBACK: Official ID Refresh ---
                         const refreshPlace = new Place({ id: placeId });
                         await refreshPlace.fetchFields({ fields: ['id'] });
-                        incrementApiCallCount(); 
+                        incrementApiCallCount();
                         
                         const newPlaceId = refreshPlace.id;
                         console.log(`Refresh successful. Old ID: ${placeId} -> New ID: ${newPlaceId}. Fetching full details...`);
@@ -2644,6 +2733,11 @@
                         const newPlace = new Place({ id: newPlaceId });
                         await newPlace.fetchFields({ fields: fields });
                         incrementApiCallCount();
+
+                        const extracted = extractLocationDetails(newPlace.addressComponents);
+                        newPlace.extractedCity = extracted.city;
+                        newPlace.extractedState = extracted.state;
+                        newPlace.extractedCountry = extracted.country;
                         
                         // Cache the new place under the OLD placeId
                         placeDetailsCache[placeId] = newPlace;
@@ -3140,11 +3234,48 @@
             if (!isElementInViewport(targetItem, container)) {
                 targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            
+
             if (isDebugMode && targetItem.dataset.rawJson) {
                 try {
                     const rawObj = JSON.parse(targetItem.dataset.rawJson);
-                    document.getElementById('debugOverlayContent').textContent = JSON.stringify(rawObj, null, 2);
+
+                    // Build a comprehensive debug object
+                    const debugInfo = {
+                        timelineItem: rawObj
+                    };
+
+                    // 1. Inject Place Cache info if applicable
+                    let placeId = null;
+                    if (rawObj.placeVisit) {
+                        placeId = rawObj.placeVisit.location?.placeId;
+                    } else if (rawObj.visit) {
+                        placeId = rawObj.visit.topCandidate?.placeID;
+                    }
+
+                    if (placeId && placeDetailsCache[placeId]) {
+                        const cacheHit = placeDetailsCache[placeId];
+                        debugInfo.placeCacheData = {
+                            id: cacheHit.id || placeId,
+                            displayName: cacheHit.displayName,
+                            formattedAddress: cacheHit.formattedAddress,
+                            types: cacheHit.types,
+                            isMissing: cacheHit.isMissing,
+                            isReplacement: cacheHit.isReplacement,
+                            originalPlaceId: cacheHit.originalPlaceId
+                        };
+                    } else if (placeId) {
+                        debugInfo.placeCacheData = "Not found in place cache.";
+                    }
+
+                    // 2. Explicitly highlight edit status at the top level
+                    if (rawObj.isEdited || rawObj.isAdded) {
+                        debugInfo.editStatus = {
+                            state: rawObj.isEdited ? "Modified" : "Manually Added",
+                            originalExists: !!rawObj.originalItem
+                        };
+                    }
+
+                    document.getElementById('debugOverlayContent').textContent = JSON.stringify(debugInfo, null, 2);
                     document.getElementById('debugOverlay').style.display = 'flex';
                 } catch(e) {
                     document.getElementById('debugOverlayContent').textContent = "Error parsing raw data: " + e.message;
@@ -3205,44 +3336,75 @@
         }
     }
 
+    // --- Location Extraction Helper ---
+    function extractLocationDetails(addressComponents) {
+        let city = "Unknown City";
+        let state = "Unknown State";
+        let country = "Unknown Country";
+
+        if (!addressComponents) return { city, state, country };
+
+        for (const component of addressComponents) {
+            const types = component.types;
+            if (types.includes('locality') || types.includes('postal_town')) {
+                city = component.longText;
+            } else if (types.includes('administrative_area_level_1')) {
+                state = component.longText;
+            } else if (types.includes('country')) {
+                country = component.longText;
+            }
+        }
+        return { city, state, country };
+    }
+
     // Adjusts map bounds to fit all currently visible markers and polylines
     function fitMapToData() {
-        if (!uiEnabled || (markers.length === 0 && polylines.length === 0)) return;
+        if (!uiEnabled) return;
 
         const bounds = new google.maps.LatLngBounds();
         let itemCount = 0;
 
-        // Extend bounds for visible markers
-        markers.forEach(marker => {
-            if (marker.map && marker.position) { // Check if marker is actually on the map and has position
-                bounds.extend(marker.position);
-                itemCount++;
-            }
-        });
+        if (worldViewVisible) {
+            // --- World View Bounds ---
+            if (worldMarkers.length === 0) return;
+            worldMarkers.forEach(marker => {
+                if (marker.map && marker.position) {
+                    bounds.extend(marker.position);
+                    itemCount++;
+                }
+            });
+        } else {
+            // --- Standard Timeline Bounds ---
+            if (markers.length === 0 && polylines.length === 0) return;
 
-        // Extend bounds for visible polylines
-        polylines.forEach(polyline => {
-            if (polyline.getMap()) { // Check if polyline is actually on the map
-                polyline.getPath().forEach(point => bounds.extend(point));
-                itemCount++;
-            }
-        });
+            markers.forEach(marker => {
+                if (marker.map && marker.position) {
+                    bounds.extend(marker.position);
+                    itemCount++;
+                }
+            });
+            polylines.forEach(polyline => {
+                if (polyline.getMap()) {
+                    polyline.getPath().forEach(point => bounds.extend(point));
+                    itemCount++;
+                }
+            });
+        }
 
         // Fit map if there are items
         if (itemCount > 0) {
-            if (itemCount === 1 && markers.length === 1 && markers[0].map && markers[0].position) {
-                // Single marker: center and set zoom
+            if (itemCount === 1) {
+                // Single item: center and set zoom
                 map.setCenter(bounds.getCenter());
-                map.setZoom(15);
+                map.setZoom(worldViewVisible ? 10 : 15); // Zoom out a bit more for a city point
             } else if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
                 // Multiple items at the exact same point
                 map.setCenter(bounds.getCenter());
-                map.setZoom(16); // Zoom slightly closer for identical points
+                map.setZoom(16);
             } else {
-                map.fitBounds(bounds, 50); // Fit multiple items with padding (e.g., 50px)
+                map.fitBounds(bounds, 50); // Fit multiple items with padding
             }
         }
-        // If itemCount is 0, do nothing (map remains as is)
     }
 
 
@@ -4569,16 +4731,21 @@
         });
     }
 
-    // Updates the active state of the Map/Summary toggle buttons
+    // Updates the active state of the Map/Summary/World toggle buttons
     function updateViewToggleButtons() {
         const summaryBtn = document.getElementById('summaryBtn');
         const mapBtn = document.getElementById('mapBtn');
+        const worldBtn = document.getElementById('worldBtn');
+
+        summaryBtn.classList.remove('active');
+        mapBtn.classList.remove('active');
+        if (worldBtn) worldBtn.classList.remove('active');
 
         if (summaryViewVisible) {
             summaryBtn.classList.add('active');
-            mapBtn.classList.remove('active');
+        } else if (worldViewVisible) {
+            if (worldBtn) worldBtn.classList.add('active');
         } else {
-            summaryBtn.classList.remove('active');
             mapBtn.classList.add('active');
         }
     }
@@ -4635,6 +4802,7 @@
             document.getElementById('fitMapBtn'),
             document.getElementById('areaBtn'),
             document.getElementById('summaryBtn'),
+            document.getElementById('worldBtn'),
             document.getElementById('mapBtn'),
             document.getElementById('kmlBtn'),
             document.getElementById('reloadBtn'),
@@ -6650,6 +6818,231 @@ Departed: ${end}</description>
     }
 
 
+
+    // --- World View Logic ---
+    let worldMarkers = [];
+
+    function initWorldView() {
+        const worldBtn = document.getElementById('worldBtn');
+        const mapBtn = document.getElementById('mapBtn');
+        const summaryBtn = document.getElementById('summaryBtn');
+        const timelineEl = document.getElementById('timeline');
+        const worldSidebar = document.getElementById('worldSidebarContent');
+
+        worldBtn.addEventListener('click', () => {
+            if (!uiEnabled) return;
+
+            // State
+            summaryViewVisible = false;
+            worldViewVisible = true;
+
+            // Map area
+            document.getElementById('summaryView').style.display = 'none';
+            document.getElementById('map').classList.remove('hidden');
+
+            // Sidebar area
+            document.getElementById('timeline').style.display = 'none';
+            if(document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
+
+            // Show World
+            worldSidebar.style.display = 'flex';
+
+            updateViewToggleButtons(); // Let the master function handle the colors
+            checkAndRenderWorldData();
+        });
+
+        mapBtn.addEventListener('click', () => {
+            if (!uiEnabled) return;
+
+            if (summaryViewVisible) {
+                summaryView.style.display = 'none';
+                mapElement.classList.remove('hidden');
+                summaryViewVisible = false;
+                updateViewToggleButtons();
+            }
+
+            if (worldViewVisible) {
+                worldViewVisible = false;
+                document.getElementById('worldSidebarContent').style.display = 'none';
+                document.getElementById('timeline').style.display = 'block';
+                updateViewToggleButtons();
+                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+                document.getElementById('goBtn').click(); // Reload regular timeline map
+            }
+        });
+
+        summaryBtn.addEventListener('click', () => {
+            worldSidebar.style.display = 'none';
+            timelineEl.style.display = 'block';
+            worldBtn.classList.remove('active');
+        });
+
+        document.getElementById('updateLegacyCache100Btn').addEventListener('click', async () => {
+            await updateLegacyCache(100);
+        });
+        document.getElementById('updateLegacyCacheBtn').addEventListener('click', async () => {
+            await updateLegacyCache();
+        });
+    }
+
+    function checkAndRenderWorldData() {
+        const legacyPlaces = Object.values(placeDetailsCache).filter(p => p.id && !p.isMissing && !p.extractedCountry);
+
+        const promptEl = document.getElementById('worldUpdatePrompt');
+        const listContainer = document.getElementById('worldListsContainer');
+
+        if (legacyPlaces.length > 0) {
+            promptEl.style.display = 'block'; // Show the warning
+            document.getElementById('legacyCacheCount').textContent = legacyPlaces.length;
+        } else {
+            promptEl.style.display = 'none'; // Hide the warning
+        }
+
+        listContainer.style.display = 'block';
+        renderWorldData();
+    }
+
+    async function updateLegacyCache(limit = null) {
+        const btnAll = document.getElementById('updateLegacyCacheBtn');
+        const btn100 = document.getElementById('updateLegacyCache100Btn');
+        const progressDiv = document.getElementById('updateCacheProgress');
+        const currentSpan = document.getElementById('updateCacheCurrent');
+        const progressDoneDiv = document.getElementById('updateCacheDone');
+
+        let legacyPlaces = Object.keys(placeDetailsCache).filter(key => {
+            const p = placeDetailsCache[key];
+            return p.id && !p.isMissing && !p.extractedCountry;
+        });
+
+        // Apply the limit if one was provided
+        if (limit && legacyPlaces.length > limit) {
+            legacyPlaces = legacyPlaces.slice(0, limit);
+        }
+
+        if (legacyPlaces.length === 0) return;
+
+        btnAll.disabled = true;
+        btn100.disabled = true;
+        progressDiv.style.display = 'block';
+        progressDoneDiv.style.display = 'none';
+        document.getElementById('updateCacheTotal').textContent = legacyPlaces.length;
+
+        let count = 0;
+        for (const placeId of legacyPlaces) {
+            count++;
+            currentSpan.textContent = count;
+
+            try {
+                const place = new Place({ id: placeId });
+                await place.fetchFields({ fields: ['id', 'addressComponents', 'location'] });
+                incrementApiCallCount();
+
+                const extracted = extractLocationDetails(place.addressComponents);
+
+                placeDetailsCache[placeId].extractedCity = extracted.city;
+                placeDetailsCache[placeId].extractedState = extracted.state;
+                placeDetailsCache[placeId].extractedCountry = extracted.country;
+
+            } catch (e) {
+                console.warn(`Failed to update legacy place ${placeId}`, e);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+
+        updateCacheIndicator();
+
+        btnAll.disabled = false;
+        btn100.disabled = false;
+        progressDoneDiv.style.display = 'block';
+
+        // Refresh the view to show the newly updated places or the remaining count
+        checkAndRenderWorldData();
+    }
+
+    function clearWorldMarkers() {
+        worldMarkers.forEach(m => m.map = null);
+        worldMarkers = [];
+    }
+
+    function renderWorldData() {
+        clearMap(); // Clear timeline lines/pins
+        clearWorldMarkers();
+
+        const countries = new Set();
+        const states = new Set();
+        const cities = new Set();
+        const cityLocations = {}; // Used to plot the dots
+
+        // Parse Cache
+        Object.values(placeDetailsCache).forEach(place => {
+            if (place.isMissing || !place.extractedCountry) return;
+
+            if (place.extractedCountry !== "Unknown Country") countries.add(place.extractedCountry);
+
+            if (place.extractedCountry === "United States" && place.extractedState !== "Unknown State") {
+                states.add(place.extractedState);
+            }
+
+            if (place.extractedCity !== "Unknown City") {
+                const cityKey = `${place.extractedCity}, ${place.extractedCountry}`;
+                cities.add(cityKey);
+
+                // Save the first valid coordinate we find for this city to plot the dot
+                if (!cityLocations[cityKey] && place.location) {
+                    cityLocations[cityKey] = {
+                        lat: typeof place.location.lat === 'function' ? place.location.lat() : place.location.lat,
+                        lng: typeof place.location.lng === 'function' ? place.location.lng() : place.location.lng,
+                    };
+                }
+            }
+        });
+
+        // Update UI Lists
+        const sortAndPopulate = (set, listId, countId) => {
+            const arr = Array.from(set).sort();
+            document.getElementById(countId).textContent = arr.length;
+            const ul = document.getElementById(listId);
+            ul.innerHTML = '';
+            arr.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                ul.appendChild(li);
+            });
+        };
+
+        sortAndPopulate(countries, 'list-countries', 'count-countries');
+        sortAndPopulate(states, 'list-states', 'count-states');
+        sortAndPopulate(cities, 'list-cities', 'count-cities');
+
+        // Plot City Dots on Map
+        const bounds = new google.maps.LatLngBounds();
+        let pointsAdded = false;
+
+        Object.keys(cityLocations).forEach(cityKey => {
+            const coords = cityLocations[cityKey];
+            if (!coords.lat || !coords.lng) return;
+
+            const PinElement = google.maps.marker.PinElement;
+            const pin = new PinElement({ background: '#007bff', scale: 0.5, glyph: '' }); // Small blue dot
+
+            const marker = new AdvancedMarkerElement({
+                position: coords,
+                map: map,
+                title: cityKey,
+                content: pin.element
+            });
+            worldMarkers.push(marker);
+            bounds.extend(coords);
+            pointsAdded = true;
+        });
+
+        if (pointsAdded) {
+            map.fitBounds(bounds, 50); // Zoom to fit the world
+        }
+    }
+
+
     async function initializeApp() {
         // Check if the API key placeholder is still present
         if (window.GOOGLE_MAPS_API_KEY === "YOUR_API_KEY" || window.GOOGLE_MAPS_API_KEY === "") {
@@ -6705,6 +7098,7 @@ Departed: ${end}</description>
             initSettingsButton();
             initFitMapButton();
             initSummaryView();
+            initWorldView();
             initCacheControls();
             initSearch();
             initCurrentLocationButton();
