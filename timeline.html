@@ -1474,7 +1474,7 @@
                     <div id="worldSidebarContent" style="display: none; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; padding: 15px; box-sizing: border-box; background: #f8f9fa;">
 
                         <div id="worldUpdatePrompt" style="display: none; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin-bottom: 15px; width: 100%; box-sizing: border-box; flex-shrink: 0;">
-                            <strong style="color: #856404; display: block; margin-bottom: 5px;">Cache Update Required</strong>
+                            <strong style="color: #856404; display: block; margin-bottom: 5px;">Cache Update Needed</strong>
                             <p style="margin: 0 0 10px 0; font-size: 13px; color: #856404;">
                                 There are <strong id="legacyCacheCount">0</strong> places missing details. An API call will be needed for each place.
                             </p>
@@ -3338,23 +3338,75 @@
 
     // --- Location Extraction Helper ---
     function extractLocationDetails(addressComponents) {
-        let city = "Unknown City";
-        let state = "Unknown State";
+        let locality = null;
+        let admin1 = null;
+        let admin2 = null;
         let country = "Unknown Country";
 
-        if (!addressComponents) return { city, state, country };
+        if (!addressComponents) return { city: "Unknown City", state: "Unknown State", country };
 
         for (const component of addressComponents) {
             const types = component.types;
             if (types.includes('locality') || types.includes('postal_town')) {
-                city = component.longText;
+                locality = component.longText;
+            } else if (types.includes('administrative_area_level_2')) {
+                admin2 = component.longText;
             } else if (types.includes('administrative_area_level_1')) {
-                state = component.longText;
+                admin1 = component.longText;
             } else if (types.includes('country')) {
                 country = component.longText;
             }
         }
-        return { city, state, country };
+
+        let city = locality;
+        let state = admin1;
+
+        // --- Smart Fallbacks for International Quirks ---
+
+        // 1. Promote explicit "City" states/counties
+        if (admin1 && (admin1.includes("City") || admin1.includes("市"))) {
+            city = admin1;
+        } else if (admin2 && (admin2.includes("City") || admin2.includes("市"))) {
+            city = admin2;
+        }
+
+        // 2. Filter out known sub-city divisions globally
+        if (city) {
+            const lowerCity = city.toLowerCase();
+            const subCityKeywords = [
+                " district", "區", " ward", "-ku",
+                "tambon", "ตำบล", "amphoe", "อำเภอ"
+            ];
+
+            for (const keyword of subCityKeywords) {
+                if (lowerCity.includes(keyword)) {
+                    city = null; // Trash it so it falls back to admin1 or admin2
+                    break;
+                }
+            }
+        }
+
+        // 3. Standard fallback chain
+        if (!city) {
+            city = admin2 || admin1 || "Unknown City";
+        }
+
+        return {
+            city: city,
+            state: state || "Unknown State",
+            country: country || "Unknown Country"
+        };
+    }
+
+    // Helper to determine if a cached place needs to be updated based on new extractor rules
+    function needsCacheUpdate(place) {
+        if (!place.id || place.isMissing) return false;
+        if (!place.extractedCountry || place.extractedCountry === "Unknown Country") return true;
+        if (!place.extractedCity || place.extractedCity === "Unknown City") return true;
+
+        const lowerCity = place.extractedCity.toLowerCase();
+        const badKeywords = ["district", "tambon", "amphoe", "ward"];
+        return badKeywords.some(kw => lowerCity.includes(kw));
     }
 
     // Adjusts map bounds to fit all currently visible markers and polylines
@@ -4101,15 +4153,15 @@
 
             if (isNaN(year)) continue; // Skip invalid keys
 
-            // Initialize summary objects if they don't exist (Added cachedVisits)
+            // Initialize summary objects if they don't exist
             if (!yearly[year]) {
-                yearly[year] = { visits: 0, cachedVisits: 0, distanceMeters: 0, distanceByActivity: {} };
+                yearly[year] = { visits: 0, cachedVisits: 0, distanceMeters: 0, distanceByActivity: {}, cities: new Set(), countries: new Set() };
             }
             if (!monthly[year]) {
                 monthly[year] = {};
             }
             if (!monthly[year][monthIndex]) {
-                monthly[year][monthIndex] = { visits: 0, cachedVisits: 0, distanceMeters: 0, distanceByActivity: {} };
+                monthly[year][monthIndex] = { visits: 0, cachedVisits: 0, distanceMeters: 0, distanceByActivity: {}, cities: new Set(), countries: new Set() };
             }
 
             // Process each item in the month's data
@@ -4118,19 +4170,26 @@
                     yearly[year].visits++;
                     monthly[year][monthIndex].visits++;
 
-                    // --- NEW: Check if this visit is in our cache ---
                     let placeId;
-                    if (item.placeVisit) {
-                        placeId = item.placeVisit.location?.placeId;
-                    } else if (item.visit) {
-                        placeId = item.visit.topCandidate?.placeID;
-                    }
+                    if (item.placeVisit) placeId = item.placeVisit.location?.placeId;
+                    else if (item.visit) placeId = item.visit.topCandidate?.placeID;
 
                     if (placeId && placeDetailsCache[placeId]) {
                         yearly[year].cachedVisits++;
                         monthly[year][monthIndex].cachedVisits++;
+
+                        const cacheHit = placeDetailsCache[placeId];
+                        if (cacheHit.extractedCity && cacheHit.extractedCity !== "Unknown City") {
+                            // Combine city and country to prevent duplicate names (e.g. Paris, TX vs Paris, France)
+                            const cityKey = `${cacheHit.extractedCity}, ${cacheHit.extractedCountry}`;
+                            yearly[year].cities.add(cityKey);
+                            monthly[year][monthIndex].cities.add(cityKey);
+                        }
+                        if (cacheHit.extractedCountry && cacheHit.extractedCountry !== "Unknown Country") {
+                            yearly[year].countries.add(cacheHit.extractedCountry);
+                            monthly[year][monthIndex].countries.add(cacheHit.extractedCountry);
+                        }
                     }
-                    // ------------------------------------------------
 
                 } else if (item.activitySegment) {
                     const segment = item.activitySegment;
@@ -4159,7 +4218,7 @@
 
     // Calculates summary specifically for the selected date range
     function calculateSelectedDatesSummary(startDate, endDate) {
-        const summary = { visits: 0, distanceMeters: 0, distanceByActivity: {} };
+        const summary = { visits: 0, distanceMeters: 0, distanceByActivity: {}, cities: new Set(), countries: new Set() };
         const tz = getSelectedTimezone();
         const startMoment = moment.tz(startDate, tz).startOf('day');
         const endMoment = moment.tz(endDate, tz).endOf('day');
@@ -4199,6 +4258,20 @@
                     // Item overlaps the current day, add its stats
                     if (item.placeVisit || item.visit ) { // Count both visit types
                         summary.visits++;
+
+                        let placeId;
+                        if (item.placeVisit) placeId = item.placeVisit.location?.placeId;
+                        else if (item.visit) placeId = item.visit.topCandidate?.placeID;
+
+                        if (placeId && placeDetailsCache[placeId]) {
+                            const cacheHit = placeDetailsCache[placeId];
+                            if (cacheHit.extractedCity && cacheHit.extractedCity !== "Unknown City") {
+                                summary.cities.add(`${cacheHit.extractedCity}, ${cacheHit.extractedCountry}`);
+                            }
+                            if (cacheHit.extractedCountry && cacheHit.extractedCountry !== "Unknown Country") {
+                                summary.countries.add(cacheHit.extractedCountry);
+                            }
+                        }
                     } else if (item.activitySegment) {
                         const segment = item.activitySegment;
                         const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
@@ -4250,6 +4323,8 @@
         item.innerHTML = `
             <strong>${title}</strong>
             <div class="summary-details">Visits: <span>${summaryData.visits.toLocaleString()}</span></div>
+            <div class="summary-details">Cities: <span>${summaryData.cities.size.toLocaleString()}</span></div>
+            <div class="summary-details">Countries: <span>${summaryData.countries.size.toLocaleString()}</span></div>
             <div class="summary-details">Total Dist: <span>${formatDistance(summaryData.distanceMeters)}</span></div>
             ${activityHtml}
         `;
@@ -4302,6 +4377,8 @@
             item.innerHTML = `
 					<strong>${year}</strong>
 					<div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+					<div class="summary-details">Cities: <span>${data.cities.size.toLocaleString()}</span></div>
+					<div class="summary-details">Countries: <span>${data.countries.size.toLocaleString()}</span></div>
 					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
 					${activityHtml}
 					<div class="summary-details" style="margin-top: 8px; border-top: 1px dashed #ced4da; padding-top: 6px; color: #989898;">
@@ -4380,6 +4457,8 @@
             item.innerHTML = `
 					<strong>${monthName}</strong>
 					<div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
+					<div class="summary-details">Cities: <span>${data.cities.size.toLocaleString()}</span></div>
+					<div class="summary-details">Countries: <span>${data.countries.size.toLocaleString()}</span></div>
 					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
 					${activityHtml}
 					<div class="summary-details" style="margin-top: 8px; margin-bottom: 8px; border-top: 1px dashed #ced4da; padding-top: 6px; color: #989898;">
@@ -6886,7 +6965,7 @@ Departed: ${end}</description>
     }
 
     function checkAndRenderWorldData() {
-        const legacyPlaces = Object.values(placeDetailsCache).filter(p => p.id && !p.isMissing && !p.extractedCountry);
+        const legacyPlaces = Object.values(placeDetailsCache).filter(needsCacheUpdate);
 
         const promptEl = document.getElementById('worldUpdatePrompt');
         const listContainer = document.getElementById('worldListsContainer');
@@ -6910,8 +6989,7 @@ Departed: ${end}</description>
         const progressDoneDiv = document.getElementById('updateCacheDone');
 
         let legacyPlaces = Object.keys(placeDetailsCache).filter(key => {
-            const p = placeDetailsCache[key];
-            return p.id && !p.isMissing && !p.extractedCountry;
+            return needsCacheUpdate(placeDetailsCache[key]);
         });
 
         // Apply the limit if one was provided
@@ -6969,62 +7047,55 @@ Departed: ${end}</description>
         clearMap(); // Clear timeline lines/pins
         clearWorldMarkers();
 
-        const countries = new Set();
-        const states = new Set();
-        const cities = new Set();
-        const cityLocations = {}; // Used to plot the dots
+        // Create a single reusable InfoWindow for the world view dots
+        if (!window.worldInfoWindow) {
+            window.worldInfoWindow = new google.maps.InfoWindow();
+        } else {
+            window.worldInfoWindow.close();
+        }
 
-        // Parse Cache
+        const countryBounds = {};
+        const stateBounds = {};
+        const cityLocations = {};
+        const cityMarkers = {}; // Store markers to trigger clicks
+
+        // Parse Cache and build bounds/locations
         Object.values(placeDetailsCache).forEach(place => {
-            if (place.isMissing || !place.extractedCountry) return;
+            if (place.isMissing || !place.extractedCountry || !place.location) return;
 
-            if (place.extractedCountry !== "Unknown Country") countries.add(place.extractedCountry);
+            const lat = typeof place.location.lat === 'function' ? place.location.lat() : place.location.lat;
+            const lng = typeof place.location.lng === 'function' ? place.location.lng() : place.location.lng;
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            const pos = new google.maps.LatLng(lat, lng);
+
+            if (place.extractedCountry !== "Unknown Country") {
+                if (!countryBounds[place.extractedCountry]) countryBounds[place.extractedCountry] = new google.maps.LatLngBounds();
+                countryBounds[place.extractedCountry].extend(pos);
+            }
 
             if (place.extractedCountry === "United States" && place.extractedState !== "Unknown State") {
-                states.add(place.extractedState);
+                if (!stateBounds[place.extractedState]) stateBounds[place.extractedState] = new google.maps.LatLngBounds();
+                stateBounds[place.extractedState].extend(pos);
             }
 
             if (place.extractedCity !== "Unknown City") {
                 const cityKey = `${place.extractedCity}, ${place.extractedCountry}`;
-                cities.add(cityKey);
-
-                // Save the first valid coordinate we find for this city to plot the dot
-                if (!cityLocations[cityKey] && place.location) {
-                    cityLocations[cityKey] = {
-                        lat: typeof place.location.lat === 'function' ? place.location.lat() : place.location.lat,
-                        lng: typeof place.location.lng === 'function' ? place.location.lng() : place.location.lng,
-                    };
+                if (!cityLocations[cityKey]) {
+                    cityLocations[cityKey] = { lat, lng };
                 }
             }
         });
 
-        // Update UI Lists
-        const sortAndPopulate = (set, listId, countId) => {
-            const arr = Array.from(set).sort();
-            document.getElementById(countId).textContent = arr.length;
-            const ul = document.getElementById(listId);
-            ul.innerHTML = '';
-            arr.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = item;
-                ul.appendChild(li);
-            });
-        };
-
-        sortAndPopulate(countries, 'list-countries', 'count-countries');
-        sortAndPopulate(states, 'list-states', 'count-states');
-        sortAndPopulate(cities, 'list-cities', 'count-cities');
-
-        // Plot City Dots on Map
+        // Plot City Dots on Map First
         const bounds = new google.maps.LatLngBounds();
         let pointsAdded = false;
 
         Object.keys(cityLocations).forEach(cityKey => {
             const coords = cityLocations[cityKey];
-            if (!coords.lat || !coords.lng) return;
 
             const PinElement = google.maps.marker.PinElement;
-            const pin = new PinElement({ background: '#007bff', scale: 0.5, glyph: '' }); // Small blue dot
+            const pin = new PinElement({ background: '#007bff', scale: 0.5, glyph: '' });
 
             const marker = new AdvancedMarkerElement({
                 position: coords,
@@ -7033,13 +7104,87 @@ Departed: ${end}</description>
                 content: pin.element
             });
             worldMarkers.push(marker);
+            cityMarkers[cityKey] = marker; // Save reference
             bounds.extend(coords);
             pointsAdded = true;
+
+            // Marker Click Listener (Map Pin -> Sidebar List)
+            marker.addListener('click', () => {
+                // Show InfoWindow
+                window.worldInfoWindow.setContent(`<div style="padding: 3px 6px; font-family: sans-serif; font-size: 14px; font-weight: 500; color: #333;">${cityKey}</div>`);
+                window.worldInfoWindow.open({ map: map, anchor: marker });
+
+                // Find in list, highlight, and scroll into view
+                const listCities = document.getElementById('list-cities');
+                listCities.querySelectorAll('li').forEach(li => {
+                    if (li.dataset.itemName === cityKey) {
+                        li.style.fontWeight = 'bold';
+                        li.style.color = '#007bff';
+                        li.closest('details').open = true; // Ensure the folder is open
+                        li.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        li.style.fontWeight = 'normal';
+                        li.style.color = '#495057';
+                    }
+                });
+            });
         });
 
         if (pointsAdded) {
-            map.fitBounds(bounds, 50); // Zoom to fit the world
+            map.fitBounds(bounds, 50);
         }
+
+        // --- Update UI Lists with Click Handlers ---
+        const populateClickableList = (keysArray, boundsOrLocationsObj, listId, countId, isCity = false) => {
+            const arr = keysArray.sort();
+            document.getElementById(countId).textContent = arr.length;
+            const ul = document.getElementById(listId);
+            ul.innerHTML = '';
+
+            arr.forEach(itemName => {
+                const li = document.createElement('li');
+                li.textContent = itemName;
+                li.dataset.itemName = itemName;
+                li.style.cursor = 'pointer';
+                li.style.transition = 'color 0.2s, font-weight 0.2s';
+
+                // Hover Effects
+                li.addEventListener('mouseover', () => { if(li.style.fontWeight !== 'bold') li.style.color = '#007bff'; });
+                li.addEventListener('mouseout', () => { if(li.style.fontWeight !== 'bold') li.style.color = '#495057'; });
+
+                // Click Effects (Sidebar List -> Map Pin)
+                li.addEventListener('click', () => {
+                    // Reset all siblings
+                    ul.querySelectorAll('li').forEach(el => {
+                        el.style.fontWeight = 'normal';
+                        el.style.color = '#495057';
+                    });
+
+                    // Highlight this one
+                    li.style.fontWeight = 'bold';
+                    li.style.color = '#007bff';
+
+                    if (isCity) {
+                        // Trigger the marker click which handles map zooming and the infowindow popup
+                        if (cityMarkers[itemName]) {
+                            //google.maps.event.trigger(cityMarkers[itemName], 'click');
+                            map.setCenter(boundsOrLocationsObj[itemName]);
+                            map.setZoom(12);
+                        }
+                    } else {
+                        // For countries/states, fit the map to the stored bounds
+                        const targetBounds = boundsOrLocationsObj[itemName];
+                        map.fitBounds(targetBounds, 20);
+                        window.worldInfoWindow.close(); // Close active city pin if zooming out
+                    }
+                });
+                ul.appendChild(li);
+            });
+        };
+
+        populateClickableList(Object.keys(countryBounds), countryBounds, 'list-countries', 'count-countries', false);
+        populateClickableList(Object.keys(stateBounds), stateBounds, 'list-states', 'count-states', false);
+        populateClickableList(Object.keys(cityLocations), cityLocations, 'list-cities', 'count-cities', true);
     }
 
 
