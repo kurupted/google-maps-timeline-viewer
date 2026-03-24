@@ -475,6 +475,8 @@
             background-color: #fff;
             border-radius: 0 0 4px 4px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 350px;
+            overflow-y: auto;
         }
         .autocomplete-suggestion-item {
             padding: 10px;
@@ -3929,10 +3931,12 @@
 
 
     // --- Search Functionality ---
+    let searchSequence = 0; // NEW: Tracks the current search to prevent race conditions
+
     function initSearch() {
         const searchBtn = document.getElementById('searchBtn');
         const searchInput = document.getElementById('searchInput');
-        const clearSearchBtn = document.getElementById('clearSearchBtn'); // Get the new button
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
         const searchResults = document.getElementById('searchResults');
 
         searchBtn.addEventListener('click', () => {
@@ -3940,19 +3944,30 @@
             showSidebarTab('search');
         });
 
-        // Autocomplete logic using Places API (New)
+        // Unified Autocomplete logic (Local + API)
         searchInput.addEventListener('input', debounce(async (e) => {
             const query = e.target.value;
-            // Show/hide clear button based on input
             clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
+
             if (query.length < 3) {
                 clearAutocompleteSuggestions();
                 return;
             }
-            await getAutocompleteSuggestions(query);
-        }, 300)); // 300ms debounce delay
 
-        // Add click listener for the new clear button
+            // Lock in the sequence number for this specific keystroke
+            const currentSequence = ++searchSequence;
+
+            // 1. Clear previous results first
+            clearAutocompleteSuggestions();
+
+            // 2. Fetch and display Local Suggestions immediately
+            const localSuggestions = getLocalSuggestions(query);
+            displayAutocompleteSuggestions(localSuggestions, true);
+
+            // 3. Fetch and display API Suggestions (pass the sequence number down)
+            await getApiAutocompleteSuggestions(query, currentSequence);
+        }, 300));
+
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
             searchResults.innerHTML = '';
@@ -3961,7 +3976,6 @@
             searchInput.focus();
         });
 
-        // Close suggestions when clicking outside
         document.addEventListener('click', function(event) {
             const container = document.getElementById('autocomplete-suggestions-container');
             if (container && !container.contains(event.target)) {
@@ -3969,7 +3983,48 @@
             }
         });
     }
-    async function getAutocompleteSuggestions(query) {
+
+
+    // Search local cache and timeline data
+    function getLocalSuggestions(query) {
+        const lowerQuery = query.toLowerCase();
+        const matches = [];
+        const seenIds = new Set();
+
+        // 1. Search the placeDetailsCache
+        for (const placeId in placeDetailsCache) {
+            const place = placeDetailsCache[placeId];
+            if (place.displayName && place.displayName.toLowerCase().includes(lowerQuery)) {
+                matches.push({ placeId: placeId, text: place.displayName });
+                seenIds.add(placeId);
+            }
+        }
+
+        // 2. Search raw timeline data for places that might not be in the cache yet
+        for (const monthKey in timelineData) {
+            const monthData = timelineData[monthKey];
+            if (monthData.timelineObjects) {
+                monthData.timelineObjects.forEach(item => {
+                    let visitName, visitPlaceId;
+                    if (item.placeVisit) {
+                        visitName = item.placeVisit.location?.name;
+                        visitPlaceId = item.placeVisit.location?.placeId;
+                    } else if (item.visit) {
+                        visitName = item.visit.topCandidate?.name;
+                        visitPlaceId = item.visit.topCandidate?.placeID;
+                    }
+
+                    if (visitName && visitPlaceId && !seenIds.has(visitPlaceId) && visitName.toLowerCase().includes(lowerQuery)) {
+                        matches.push({ placeId: visitPlaceId, text: visitName });
+                        seenIds.add(visitPlaceId);
+                    }
+                });
+            }
+        }
+        return matches;
+    }
+
+    async function getApiAutocompleteSuggestions(query, currentSequence) {
         if (apiCallsDisabled) {
             console.log("API calls are disabled, skipping autocomplete search.");
             return;
@@ -3977,14 +4032,13 @@
 
         const apiKey = window.GOOGLE_MAPS_API_KEY;
         const url = `https://places.googleapis.com/v1/places:autocomplete`;
-        incrementApiCallCount(); // Count this as an API call
+        incrementApiCallCount();
 
         const requestBody = {
             'input': query,
             'languageCode': 'en'
         };
 
-        // Add location biasing if available
         if (locationBias && locationBias.lat && locationBias.lng) {
             requestBody.locationBias = {
                 "circle": {
@@ -3992,7 +4046,7 @@
                         "latitude": locationBias.lat,
                         "longitude": locationBias.lng
                     },
-                    "radius": 50000.0 // Bias results within a 50km radius
+                    "radius": 50000.0
                 }
             };
         }
@@ -4008,42 +4062,66 @@
             });
 
             if (!response.ok) {
-                const errorBody = await response.json();
+                const errorBody = await response.text(); // Use text() just in case the error isn't valid JSON
                 console.error('Places Autocomplete API error:', errorBody);
-                if (errorBody.error?.message.includes("is not enabled")) {
-                    alert("Error: The Places API (New) is not enabled for your project. Please enable it in the Google Cloud Console.");
-                }
                 return;
             }
 
             const data = await response.json();
-            displayAutocompleteSuggestions(data.suggestions || []);
+
+            // ONLY append the Google results if the user hasn't typed anything new while we were waiting!
+            if (currentSequence === searchSequence) {
+                displayAutocompleteSuggestions(data.suggestions || [], false);
+            }
 
         } catch (error) {
             console.error('Failed to fetch autocomplete suggestions:', error);
         }
     }
 
-    function displayAutocompleteSuggestions(suggestions) {
+    function displayAutocompleteSuggestions(suggestions, isLocal = false) {
         const resultsContainer = document.getElementById('autocomplete-results');
-        clearAutocompleteSuggestions();
+
         if (suggestions.length === 0) {
             return;
         }
+
+        // Add a small header to separate Local from Google Maps results
+        const header = document.createElement('div');
+        header.style.padding = '6px 10px';
+        header.style.backgroundColor = '#f1f3f4';
+        header.style.fontSize = '11px';
+        header.style.fontWeight = 'bold';
+        header.style.color = '#5f6368';
+        header.style.textTransform = 'uppercase';
+        header.textContent = isLocal ? 'Your Saved Places' : 'Google Maps Search';
+        resultsContainer.appendChild(header);
+
         suggestions.forEach(suggestion => {
             const item = document.createElement('div');
             item.className = 'autocomplete-suggestion-item';
-            const prediction = suggestion.placePrediction;
-            const placeId = prediction.placeId;
-            const placeText = prediction.text.text;
-            const shortName = prediction.structuredFormat?.mainText?.text || prediction.text.text;
-            item.innerHTML = `<span class="pac-icon"></span> <span><b>${escapeHtml(shortName)}</b> ${escapeHtml(prediction.text.text)}</span>`;
-            item.addEventListener('click', () => {
-                console.log("Place selected:", placeText, placeId);
-                document.getElementById('searchInput').value = placeText; // Populate input
-                clearAutocompleteSuggestions();
-                performSearch(placeId, placeText);
-            });
+
+            if (isLocal) {
+                // Formatting for Local matches
+                item.innerHTML = `<span style="margin-right:7px; font-size:16px;">📍</span> <span><b>${escapeHtml(suggestion.text)}</b></span>`;
+                item.addEventListener('click', () => {
+                    document.getElementById('searchInput').value = suggestion.text;
+                    clearAutocompleteSuggestions();
+                    performSearch(suggestion.placeId, suggestion.text);
+                });
+            } else {
+                // Formatting for API matches
+                const prediction = suggestion.placePrediction;
+                const placeId = prediction.placeId;
+                const placeText = prediction.text.text;
+                const shortName = prediction.structuredFormat?.mainText?.text || prediction.text.text;
+                item.innerHTML = `<span class="pac-icon"></span> <span><b>${escapeHtml(shortName)}</b> ${escapeHtml(prediction.text.text)}</span>`;
+                item.addEventListener('click', () => {
+                    document.getElementById('searchInput').value = placeText;
+                    clearAutocompleteSuggestions();
+                    performSearch(placeId, placeText);
+                });
+            }
             resultsContainer.appendChild(item);
         });
     }
