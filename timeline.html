@@ -17,7 +17,7 @@
 
     <!-- Google Maps importLibrary loader -->
     <script>
-        window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
+        window.GOOGLE_MAPS_API_KEY = "AIzaSyCGJf2RsecwH9oRbYRcLg8OIfwxOn2dLc8"; // Replace YOUR_API_KEY with your actual key
 
         (g => {
             var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
@@ -1530,8 +1530,8 @@
                     <div class="area-options-group">
                         <label class="area-options-title">Result Display:</label>
                         <div class="radio-group">
-                            <label><input type="radio" name="areaResultType" value="all" checked> A place entry for each visit</label>
-                            <label><input type="radio" name="areaResultType" value="consolidated"> Single entry for <i>all</i> visits</label>
+                            <label><input type="radio" name="areaResultType" value="all"> Separate entries for every place visit</label>
+                            <label><input type="radio" name="areaResultType" value="consolidated" checked> Group together visits to the same place</label>
                         </div>
                     </div>
                     <div class="area-options-group">
@@ -2183,11 +2183,28 @@
             worldViewVisible = false;
             updateViewToggleButtons();
 
+            // RESTORE DATE PICKERS
+            document.getElementById('datePickerContainer').style.display = 'flex';
+            document.getElementById('date-range-info').style.display = 'block';
+            document.getElementById('go-container').style.display = 'flex';
+
             // When switching to date view, re-fit the map to that day's data
             fitMapToData();
         } else if (tabName === 'area') {
+            // Cleanly exit world view if active
+            if (worldViewVisible) {
+                worldViewVisible = false;
+                document.getElementById('worldSidebarContent').style.display = 'none';
+                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+                updateViewToggleButtons();
+            }
+
             areaView.style.display = 'flex';
             areaBtn.classList.add('active');
+
+            // Ensure visibility in case previous views hid it
+            document.getElementById('areaResults').style.display = 'block';
+
             // If we have previous area results, restore them using the stored mode
             if (lastAreaSearchResults.length > 0) {
                 const isConsolidated = lastAreaSearchMode === 'consolidated';
@@ -2644,10 +2661,10 @@
 
     // Fetches place details using the new Place.fetchFields method
     async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index, sidebarItem = null) {
-		const lat = placeVisit.location && placeVisit.location.latitudeE7 ? placeVisit.location.latitudeE7 / 1e7 : NaN;
+        const lat = placeVisit.location && placeVisit.location.latitudeE7 ? placeVisit.location.latitudeE7 / 1e7 : NaN;
         const lng = placeVisit.location && placeVisit.location.longitudeE7 ? placeVisit.location.longitudeE7 / 1e7 : NaN;
         const customSemanticType = getCustomSemanticType(placeId, placeVisit.location && placeVisit.location.semanticType);
-        
+
         if (apiCallsDisabled) {
             console.log("API calls disabled. Skipping fetchPlaceDetails, rendering basic marker.");
             if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
@@ -2655,7 +2672,6 @@
             return;
         }
 
-        // Define the fields to fetch (excluding 'photos')
         const fields = [
             'id',               // Basic identifier
             'displayName',
@@ -2672,15 +2688,12 @@
         // Wait if this placeId is already being fetched right now
         if (pendingPlaceRequests[placeId]) {
             await pendingPlaceRequests[placeId];
-            
-            // Use the newly populated cache
             if (placeDetailsCache[placeId]) {
                 if (placeDetailsCache[placeId].isMissing) {
                     if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
                     if (sidebarItem) {
                         const nametag = sidebarItem.querySelector('strong');
                         if (nametag) nametag.textContent = fallbackName;
-                        // NEW: apply fetched (but missing) style
                         const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
                         if(iconContainer) {
                             const style = getPlaceStyle([], true, customSemanticType);
@@ -2700,7 +2713,7 @@
         // Create the promise for the fetch
         const fetchPromise = (async () => {
             try {
-                const place = new Place({ id: placeId }); 
+                const place = new Place({ id: placeId });
                 await place.fetchFields({ fields: fields });
                 incrementApiCallCount();
 
@@ -2709,23 +2722,26 @@
                 place.extractedState = extracted.state;
                 place.extractedCountry = extracted.country;
 
+                // Flag this place so we don't try to "update" it later if it returned sparse data
+                place.fetchAttempted = true;
+
                 placeDetailsCache[placeId] = place;
                 updateCacheIndicator();
                 renderPlaceDetails(place, placeVisit, index, sidebarItem);
 
             } catch (error) {
-                console.warn(`Error fetching full details for ${placeId}:`, error);
-                
-                // Intercept 404 NOT_FOUND errors
-                if (error && error.message && error.message.includes("NOT_FOUND")) {
+                // Safely extract the error string to catch custom MapsRequestErrors
+                const errorString = error?.message || String(error);
+                console.warn(`Error fetching full details for ${placeId}:`, errorString);
+
+                if (errorString.includes("NOT_FOUND") || errorString.includes("no longer valid")) {
                     console.log(`Place ID ${placeId} returned 404. Attempting ID refresh...`);
-                    
                     try {
                         // --- FALLBACK: Official ID Refresh ---
                         const refreshPlace = new Place({ id: placeId });
                         await refreshPlace.fetchFields({ fields: ['id'] });
                         incrementApiCallCount();
-                        
+
                         const newPlaceId = refreshPlace.id;
                         console.log(`Refresh successful. Old ID: ${placeId} -> New ID: ${newPlaceId}. Fetching full details...`);
                         
@@ -2738,15 +2754,16 @@
                         newPlace.extractedCity = extracted.city;
                         newPlace.extractedState = extracted.state;
                         newPlace.extractedCountry = extracted.country;
-                        
+                        newPlace.fetchAttempted = true; // Mark as attempted
+
                         // Cache the new place under the OLD placeId
                         placeDetailsCache[placeId] = newPlace;
-                        placeDetailsCache[placeId].originalPlaceId = placeId; 
+                        placeDetailsCache[placeId].originalPlaceId = placeId;
                         placeDetailsCache[placeId].isReplacement = true;
-                        
+
                         updateCacheIndicator();
                         renderPlaceDetails(newPlace, placeVisit, index, sidebarItem);
-                        return; // Success! Stop execution here.
+                        return;
 
                     } catch (refreshError) {
                         console.log(`ID refresh failed for ${placeId}. Marking as permanently missing.`);
@@ -2754,7 +2771,8 @@
                         placeDetailsCache[placeId] = {
                             id: placeId,
                             displayName: fallbackName,
-                            isMissing: true
+                            isMissing: true,
+                            fetchAttempted: true
                         };
                         updateCacheIndicator();
                     }
@@ -2762,11 +2780,10 @@
 
                 // Fallback to basic marker if everything failed
                 if (!isNaN(lat) && !isNaN(lng)) renderBasicMarker(lat, lng, fallbackName, placeVisit, index);
-                
+
                 if (sidebarItem) {
                     const nametag = sidebarItem.querySelector('strong');
                     if (nametag) nametag.textContent = fallbackName;
-                    // NEW: apply unfetched style
                     const iconContainer = sidebarItem.querySelector('.timeline-icon-container');
                     if(iconContainer) {
                         const style = getPlaceStyle([], false, customSemanticType);
@@ -3400,12 +3417,16 @@
 
     // Helper to determine if a cached place needs to be updated based on new extractor rules
     function needsCacheUpdate(place) {
-        if (!place.id || place.isMissing) return false;
+        // Stop if we've already tried fetching this, if it's dead, or if there's no ID
+        if (!place.id || place.isMissing || place.fetchAttempted) return false;
         if (!place.extractedCountry || place.extractedCountry === "Unknown Country") return true;
         if (!place.extractedCity || place.extractedCity === "Unknown City") return true;
 
         const lowerCity = place.extractedCity.toLowerCase();
-        const badKeywords = ["district", "tambon", "amphoe", "ward"];
+        const badKeywords = [
+            " district", "區", " ward", "-ku",
+            "tambon", "ตำบล", "amphoe", "อำเภอ"
+        ];
         return badKeywords.some(kw => lowerCity.includes(kw));
     }
 
@@ -4860,6 +4881,8 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 console.log("Place details cache saved.");
+                initialCacheSizeFromFile = Object.keys(placeDetailsCache).length;
+                updateCacheIndicator();
             } catch (error) {
                 console.error("Error saving cache:", error);
                 alert("Could not save cache data. See console for details.");
@@ -6921,7 +6944,11 @@ Departed: ${end}</description>
 
             // Sidebar area
             document.getElementById('timeline').style.display = 'none';
-            if(document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
+
+            // HIDE DATE PICKERS
+            document.getElementById('datePickerContainer').style.display = 'none';
+            document.getElementById('date-range-info').style.display = 'none';
+            document.getElementById('go-container').style.display = 'none';
 
             // Show World
             worldSidebar.style.display = 'flex';
@@ -6934,8 +6961,8 @@ Departed: ${end}</description>
             if (!uiEnabled) return;
 
             if (summaryViewVisible) {
-                summaryView.style.display = 'none';
-                mapElement.classList.remove('hidden');
+                document.getElementById('summaryView').style.display = 'none';
+                document.getElementById('map').classList.remove('hidden');
                 summaryViewVisible = false;
                 updateViewToggleButtons();
             }
@@ -6944,6 +6971,12 @@ Departed: ${end}</description>
                 worldViewVisible = false;
                 document.getElementById('worldSidebarContent').style.display = 'none';
                 document.getElementById('timeline').style.display = 'block';
+
+                // RESTORE DATE PICKERS
+                document.getElementById('datePickerContainer').style.display = 'flex';
+                document.getElementById('date-range-info').style.display = 'block';
+                document.getElementById('go-container').style.display = 'flex';
+
                 updateViewToggleButtons();
                 if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
                 document.getElementById('goBtn').click(); // Reload regular timeline map
@@ -6954,6 +6987,13 @@ Departed: ${end}</description>
             worldSidebar.style.display = 'none';
             timelineEl.style.display = 'block';
             worldBtn.classList.remove('active');
+            worldViewVisible = false;
+            if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+
+            // RESTORE DATE PICKERS
+            document.getElementById('datePickerContainer').style.display = 'flex';
+            document.getElementById('date-range-info').style.display = 'block';
+            document.getElementById('go-container').style.display = 'flex';
         });
 
         document.getElementById('updateLegacyCache100Btn').addEventListener('click', async () => {
@@ -6992,7 +7032,10 @@ Departed: ${end}</description>
             return needsCacheUpdate(placeDetailsCache[key]);
         });
 
-        // Apply the limit if one was provided
+        // --- NEW: BEFORE LOGGING ---
+        console.log(`[DEBUG] BEFORE UPDATE: Found ${legacyPlaces.length} places needing update.`);
+        console.log(`[DEBUG] Target Place IDs:`, legacyPlaces);
+
         if (limit && legacyPlaces.length > limit) {
             legacyPlaces = legacyPlaces.slice(0, limit);
         }
@@ -7021,11 +7064,24 @@ Departed: ${end}</description>
                 placeDetailsCache[placeId].extractedState = extracted.state;
                 placeDetailsCache[placeId].extractedCountry = extracted.country;
 
+                // CRITICAL FIX: Mark as attempted so we don't infinitely retry partial data
+                placeDetailsCache[placeId].fetchAttempted = true;
+
             } catch (e) {
-                console.warn(`Failed to update legacy place ${placeId}`, e);
+                // CRITICAL FIX: Force error to string to catch the NOT_FOUND text
+                const errorString = String(e);
+
+                if (errorString.includes("NOT_FOUND") || errorString.includes("no longer valid")) {
+                    console.log(`[DEBUG] Marking Place ID ${placeId} as permanently missing (404).`);
+                    placeDetailsCache[placeId].isMissing = true;
+                    placeDetailsCache[placeId].fetchAttempted = true;
+                } else {
+                    console.warn(`Failed to update legacy place ${placeId}`, e);
+                }
             }
 
-            await new Promise(resolve => setTimeout(resolve, 10));
+            // CRITICAL FIX: Increased to 50ms to prevent API rate limiting
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
 
         updateCacheIndicator();
@@ -7034,7 +7090,17 @@ Departed: ${end}</description>
         btn100.disabled = false;
         progressDoneDiv.style.display = 'block';
 
-        // Refresh the view to show the newly updated places or the remaining count
+        // --- NEW: AFTER LOGGING ---
+        let remainingPlaces = Object.keys(placeDetailsCache).filter(key => needsCacheUpdate(placeDetailsCache[key]));
+        console.log(`[DEBUG] AFTER UPDATE: ${remainingPlaces.length} places still need update.`);
+        if (remainingPlaces.length > 0) {
+            console.log(`[DEBUG] Stuck Place IDs:`, remainingPlaces);
+            remainingPlaces.forEach(id => {
+                // Clone the object so console.log doesn't show a future mutated state
+                console.log(`[DEBUG] Data for stuck place ${id}:`, JSON.parse(JSON.stringify(placeDetailsCache[id])));
+            });
+        }
+
         checkAndRenderWorldData();
     }
 
