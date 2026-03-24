@@ -20,14 +20,16 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - World view shows all of the countries and cities you've visited
 - Export to KML file
 - Mobile-friendly UI, so you can use this on your phone
-  
-#
-![Alt text](/screenshot.png?raw=true "Screenshot")
-#
 
-![Alt text](/screenshot2.jpg?raw=true "Screenshot 2")
+<p align="center">
+  <a href="/screenshot.png?raw=true"><img src="/screenshot.png?raw=true" alt="Map View" width="48%"></a>
+  <a href="/screenshot2.png?raw=true"><img src="/screenshot2.png?raw=true" alt="Summary View" width="48%"></a>
+</p>
 
-
+<p align="center">
+  <a href="/screenshot3.png?raw=true"><img src="/screenshot3.png?raw=true" alt="Area Search" width="48%"></a>
+  <a href="/screenshot4.png?raw=true"><img src="/screenshot4.png?raw=true" alt="World View" width="48%"></a>
+</p>
 
 #
 
