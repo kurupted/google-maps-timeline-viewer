@@ -4,7 +4,7 @@
 <!-- -----
         Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 
-        Version: February 25, 2026
+        Version: March 24, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -17,7 +17,7 @@
 
     <!-- Google Maps importLibrary loader -->
     <script>
-        window.GOOGLE_MAPS_API_KEY = "AIzaSyCGJf2RsecwH9oRbYRcLg8OIfwxOn2dLc8"; // Replace YOUR_API_KEY with your actual key
+        window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
 
         (g => {
             var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
@@ -1487,6 +1487,22 @@
                             <div id="updateCacheProgress" style="display: none; margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center; color: #d39e00;">
                                 Progress: <span id="updateCacheCurrent">0</span> / <span id="updateCacheTotal">0</span>
                                 <div id="updateCacheDone" style="display: none; color:#28a745">Updated. Be sure to Save the Place Cache!</div>
+                            </div>
+                        </div>
+                        <div id="uncachedPlacesPrompt" style="display: none; background: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; border-radius: 5px; margin-bottom: 15px; width: 100%; box-sizing: border-box; flex-shrink: 0;">
+                            <strong style="color: #383d41; display: block; margin-bottom: 5px;">Uncached Places Found</strong>
+                            <p style="margin: 0 0 10px 0; font-size: 13px; color: #383d41;">
+                                There are <strong id="uncachedPlacesCount">0</strong> places in your timeline that haven't been fetched yet.
+                            </p>
+
+                            <div style="display: flex; gap: 8px;">
+                                <button id="fetchUncached100Btn" class="control-btn" style="flex: 1; background-color: #007bff; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Fetch 100</button>
+                                <button id="fetchUncachedBtn" class="control-btn" style="flex: 1; background-color: #6c757d; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Fetch All</button>
+                            </div>
+
+                            <div id="fetchUncachedProgress" style="display: none; margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center; color: #0056b3;">
+                                Progress: <span id="fetchUncachedCurrent">0</span> / <span id="fetchUncachedTotal">0</span>
+                                <div id="fetchUncachedDone" style="display: none; color:#28a745">Fetched. Be sure to Save the Place Cache!</div>
                             </div>
                         </div>
                         <div id="worldListsContainer" style="display: none;">
@@ -6944,8 +6960,9 @@ Departed: ${end}</description>
 
             // Sidebar area
             document.getElementById('timeline').style.display = 'none';
+            if(document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
 
-            // HIDE DATE PICKERS
+            // Hide Date controls
             document.getElementById('datePickerContainer').style.display = 'none';
             document.getElementById('date-range-info').style.display = 'none';
             document.getElementById('go-container').style.display = 'none';
@@ -6953,7 +6970,7 @@ Departed: ${end}</description>
             // Show World
             worldSidebar.style.display = 'flex';
 
-            updateViewToggleButtons(); // Let the master function handle the colors
+            updateViewToggleButtons();
             checkAndRenderWorldData();
         });
 
@@ -6972,7 +6989,7 @@ Departed: ${end}</description>
                 document.getElementById('worldSidebarContent').style.display = 'none';
                 document.getElementById('timeline').style.display = 'block';
 
-                // RESTORE DATE PICKERS
+                // Restore Date controls
                 document.getElementById('datePickerContainer').style.display = 'flex';
                 document.getElementById('date-range-info').style.display = 'block';
                 document.getElementById('go-container').style.display = 'flex';
@@ -6987,39 +7004,190 @@ Departed: ${end}</description>
             worldSidebar.style.display = 'none';
             timelineEl.style.display = 'block';
             worldBtn.classList.remove('active');
+
             worldViewVisible = false;
             if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
 
-            // RESTORE DATE PICKERS
+            // Restore Date controls
             document.getElementById('datePickerContainer').style.display = 'flex';
             document.getElementById('date-range-info').style.display = 'block';
             document.getElementById('go-container').style.display = 'flex';
         });
 
+        // Event Listeners for Legacy Cache updates
         document.getElementById('updateLegacyCache100Btn').addEventListener('click', async () => {
             await updateLegacyCache(100);
         });
         document.getElementById('updateLegacyCacheBtn').addEventListener('click', async () => {
             await updateLegacyCache();
         });
+
+        // Event Listeners for New Uncached updates
+        document.getElementById('fetchUncached100Btn').addEventListener('click', async () => {
+            await fetchMissingPlaces(100);
+        });
+        document.getElementById('fetchUncachedBtn').addEventListener('click', async () => {
+            await fetchMissingPlaces();
+        });
     }
 
     function checkAndRenderWorldData() {
         const legacyPlaces = Object.values(placeDetailsCache).filter(needsCacheUpdate);
+        const uncachedPlaceIds = getUncachedPlaceIds();
 
-        const promptEl = document.getElementById('worldUpdatePrompt');
+        const legacyPromptEl = document.getElementById('worldUpdatePrompt');
+        const uncachedPromptEl = document.getElementById('uncachedPlacesPrompt');
         const listContainer = document.getElementById('worldListsContainer');
 
+        // Handle Legacy Prompt
         if (legacyPlaces.length > 0) {
-            promptEl.style.display = 'block'; // Show the warning
+            legacyPromptEl.style.display = 'block';
             document.getElementById('legacyCacheCount').textContent = legacyPlaces.length;
         } else {
-            promptEl.style.display = 'none'; // Hide the warning
+            legacyPromptEl.style.display = 'none';
+        }
+
+        // Handle Uncached Prompt
+        if (uncachedPlaceIds.length > 0) {
+            uncachedPromptEl.style.display = 'block';
+            document.getElementById('uncachedPlacesCount').textContent = uncachedPlaceIds.length;
+        } else {
+            uncachedPromptEl.style.display = 'none';
         }
 
         listContainer.style.display = 'block';
         renderWorldData();
     }
+
+    function getUncachedPlaceIds() {
+        const allPlaceIds = new Set();
+        // Extract all Place IDs from loaded timeline data
+        for (const monthKey in timelineData) {
+            if (timelineData[monthKey] && timelineData[monthKey].timelineObjects) {
+                timelineData[monthKey].timelineObjects.forEach(item => {
+                    let placeId;
+                    if (item.placeVisit) placeId = item.placeVisit.location?.placeId;
+                    else if (item.visit) placeId = item.visit.topCandidate?.placeID;
+
+                    if (placeId) allPlaceIds.add(placeId);
+                });
+            }
+        }
+
+        // Filter out the ones we already have in the cache
+        const uncached = [];
+        allPlaceIds.forEach(id => {
+            if (!placeDetailsCache[id] && !pendingPlaceRequests[id]) {
+                uncached.push(id);
+            }
+        });
+        return uncached;
+    }
+
+    async function fetchMissingPlaces(limit = null) {
+        const btnAll = document.getElementById('fetchUncachedBtn');
+        const btn100 = document.getElementById('fetchUncached100Btn');
+        const progressDiv = document.getElementById('fetchUncachedProgress');
+        const currentSpan = document.getElementById('fetchUncachedCurrent');
+        const progressDoneDiv = document.getElementById('fetchUncachedDone');
+
+        let uncachedIds = getUncachedPlaceIds();
+
+        if (limit && uncachedIds.length > limit) {
+            uncachedIds = uncachedIds.slice(0, limit);
+        }
+
+        if (uncachedIds.length === 0) return;
+
+        btnAll.disabled = true;
+        btn100.disabled = true;
+        progressDiv.style.display = 'block';
+        progressDoneDiv.style.display = 'none';
+        document.getElementById('fetchUncachedTotal').textContent = uncachedIds.length;
+
+        const fields = [
+            'id', 'displayName', 'addressComponents', 'formattedAddress',
+            'location', 'svgIconMaskURI', 'iconBackgroundColor', 'googleMapsURI', 'types'
+        ];
+
+        let count = 0;
+        for (const placeId of uncachedIds) {
+            count++;
+            currentSpan.textContent = count;
+
+            try {
+                const place = new Place({ id: placeId });
+                await place.fetchFields({ fields: fields });
+                incrementApiCallCount();
+
+                const extracted = extractLocationDetails(place.addressComponents);
+                place.extractedCity = extracted.city;
+                place.extractedState = extracted.state;
+                place.extractedCountry = extracted.country;
+                place.fetchAttempted = true; // Mark as attempted
+
+                placeDetailsCache[placeId] = place;
+
+            } catch (error) {
+                const errorString = String(error);
+
+                // Fallback: Attempt ID refresh if it returns a 404 (common in older Takeout data)
+                if (errorString.includes("NOT_FOUND") || errorString.includes("no longer valid")) {
+                    console.log(`Place ID ${placeId} returned 404. Attempting ID refresh...`);
+                    try {
+                        const refreshPlace = new Place({ id: placeId });
+                        await refreshPlace.fetchFields({ fields: ['id'] });
+                        incrementApiCallCount();
+
+                        const newPlaceId = refreshPlace.id;
+                        const newPlace = new Place({ id: newPlaceId });
+                        await newPlace.fetchFields({ fields: fields });
+                        incrementApiCallCount();
+
+                        const extracted = extractLocationDetails(newPlace.addressComponents);
+                        newPlace.extractedCity = extracted.city;
+                        newPlace.extractedState = extracted.state;
+                        newPlace.extractedCountry = extracted.country;
+                        newPlace.fetchAttempted = true;
+
+                        placeDetailsCache[placeId] = newPlace;
+                        placeDetailsCache[placeId].originalPlaceId = placeId;
+                        placeDetailsCache[placeId].isReplacement = true;
+
+                    } catch (refreshError) {
+                        // Refresh failed too, mark as permanently missing
+                        placeDetailsCache[placeId] = {
+                            id: placeId,
+                            displayName: "Unknown Location",
+                            isMissing: true,
+                            fetchAttempted: true
+                        };
+                    }
+                } else {
+                    console.warn(`Failed to fetch place ${placeId}`, error);
+                    // Mark as attempted so we don't spam the API on other types of errors
+                    placeDetailsCache[placeId] = {
+                        id: placeId,
+                        displayName: "Unknown Location",
+                        isMissing: true,
+                        fetchAttempted: true
+                    };
+                }
+            }
+
+            // Small delay to respect API rate limits
+            await new Promise(resolve => setTimeout(resolve, 15));
+        }
+
+        updateCacheIndicator();
+
+        btnAll.disabled = false;
+        btn100.disabled = false;
+        progressDoneDiv.style.display = 'block';
+
+        checkAndRenderWorldData(); // Refresh lists and prompt visibility
+    }
+
 
     async function updateLegacyCache(limit = null) {
         const btnAll = document.getElementById('updateLegacyCacheBtn');
@@ -7031,10 +7199,6 @@ Departed: ${end}</description>
         let legacyPlaces = Object.keys(placeDetailsCache).filter(key => {
             return needsCacheUpdate(placeDetailsCache[key]);
         });
-
-        // --- NEW: BEFORE LOGGING ---
-        console.log(`[DEBUG] BEFORE UPDATE: Found ${legacyPlaces.length} places needing update.`);
-        console.log(`[DEBUG] Target Place IDs:`, legacyPlaces);
 
         if (limit && legacyPlaces.length > limit) {
             legacyPlaces = legacyPlaces.slice(0, limit);
@@ -7063,12 +7227,9 @@ Departed: ${end}</description>
                 placeDetailsCache[placeId].extractedCity = extracted.city;
                 placeDetailsCache[placeId].extractedState = extracted.state;
                 placeDetailsCache[placeId].extractedCountry = extracted.country;
-
-                // CRITICAL FIX: Mark as attempted so we don't infinitely retry partial data
                 placeDetailsCache[placeId].fetchAttempted = true;
 
             } catch (e) {
-                // CRITICAL FIX: Force error to string to catch the NOT_FOUND text
                 const errorString = String(e);
 
                 if (errorString.includes("NOT_FOUND") || errorString.includes("no longer valid")) {
@@ -7080,8 +7241,7 @@ Departed: ${end}</description>
                 }
             }
 
-            // CRITICAL FIX: Increased to 50ms to prevent API rate limiting
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 15));
         }
 
         updateCacheIndicator();
@@ -7089,17 +7249,6 @@ Departed: ${end}</description>
         btnAll.disabled = false;
         btn100.disabled = false;
         progressDoneDiv.style.display = 'block';
-
-        // --- NEW: AFTER LOGGING ---
-        let remainingPlaces = Object.keys(placeDetailsCache).filter(key => needsCacheUpdate(placeDetailsCache[key]));
-        console.log(`[DEBUG] AFTER UPDATE: ${remainingPlaces.length} places still need update.`);
-        if (remainingPlaces.length > 0) {
-            console.log(`[DEBUG] Stuck Place IDs:`, remainingPlaces);
-            remainingPlaces.forEach(id => {
-                // Clone the object so console.log doesn't show a future mutated state
-                console.log(`[DEBUG] Data for stuck place ${id}:`, JSON.parse(JSON.stringify(placeDetailsCache[id])));
-            });
-        }
 
         checkAndRenderWorldData();
     }
