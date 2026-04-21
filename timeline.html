@@ -4,7 +4,7 @@
 <!-- -----
         Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
 
-        Version: April 5, 2026
+        Version: April 21, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -1918,7 +1918,7 @@
         'SNOWSHOEING': ['SNOWSHOEING'],
         'SURFING': ['SURFING'],
         'SWIMMING': ['SWIMMING'],
-        'UNKNOWN': ['UNKNOWN', 'UNKNOWN_ACTIVITY_TYPE', 'TILTING']
+        'UNKNOWN': ['UNKNOWN', 'UNKNOWN_ACTIVITY_TYPE', 'TILTING', 'MOVING']
     };
 
     // Reverse mapping for easy lookup: RawType -> GroupName
@@ -1949,7 +1949,7 @@
         'grocery_or_supermarket': { color: '#32CD32', icon: '🛒', label: 'Grocery' },
         'park': { color: '#228B22', icon: '🌳', label: 'Park' },
         'lodging': { color: '#800080', icon: '🏨', label: 'Lodging' },
-        'transit_station': { color: '#A9A9A9', icon: '🚉', label: 'Transit' },
+        'transit_station': { color: '#03C9FF', icon: '🚉', label: 'Transit' },
         'home': { color: '#4285F4', icon: '🏠', label: 'Home' },
         'work': { color: '#0F9D58', icon: '💼', label: 'Work' },
         'other': { color: '#454545', icon: '📍', label: 'Other (Known)' },
@@ -2301,6 +2301,34 @@
             const kilometers = meters / 1000;
             return `${kilometers.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
         }
+    }
+
+    function computeHaversineDistance(points) {
+        if (!points || points.length < 2) return 0;
+        let computedDist = 0;
+        const toRad = x => x * Math.PI / 180;
+        const R = 6371e3; // metres
+        for(let k=1; k < points.length; k++) {
+            const p1 = points[k-1];
+            const p2 = points[k];
+            const lat1 = (p1.latE7 !== undefined ? p1.latE7 / 1e7 : p1.lat);
+            const lon1 = (p1.lngE7 !== undefined ? p1.lngE7 / 1e7 : p1.lng);
+            const lat2 = (p2.latE7 !== undefined ? p2.latE7 / 1e7 : p2.lat);
+            const lon2 = (p2.lngE7 !== undefined ? p2.lngE7 / 1e7 : p2.lng);
+            if(isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) continue;
+
+            const φ1 = toRad(lat1);
+            const φ2 = toRad(lat2);
+            const Δφ = toRad(lat2-lat1);
+            const Δλ = toRad(lon2-lon1);
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            computedDist += R * c;
+        }
+        return Math.round(computedDist);
     }
 
     // Debounce function to limit API calls
@@ -5307,6 +5335,15 @@
                                     transformedActivity.simplifiedRawPath.points.push({lat: endGeo.lat, lng: endGeo.lng});
                                 }
                             }
+                            // Estimate distance if Google omitted it
+                            if (transformedActivity.distance === 0) {
+                                if (transformedActivity.simplifiedRawPath.points.length > 1) {
+                                    transformedActivity.distance = computeHaversineDistance(transformedActivity.simplifiedRawPath.points);
+                                } else if (startGeo && endGeo) {
+                                    transformedActivity.distance = computeHaversineDistance([startGeo, endGeo]);
+                                }
+                                transformedActivity.simplifiedRawPath.distanceMeters = transformedActivity.distance;
+                            }
                             // Replace the original item with the transformed activitySegment structure
                             processedItem = { activitySegment: transformedActivity };
                             activityTypes.add(transformedActivity.activityType);
@@ -5446,29 +5483,44 @@
                                     editConfirmationStatus: segment.visit.editConfirmationStatus
                                 }
                             };
-                            // Process Activity Segment
-                        } else if (segment.activity?.topCandidate?.type && segment.activity?.start?.latLng && segment.activity?.end?.latLng) {
-                            const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
-                            const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
-                            if (!startLatLngMatch || !endLatLngMatch) return null;
-                            const startLat = parseFloat(startLatLngMatch[1]);
-                            const startLng = parseFloat(startLatLngMatch[2]);
-                            const endLat = parseFloat(endLatLngMatch[1]);
-                            const endLng = parseFloat(endLatLngMatch[2]);
-                            if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng)) return null;
+                        // Process Activity Segment
+                        } else if (segment.activity) {
+                            let startLat, startLng, endLat, endLng;
+                            if (segment.activity.start?.latLng) {
+                                const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                if (startLatLngMatch) {
+                                    startLat = parseFloat(startLatLngMatch[1]);
+                                    startLng = parseFloat(startLatLngMatch[2]);
+                                }
+                            }
+                            if (segment.activity.end?.latLng) {
+                                const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                if (endLatLngMatch) {
+                                    endLat = parseFloat(endLatLngMatch[1]);
+                                    endLng = parseFloat(endLatLngMatch[2]);
+                                }
+                            }
 
                             const activitySegment = { // Create standard activitySegment structure
-                                activityType: segment.activity.topCandidate.type || 'UNKNOWN',
+                                activityType: segment.activity.topCandidate?.type || segment.activity.activityType || 'UNKNOWN',
                                 duration: { startTimestamp: startTime, endTimestamp: endTime },
-                                distance: segment.activity.distanceMeters, // Use provided distance
-                                startLocation: { latitudeE7: Math.round(startLat * 1e7), longitudeE7: Math.round(startLng * 1e7) },
-                                endLocation: { latitudeE7: Math.round(endLat * 1e7), longitudeE7: Math.round(endLng * 1e7) },
+                                distance: segment.activity.distanceMeters || 0,
+                                startLocation: {},
+                                endLocation: {},
                                 editConfirmationStatus: segment.activity.editConfirmationStatus,
                                 simplifiedRawPath: { // Structure expected by rendering function
-                                    distanceMeters: segment.activity.distanceMeters, // Include distance here too
+                                    distanceMeters: segment.activity.distanceMeters || 0,
                                     points: []
                                 }
                             };
+
+                            if (!isNaN(startLat) && !isNaN(startLng)) {
+                                activitySegment.startLocation = { latitudeE7: Math.round(startLat * 1e7), longitudeE7: Math.round(startLng * 1e7) };
+                            }
+                            if (!isNaN(endLat) && !isNaN(endLng)) {
+                                activitySegment.endLocation = { latitudeE7: Math.round(endLat * 1e7), longitudeE7: Math.round(endLng * 1e7) };
+                            }
+
                             // Efficiently find associated path points
                             const segmentStartMoment = moment(startTime);
                             const segmentEndMoment = moment(endTime);
@@ -5486,6 +5538,17 @@
                                     lngE7: allPathPoints[i].lngE7,
                                 });
                             }
+
+                            // Estimate distance if Google omitted it
+                            if (activitySegment.distance === 0) {
+                                if (activitySegment.simplifiedRawPath.points.length > 1) {
+                                    activitySegment.distance = computeHaversineDistance(activitySegment.simplifiedRawPath.points);
+                                } else if (!isNaN(startLat) && !isNaN(startLng) && !isNaN(endLat) && !isNaN(endLng)) {
+                                    activitySegment.distance = computeHaversineDistance([{lat: startLat, lng: startLng}, {lat: endLat, lng: endLng}]);
+                                }
+                                activitySegment.simplifiedRawPath.distanceMeters = activitySegment.distance;
+                            }
+
                             activityTypes.add(activitySegment.activityType);
                             return { activitySegment: activitySegment };
                         }
@@ -6807,7 +6870,7 @@ Departed: ${end}</description>
         const sortedGroups = Array.from(uniqueGroups).sort();
 
         sortedGroups.forEach(group => {
-            if(group === 'STATIONARY' || group === 'UNKNOWN') return;
+            if(group === 'STATIONARY') return;
             
             const color = getActivityColor(group);
             // Enforce strict Title Case
