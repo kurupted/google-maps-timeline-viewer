@@ -2,7 +2,8 @@
 <html lang="en">
 
 <!-- -----
-        Be sure to set your actual API key in place of "YOUR_API_KEY" (line 20)
+        You can enter your Google Maps API key in the app, set it in
+        timeline.local.js, or replace "YOUR_API_KEY" below.
 
         Version:  April 21, 2026
         Full details here:
@@ -15,35 +16,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Google Maps Timeline Viewer</title>
 
-    <!-- Google Maps importLibrary loader -->
+    <!-- API key configuration. timeline.local.js is optional and may override this. -->
     <script>
-        window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
-
-        (g => {
-            var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
-            b = b[c] || (b[c] = {});
-            var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams,
-                u = () => h || (h = new Promise(async (f, n) => {
-                    await (a = m.createElement("script"));
-                    e.set("libraries", [...r] + "");
-                    for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
-                    e.set("callback", c + ".maps." + q);
-                    // Use the globally stored API key
-                    if (g.key) { // Check if a key was passed in the config object
-                        e.set("key", g.key);
-                    }
-                    a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-                    d[q] = f;
-                    a.onerror = () => h = n(Error(p + " could not load."));
-                    a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-                    m.head.append(a);
-                }));
-            d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
-        })
-        ({ key: window.GOOGLE_MAPS_API_KEY,
-            v: "beta",
-            libraries: "places" });
+        window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Optional fallback; leave unchanged to use the in-app key prompt.
+        window.TIMELINE_VIEWER_CONFIG = window.TIMELINE_VIEWER_CONFIG || {};
     </script>
+    <script src="timeline.local.js" onerror="this.remove()"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
@@ -203,6 +181,39 @@
         }
         .settings-checkbox {
             margin-right: 8px;
+        }
+        .settings-help {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            margin-top: 0;
+        }
+        .settings-button-row {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        #settingsDataControls {
+            border: 0;
+            margin: 0;
+            padding: 0;
+            min-inline-size: 0;
+        }
+        #settingsDataControls:disabled {
+            opacity: 0.55;
+        }
+        #settingsDataControls:disabled a {
+            color: #6c757d;
+            pointer-events: none;
+        }
+        #settingsLockedMessage {
+            border-left: 4px solid #b02a37;
+            color: #842029;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 24px 0 8px;
+            padding: 5px 0 5px 10px;
         }
         #activityFilters {
             margin-left: 20px;
@@ -1408,20 +1419,44 @@
         #apiKeyModal button:hover {
             background-color: #4a85e5;
         }
+        #apiKeyModal button.secondary {
+            background-color: #6c757d;
+            margin-left: 8px;
+        }
+        #apiKeyModal button.secondary:hover {
+            background-color: #5a6268;
+        }
+        #apiKeyModal .remember-key {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            margin: 0 0 12px;
+        }
+        #apiKeyModal .remember-key input {
+            width: auto;
+            margin: 0;
+        }
         #apiKeyModal a {
             color: #007bff;
         }
     </style>
 </head>
 <body>
-<div id="apiKeyModal"><!-- not used atm. will fix later -->
+<div id="apiKeyModal">
     <div class="modal-content">
-        <h3>Enter API Key</h3>
-        <p>A Google Maps API Key is required. Please enter it below to continue.</p>
-        <p><small>The key is only stored for this browser session.</small></p>
+        <h3 id="apiKeyModalTitle">Enter API Key</h3>
+        <p id="apiKeyModalMessage">A Google Maps API Key is required. Please enter it below to continue.</p>
         <input type="text" id="apiKeyInput" placeholder="Paste your API key here">
+        <label class="remember-key">
+            <input type="checkbox" id="rememberApiKey" checked>
+            Remember this key in this browser
+        </label>
+        <p id="apiKeyModalHelp" class="settings-help"></p>
         <button id="apiKeySubmit">Submit</button>
-        <p><small>For instructions on getting a key, see the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank" rel="noopener">project page</a>.</small></p>
+        <button id="apiKeyCancel" class="secondary" style="display: none;">Cancel</button>
+        <p><small>For instructions on getting a key or storing it outside the browser, see the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank" rel="noopener">project page</a>.</small></p>
     </div>
 </div>
 <div id="container">
@@ -1571,6 +1606,16 @@
             <div id="settingsView">
                 <div id="settingsHeader">
                 </div>
+                <h4>Google Maps API Key</h4>
+                <p id="apiKeyStatus" class="settings-help"></p>
+                <div class="settings-button-row">
+                    <button id="changeApiKeyBtn" class="control-btn" style="flex: 1; padding: 6px;">Set Browser Key</button>
+                    <button id="clearApiKeyBtn" class="control-btn" style="flex: 1; padding: 6px; background-color: #6c757d;">Clear Saved Key</button>
+                </div>
+                <p id="apiKeyHelp" class="settings-help"></p>
+                <p id="settingsLockedMessage">The rest of Settings unlocks after Timeline data is loaded.</p>
+
+                <fieldset id="settingsDataControls" disabled>
                 <h4>Timezone</h4>
                 <label for="timezone-select">Display times in:</label>
                 <select id="timezone-select"></select>
@@ -1609,7 +1654,7 @@
 				<label for="workPlaceIdsInput">Work Place IDs (comma-separated):</label>
 				<input type="text" id="workPlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
 
-				<div style="display: flex; gap: 5px; margin-top: 5px;">
+				<div class="settings-button-row">
 					<button id="saveAdvancedSettingsBtn" class="control-btn" style="flex: 1; padding: 6px;">Save IDs</button>
 				</div>
 
@@ -1632,6 +1677,7 @@
 					<button id="importSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Import Settings</button>
 				</div>
 				<input type="file" id="importSettingsFile" accept=".json" style="display: none;">
+                </fieldset>
             </div>
         </div>
 
@@ -1867,6 +1913,16 @@
     let editModeActiveFullItem = null;
     let homePlaceIds = [];
     let workPlaceIds = [];
+    const API_KEY_PLACEHOLDER = 'YOUR_API_KEY';
+    const API_KEY_STORAGE_KEY = 'googleMapsApiKey';
+    const API_KEY_SOURCE = Object.freeze({
+        MISSING: 'missing',
+        LOCAL_CONFIG: 'localConfig',
+        TIMELINE_HTML: 'timelineHtml',
+        BROWSER_STORAGE: 'browserStorage',
+        SESSION: 'session'
+    });
+    let currentApiKeySource = API_KEY_SOURCE.MISSING;
 
     // Summary View Globals
     let allYearlySummaries = null; // Calculated yearly summaries
@@ -2017,10 +2073,258 @@
         return isFetched ? 'other' : 'unknown_place'; 
     }
 
+    // --- API Key Resolution ---
+    function normalizeApiKey(value) {
+        return typeof value === 'string' ? value.trim() : '';
+    }
+
+    function isUsableApiKey(value) {
+        const apiKey = normalizeApiKey(value);
+        return apiKey !== '' && apiKey !== API_KEY_PLACEHOLDER;
+    }
+
+    function getGoogleMapsApiKey() {
+        return normalizeApiKey(window.GOOGLE_MAPS_API_KEY);
+    }
+
+    function getConfiguredApiKey() {
+        const configKey = window.TIMELINE_VIEWER_CONFIG?.googleMapsApiKey;
+        if (isUsableApiKey(configKey)) {
+            return { key: normalizeApiKey(configKey), source: API_KEY_SOURCE.LOCAL_CONFIG };
+        }
+
+        if (isUsableApiKey(window.GOOGLE_MAPS_API_KEY)) {
+            return { key: normalizeApiKey(window.GOOGLE_MAPS_API_KEY), source: API_KEY_SOURCE.TIMELINE_HTML };
+        }
+
+        return null;
+    }
+
+    async function resolveGoogleMapsApiKey() {
+        const configuredKey = getConfiguredApiKey();
+        if (configuredKey) return configuredKey;
+
+        const storedKey = await getSetting(API_KEY_STORAGE_KEY);
+        if (isUsableApiKey(storedKey)) {
+            return { key: normalizeApiKey(storedKey), source: API_KEY_SOURCE.BROWSER_STORAGE };
+        }
+
+        return await promptForApiKey();
+    }
+
+    function promptForApiKey(options = {}) {
+        return new Promise(resolve => {
+            const modal = document.getElementById('apiKeyModal');
+            const title = document.getElementById('apiKeyModalTitle');
+            const message = document.getElementById('apiKeyModalMessage');
+            const input = document.getElementById('apiKeyInput');
+            const remember = document.getElementById('rememberApiKey');
+            const help = document.getElementById('apiKeyModalHelp');
+            const submit = document.getElementById('apiKeySubmit');
+            const cancel = document.getElementById('apiKeyCancel');
+
+            title.textContent = options.title || 'Enter API Key';
+            message.textContent = options.message || 'A Google Maps API Key is required. Please enter it below to continue.';
+            input.value = '';
+            remember.checked = options.rememberDefault !== false;
+            remember.disabled = options.forceRemember === true;
+            help.textContent = options.help || '';
+            help.style.display = options.help ? 'block' : 'none';
+            cancel.style.display = options.allowCancel ? 'inline-block' : 'none';
+
+            const cleanup = () => {
+                submit.removeEventListener('click', submitKey);
+                cancel.removeEventListener('click', cancelKey);
+                input.removeEventListener('keydown', handleKeydown);
+            };
+
+            const cancelKey = () => {
+                modal.style.display = 'none';
+                cleanup();
+                resolve(null);
+            };
+
+            const submitKey = async () => {
+                const apiKey = normalizeApiKey(input.value);
+                if (!isUsableApiKey(apiKey)) {
+                    alert('Please enter a valid Google Maps API key.');
+                    input.focus();
+                    return;
+                }
+
+                let saved = false;
+                if (remember.checked) {
+                    saved = await saveSetting(API_KEY_STORAGE_KEY, apiKey);
+                    if (!saved) {
+                        if (options.forceRemember) {
+                            alert('The API key could not be saved in this browser. The current key was not changed.');
+                            input.focus();
+                            return;
+                        }
+                        alert('The API key could not be saved in this browser. It will be used for this session only.');
+                    }
+                }
+
+                modal.style.display = 'none';
+                cleanup();
+                resolve({ key: apiKey, source: saved ? API_KEY_SOURCE.BROWSER_STORAGE : API_KEY_SOURCE.SESSION });
+            };
+
+            const handleKeydown = event => {
+                if (event.key === 'Enter') submitKey();
+            };
+
+            submit.addEventListener('click', submitKey);
+            cancel.addEventListener('click', cancelKey);
+            input.addEventListener('keydown', handleKeydown);
+            modal.style.display = 'flex';
+            setTimeout(() => input.focus(), 0);
+        });
+    }
+
+    function installGoogleMapsLoader(apiKey) {
+        googleMapsAuthFailed = false;
+        googleMapsAuthFailureHandled = false;
+        window.gm_authFailure = handleGoogleMapsAuthFailure;
+
+        (g => {
+            var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
+            b = b[c] || (b[c] = {});
+            var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams,
+                u = () => h || (h = new Promise(async (f, n) => {
+                    await (a = m.createElement("script"));
+                    e.set("libraries", [...r] + "");
+                    for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+                    e.set("callback", c + ".maps." + q);
+                    if (g.key) {
+                        e.set("key", g.key);
+                    }
+                    a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+                    d[q] = f;
+                    a.onerror = () => h = n(Error(p + " could not load."));
+                    a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+                    m.head.append(a);
+                }));
+            d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
+        })
+        ({
+            key: apiKey,
+            v: "beta",
+            libraries: "places"
+        });
+    }
+
+    function getApiKeySourceMessage() {
+        if (currentApiKeySource === API_KEY_SOURCE.BROWSER_STORAGE) {
+            return 'The API key is loaded from this browser storage.';
+        }
+        if (currentApiKeySource === API_KEY_SOURCE.LOCAL_CONFIG) {
+            return 'The API key is loaded from timeline.local.js.';
+        }
+        if (currentApiKeySource === API_KEY_SOURCE.TIMELINE_HTML) {
+            return 'The API key is set directly in timeline.html.';
+        }
+        if (currentApiKeySource === API_KEY_SOURCE.SESSION) {
+            return 'The API key is being used for this browser session only.';
+        }
+        return 'No API key is currently loaded.';
+    }
+
+    function getApiKeyHelpMessage() {
+        if (googleMapsAuthFailed && currentApiKeySource === API_KEY_SOURCE.LOCAL_CONFIG) {
+            return 'Google Maps rejected the key from timeline.local.js. Fix that key, or remove it to use browser storage.';
+        }
+        if (googleMapsAuthFailed && currentApiKeySource === API_KEY_SOURCE.TIMELINE_HTML) {
+            return 'Google Maps rejected the key in timeline.html. Fix that key, or replace it with YOUR_API_KEY to use browser storage.';
+        }
+        if (googleMapsAuthFailed) {
+            return 'Google Maps rejected the current key. Clear or replace the browser key, then reload.';
+        }
+        if (currentApiKeySource === API_KEY_SOURCE.LOCAL_CONFIG) {
+            return 'Remove the key from timeline.local.js to use a browser-stored key.';
+        }
+        if (currentApiKeySource === API_KEY_SOURCE.TIMELINE_HTML) {
+            return 'Replace the key in timeline.html with YOUR_API_KEY to use browser storage.';
+        }
+        return '';
+    }
+
+    function offerPageReload(message) {
+        if (confirm(`${message}\n\nReload now?`)) {
+            window.location.reload();
+        }
+    }
+
+    function updateApiKeySettingsUi() {
+        const status = document.getElementById('apiKeyStatus');
+        if (status) status.textContent = getApiKeySourceMessage();
+        const help = document.getElementById('apiKeyHelp');
+        if (help) {
+            const helpMessage = getApiKeyHelpMessage();
+            help.textContent = helpMessage;
+            help.style.display = helpMessage ? 'block' : 'none';
+        }
+        const changeApiKeyBtn = document.getElementById('changeApiKeyBtn');
+        if (changeApiKeyBtn) {
+            const keyIsFileConfigured = currentApiKeySource === API_KEY_SOURCE.LOCAL_CONFIG || currentApiKeySource === API_KEY_SOURCE.TIMELINE_HTML;
+            changeApiKeyBtn.disabled = keyIsFileConfigured;
+            changeApiKeyBtn.title = keyIsFileConfigured ? getApiKeyHelpMessage() : '';
+        }
+    }
+
     // --- Map Initialization ---
     let AdvancedMarkerElement;
     let Place;
     let GoogleMap; // Renamed to avoid conflict with built-in Map
+    let googleMapsAuthFailed = false;
+    let googleMapsAuthFailureHandled = false;
+
+    function showMapConfigurationError(options = {}) {
+        const howToMessage = document.getElementById('howToMessage');
+        if (options.showMapMessage) {
+            howToMessage.innerHTML = "<h3>Configuration Error</h3><p>Google Maps could not be initialized. Check your API key or use Settings to clear or replace a browser-stored key.</p>";
+            howToMessage.style.display = "block";
+        } else {
+            howToMessage.style.display = "none";
+        }
+        setUIEnabled(false);
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) settingsBtn.disabled = false;
+        const folderPicker = document.getElementById('folderPicker');
+        if(folderPicker) folderPicker.disabled = true;
+        showSidebarTab('settings');
+    }
+
+    function handleGoogleMapsAuthFailure() {
+        googleMapsAuthFailed = true;
+        if (googleMapsAuthFailureHandled) return;
+        googleMapsAuthFailureHandled = true;
+        alert("Failed to load Google Maps: API Key issue. Please check your API key, ensure the Maps JavaScript API is enabled, and that your project is linked to a billing account.");
+        showMapConfigurationError();
+        updateApiKeySettingsUi();
+    }
+
+    function waitForGoogleMapsAuthCheck() {
+        return new Promise(resolve => {
+            if (googleMapsAuthFailed) {
+                resolve(false);
+                return;
+            }
+
+            let resolved = false;
+            const done = success => {
+                if (resolved) return;
+                resolved = true;
+                resolve(success && !googleMapsAuthFailed);
+            };
+
+            if (map && window.google?.maps?.event) {
+                google.maps.event.addListenerOnce(map, 'tilesloaded', () => done(true));
+            }
+
+            setTimeout(() => done(!googleMapsAuthFailed), 1500);
+        });
+    }
 
     async function initMap() {
         try {
@@ -2049,7 +2353,14 @@
             const placesModule = await google.maps.importLibrary("places");
             Place = placesModule.Place;
 
+            const authCheckPassed = await waitForGoogleMapsAuthCheck();
+            if (!authCheckPassed) {
+                handleGoogleMapsAuthFailure();
+                return false;
+            }
+
             console.log("Map and libraries loaded successfully");
+            return true;
         } catch (error) {
             console.error("Error initializing map libraries:", error);
             // Check if the error is due to API key issues specifically
@@ -2058,6 +2369,7 @@
             } else {
                 alert("Failed to load Google Maps libraries. Please check your internet connection and API key settings.");
             }
+            return false;
         }
     }
     function initCurrentLocationButton() {
@@ -4097,7 +4409,7 @@
             return;
         }
 
-        const apiKey = window.GOOGLE_MAPS_API_KEY;
+        const apiKey = getGoogleMapsApiKey();
         const url = `https://places.googleapis.com/v1/places:autocomplete`;
         incrementApiCallCount();
 
@@ -4868,7 +5180,6 @@
 
         // Toggle settings tab visibility
         settingsBtn.addEventListener('click', () => {
-            if (!uiEnabled) return;
             showSidebarTab('settings');
         });
 
@@ -5061,7 +5372,6 @@
             document.getElementById('prevDayBtn'),
             document.getElementById('nextDayBtn'),
             document.getElementById('goBtn'),
-            document.getElementById('settingsBtn'),
             document.getElementById('fitMapBtn'),
             document.getElementById('areaBtn'),
             document.getElementById('summaryBtn'),
@@ -5087,6 +5397,10 @@
         settingsCheckboxes.forEach(cb => cb.disabled = !enabled);
         document.getElementById('timezone-select').disabled = !enabled;
         document.getElementById('distance-unit-select').disabled = !enabled;
+        const settingsDataControls = document.getElementById('settingsDataControls');
+        if (settingsDataControls) settingsDataControls.disabled = !enabled;
+        const settingsLockedMessage = document.getElementById('settingsLockedMessage');
+        if (settingsLockedMessage) settingsLockedMessage.style.display = enabled ? 'none' : 'block';
 
         if (!enabled) {
             // Reset state when UI is disabled (e.g., no data loaded)
@@ -6182,7 +6496,7 @@
             }
             if (apiCallsDisabled) return;
 
-            const apiKey = window.GOOGLE_MAPS_API_KEY;
+            const apiKey = getGoogleMapsApiKey();
             const url = `https://places.googleapis.com/v1/places:autocomplete`;
             incrementApiCallCount();
 
@@ -6315,16 +6629,26 @@
         });
     }
 
+    function waitForTransaction(tx) {
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error('IndexedDB transaction failed.'));
+            tx.onabort = () => reject(tx.error || new Error('IndexedDB transaction aborted.'));
+        });
+    }
+
     async function saveSetting(key, value) {
         try {
             const db = await openDB();
             const tx = db.transaction(STORE_NAME, 'readwrite');
             const store = tx.objectStore(STORE_NAME);
             store.put(value, key);
-            await new Promise(resolve => tx.oncomplete = resolve);
+            await waitForTransaction(tx);
             console.log(`Setting '${key}' saved to IndexedDB.`);
+            return true;
         } catch (error) {
             console.error(`Error saving setting '${key}' to IndexedDB:`, error);
+            return false;
         }
     }
 
@@ -6341,6 +6665,21 @@
         } catch (error) {
             console.error(`Error getting setting '${key}' from IndexedDB:`, error);
             return undefined;
+        }
+    }
+
+    async function deleteSetting(key) {
+        try {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            store.delete(key);
+            await waitForTransaction(tx);
+            console.log(`Setting '${key}' deleted from IndexedDB.`);
+            return true;
+        } catch (error) {
+            console.error(`Error deleting setting '${key}' from IndexedDB:`, error);
+            return false;
         }
     }
 
@@ -6442,6 +6781,9 @@
         const homeInput = document.getElementById('homePlaceIdsInput');
         const workInput = document.getElementById('workPlaceIdsInput');
         const themeSelect = document.getElementById('map-theme-select');
+        const changeApiKeyBtn = document.getElementById('changeApiKeyBtn');
+        const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
+        updateApiKeySettingsUi();
         
         // --- ADD DEBUG LISTENERS ---
         const debugModeToggle = document.getElementById('debugModeToggle');
@@ -6454,6 +6796,48 @@
         });
         document.getElementById('closeDebugOverlayBtn').addEventListener('click', () => {
             document.getElementById('debugOverlay').style.display = 'none';
+        });
+
+        changeApiKeyBtn.addEventListener('click', async () => {
+            if (currentApiKeySource === API_KEY_SOURCE.LOCAL_CONFIG || currentApiKeySource === API_KEY_SOURCE.TIMELINE_HTML) {
+                alert(getApiKeyHelpMessage());
+                return;
+            }
+
+            const resolved = await promptForApiKey({
+                title: 'Set Browser Key',
+                message: 'Enter a Google Maps API key to use in this browser.',
+                rememberDefault: true,
+                forceRemember: true,
+                help: 'To use a key without saving it, clear the saved browser key and reload the page.',
+                allowCancel: true
+            });
+            if (!resolved) return;
+
+            window.GOOGLE_MAPS_API_KEY = resolved.key;
+            currentApiKeySource = resolved.source;
+            updateApiKeySettingsUi();
+            if (resolved.source === API_KEY_SOURCE.BROWSER_STORAGE) {
+                offerPageReload('Browser key saved. Reload to use it for Google Maps.');
+            }
+        });
+
+        clearApiKeyBtn.addEventListener('click', async () => {
+            const clearedActiveBrowserKey = currentApiKeySource === API_KEY_SOURCE.BROWSER_STORAGE;
+            const deleted = await deleteSetting(API_KEY_STORAGE_KEY);
+            if (!deleted) {
+                alert('Saved API key could not be cleared. Please check browser storage permissions and try again.');
+                return;
+            }
+            if (clearedActiveBrowserKey) {
+                currentApiKeySource = API_KEY_SOURCE.SESSION;
+            }
+            updateApiKeySettingsUi();
+            if (clearedActiveBrowserKey) {
+                offerPageReload('Saved browser key cleared. Reload to enter or load another key.');
+            } else {
+                alert('Saved API key cleared. The currently loaded key source is unchanged.');
+            }
         });
 
         // Populate initial values
@@ -7666,7 +8050,7 @@ Departed: ${end}</description>
                 endIso = moment(last.time).add(1, 'seconds').utc().toISOString();
             }
 
-            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${first.lat},${first.lon}&key=${window.GOOGLE_MAPS_API_KEY}`;
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${first.lat},${first.lon}&key=${encodeURIComponent(getGoogleMapsApiKey())}`;
             try {
                 const response = await fetch(url);
                 const data = await response.json();
@@ -7729,20 +8113,21 @@ Departed: ${end}</description>
 
 
     async function initializeApp() {
-        // Check if the API key placeholder is still present
-        if (window.GOOGLE_MAPS_API_KEY === "YOUR_API_KEY" || window.GOOGLE_MAPS_API_KEY === "") {
-            alert("Please replace 'YOUR_API_KEY' in the HTML (near the top of the <script> block) with your actual Google Maps API Key.");
-            // Optionally, disable functionality or hide the map
-            document.getElementById('howToMessage').innerHTML = "<h3>Configuration Error</h3><p>Please set your Google Maps API key in the HTML file to use this tool.</p>";
-            document.getElementById('howToMessage').style.display = "block";
-            // Disable controls if API key is not set
-            setUIEnabled(false);
-            const folderPicker = document.getElementById('folderPicker');
-            if(folderPicker) folderPicker.disabled = true; // Also disable folder picker explicitly
-            return; // Stop further execution
-        }
-
         try {
+            const resolvedApiKey = await resolveGoogleMapsApiKey();
+            if (!resolvedApiKey || !isUsableApiKey(resolvedApiKey.key)) {
+                document.getElementById('howToMessage').innerHTML = "<h3>Configuration Error</h3><p>Please enter a Google Maps API key to use this tool.</p>";
+                document.getElementById('howToMessage').style.display = "block";
+                setUIEnabled(false);
+                const folderPicker = document.getElementById('folderPicker');
+                if(folderPicker) folderPicker.disabled = true;
+                return;
+            }
+
+            window.GOOGLE_MAPS_API_KEY = resolvedApiKey.key;
+            currentApiKeySource = resolvedApiKey.source;
+            installGoogleMapsLoader(resolvedApiKey.key);
+
             // Load stored settings from IndexedDB first
             const storedTimezone = await getSetting('displayTimezone');
             if (storedTimezone) {
@@ -7776,22 +8161,30 @@ Departed: ${end}</description>
                 if (themeSelect) themeSelect.value = currentMapTheme;
             }
 
-            // Initialize the map and all UI components
-            await initMap();
+            // Initialize settings before the map so API key recovery remains available if Maps fails to load.
+            initSettingsButton();
+            populateTimezoneSelector();
+            initDistanceUnitSelector();
+            initAdvancedSettings(); // Initialize the new settings pane controls
+            setUIEnabled(false);
+            document.getElementById('settingsBtn').disabled = false;
+
+            const mapInitialized = await initMap();
+            if (!mapInitialized) {
+                showMapConfigurationError({ showMapMessage: !googleMapsAuthFailed });
+                return;
+            }
+
+            // Initialize the remaining UI components that require a working map.
             initDatePicker();
             initFolderPicker();
-            initSettingsButton();
             initFitMapButton();
             initSummaryView();
             initWorldView();
             initCacheControls();
             initSearch();
             initCurrentLocationButton();
-            populateTimezoneSelector();
-            initDistanceUnitSelector();
-            initAdvancedSettings(); // Initialize the new settings pane controls
             initEditModal();
-            setUIEnabled(false);
             showSidebarTab('date');
             updateApiCallDisplay();
 
