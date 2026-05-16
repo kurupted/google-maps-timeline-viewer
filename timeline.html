@@ -101,6 +101,22 @@
             align-items: center;
             gap: 8px;
         }
+        #dataLoadStatus {
+            display: none;
+            padding: 6px 12px 8px;
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.35;
+            color: #6c757d;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+        }
+        #dataLoadStatus.warning {
+            color: #8a5a00;
+        }
+        #dataLoadStatus.error {
+            color: #9f1d20;
+        }
         #datePickerContainer,
         #date-range-info,
         #icon-buttons-container,
@@ -1474,6 +1490,7 @@
                 <button id="settingsBtn" class="icon-btn" title="Settings" disabled>⚙️</button>
             </div>
         </div>
+        <p id="dataLoadStatus" aria-live="polite"></p>
 
         <div id="sidebar-main">
             <div id="dateView">
@@ -5436,10 +5453,12 @@
         let dataSourceText = 'Unknown';
         let placeCacheFile = null;
         let latestLocation = null;
+        const loadWarnings = [];
 
         // Reset global state ONLY on the initial, non-recursive call
         if (!isRecursive) {
             console.log("Initial call to readFilesFromDirectory, resetting globals...");
+            setDataLoadStatus();
             globalIndex = 0;
             timelineData = {};
             activityTypes = new Set();
@@ -5507,6 +5526,8 @@
                         }
                     } catch (cacheError) {
                         console.error("Error reading or parsing TimelinePlaceCache.json:", cacheError);
+                        loadWarnings.push('TimelinePlaceCache.json could not be loaded. The place cache was ignored.');
+                        setDataLoadStatus(loadWarnings.join(' '), 'warning');
                         alert("Error loading TimelinePlaceCache.json. It might be corrupted.");
                         placeDetailsCache = {};
                         initialCacheSizeFromFile = 0;
@@ -5980,6 +6001,15 @@
                     const startDate = new Date(document.getElementById('startDatePicker').value);
                     const endDate = new Date(document.getElementById('endDatePicker').value);
                     await loadTimelineDataInDateRange(startDate, endDate); // Await initial load
+                    const recordCount = getLoadedTimelineRecordCount();
+                    const monthCount = Object.keys(timelineData).length;
+                    const recordText = `${recordCount.toLocaleString()} timeline ${recordCount === 1 ? 'record' : 'records'}`;
+                    const monthText = `${monthCount.toLocaleString()} ${monthCount === 1 ? 'month' : 'months'}`;
+                    const successMessage = `Loaded ${recordText} from ${dataSourceText} across ${monthText}.`;
+                    setDataLoadStatus(
+                        loadWarnings.length ? `${successMessage} ${loadWarnings.join(' ')}` : successMessage,
+                        loadWarnings.length ? 'warning' : ''
+                    );
 
                 } else {
                     // No data was successfully loaded
@@ -6690,6 +6720,20 @@
 
     async function getDirectoryHandle() {
         return await getSetting('lastDirectoryHandle');
+    }
+
+    function setDataLoadStatus(message, type = '') {
+        const status = document.getElementById('dataLoadStatus');
+        if (!status) return;
+        status.textContent = message || '';
+        status.className = type;
+        status.style.display = message ? 'block' : 'none';
+    }
+
+    function getLoadedTimelineRecordCount() {
+        return Object.values(timelineData).reduce((total, monthData) => {
+            return total + (monthData.timelineObjects?.length || 0);
+        }, 0);
     }
 
     async function verifyPermission(fileHandle, readWrite) {
