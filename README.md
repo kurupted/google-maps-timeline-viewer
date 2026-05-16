@@ -124,13 +124,11 @@ Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, 
 
 ## View Your Timeline
 1. **Open the timeline.html File:**
-   - Open the file on your computer or mobile device. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
+   - Open the file on your computer or mobile device. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work. (Alternatively, you can [run timeline.html directly from GitHub](https://kurupted.github.io/google-maps-timeline-viewer/timeline.html). No data is transmitted to GitHub or to me; everything still runs locally in your browser, but I recommend saving the file to your device as described.)
    - At the top left of the page, click Load Data and navigate to the folder that contains your Timeline data.
       - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
       - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
    - Note that on Android you may not be allowed to load the data if it's in certain folders, such as Downloads -- move the data file to an accessible location.
-  
-     Alternatively, you can [run timeline.html directly from GitHub](https://kurupted.github.io/google-maps-timeline-viewer/timeline.html). No data is transmitted to GitHub or to me; everything still runs locally in your browser.
 
 ## Note on API Usage & Billing
 - You can find the free usage limits, and over-the-limit pricing here: https://developers.google.com/maps/billing-and-pricing/pricing#places-pricing
