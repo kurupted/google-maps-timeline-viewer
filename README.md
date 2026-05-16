@@ -34,7 +34,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 
 #
 
-Setup procedure:
+Setup only takes a few minutes and doesn't require any special technical skills. Just follow these steps:
 
 ## Get Your Data: Option 1, On-Device data export
 1. For Android: Open the Settings app, tap "Location", then "Location services", then "Timeline" and then "Export Timeline data".   
@@ -42,66 +42,64 @@ Setup procedure:
 2. Save the exported file as "Timeline.json". (On non-English devices, the default file name may be different -- be sure to save the file as "Timeline.json")
 3. Transfer the JSON file to your computer, and save it anywhere you like, eg My Documents.
 
-   
+
 ## Get Your Data: Option 2, Google Takeout (No longer available once you've started using on-device data)
 1. **Go to Google Takeout:**
-    - Visit [Google Takeout](https://takeout.google.com/).
+   - Visit [Google Takeout](https://takeout.google.com/).
 
 2. **Select Data to Include:**
-    - Click "Deselect all".
-    - Scroll down and select **Timeline**. (The default format is JSON, which is what we want.)
-    - Click "Next step".
+   - Click "Deselect all".
+   - Scroll down and select **Timeline**. (The default format is JSON, which is what we want.)
+   - Click "Next step".
 
 3. **Customize Export Format:**
-    - Choose the delivery method, etc. Doesn't matter what you choose here.
-    - Click "Create export".
+   - Choose the delivery method, etc. Doesn't matter what you choose here.
+   - Click "Create export".
 
 4. **Download the Export:**
-    - Once the export is ready, download the file.
-    - Extract the archive to anywhere you like, eg My Documents.
-    - Ensure that the archive contained a folder called "Location History (Timeline)". If not, you'll need to use on-device data, as described above. (Note that "Timeline Edits.json" is *not* the same as the "Timeline.json" that comes from your device.)
-  
+   - Once the export is ready, download the file.
+   - Extract the archive to anywhere you like, eg My Documents.
+   - Ensure that the archive contained a folder called "Location History (Timeline)". If not, you'll need to use on-device data, as described above. (Note that "Timeline Edits.json" is *not* the same as the "Timeline.json" that comes from your device.)
+
 
 ## Obtain a Google Maps API Key
 
 1. **Go to the Google Cloud Console:**
-    - Visit [Google Cloud Console](https://console.cloud.google.com/).
+   - Visit [Google Cloud Console](https://console.cloud.google.com/).
 
 2. **Create a New Project:**
-    - Click on the project drop-down and select "New Project".
-    - Enter a name for your project and click "Create".
+   - Click on the project drop-down and select "New Project".
+   - Enter a name for your project and click "Create".
 
 3. **Enable APIs:**
-    - In the Cloud Console, go to **APIs & Services**.
-    - Search for the following APIs and enable them:
-        - **Maps JavaScript API**
-        - **Maps Embed API**
-        - **Places API (New)**
-    - You'll need to enable Billing to use the APIs. With normal use, you shouldn't incur any charges. See bottom of this doc for more info.
+   - In the Cloud Console, go to **APIs & Services**.
+   - Search for the following APIs and enable them:
+      - **Maps JavaScript API**
+      - **Maps Embed API**
+      - **Places API (New)**
+   - You'll need to enable Billing to use the APIs. With normal use, you shouldn't incur any charges. See bottom of this doc for more info.
 
 4. **Create API Key:**
-    - Go to **APIs & Services > Credentials**.
-    - Click "Create Credentials" and select "API Key".
-    - Copy the generated API key.
+   - Go to **APIs & Services > Credentials**.
+   - Click "Create Credentials" and select "API Key".
+   - Copy the generated API key.
 
 5. **Restrict API Key (Optional):**
-    - In the API key's settings, under **API restrictions**, select "Restrict key" and choose the APIs you enabled.
+   - In the API key's settings, under **API restrictions**, select "Restrict key" and choose the APIs you enabled.
 
 
 ##  Final Set Up
 1. **Download The Google Maps Timeline Viewer:**
-    - Save this project's [timeline.html](https://raw.githubusercontent.com/kurupted/google-maps-timeline-viewer/refs/heads/main/timeline.html) file anywhere you like, either on your computer (eg in My Documents) or on your mobile device. (To save, copy/paste the text into eg Notepad, and save as "timeline.html")
+   - Save this project's [timeline.html](https://raw.githubusercontent.com/kurupted/google-maps-timeline-viewer/refs/heads/main/timeline.html) file anywhere you like, either on your computer (eg in My Documents) or on your mobile device. (To save, copy/paste the text into eg Notepad, and save as "timeline.html")
 
 2. **Add your API key:**
-    - When you first open `timeline.html`, the app will ask for your Google Maps API key. If you choose to remember it, the key is saved in this browser's storage and reused the next time you open the viewer.
-    - Browser storage is local to this browser and device. If you use another browser, clear site/browser data, use private browsing, or move/rename the local `timeline.html` file, you may need to enter the key again.
-    - Browser storage is a convenience feature, not secure secret storage.
-    - For best results, restrict your API key in Google Cloud Console to only the APIs used by this project.
+   - When you first open `timeline.html`, the app will ask for your Google Maps API key. If you choose to remember it, the key will be saved in your browser's storage, so you won't need to enter it again.
+   - If you change browsers or devices, clear your browser data, or move/rename the `timeline.html` file, you may need to enter the key again.
 
-### Alternative API Key Setup
-If you prefer not to use browser storage, you can provide the key in either of these ways.
 
-#### Option 1: Local config file
+### Optional: Store Your API Key within Your Project Files
+_Option 1: Local config file:_
+
 Create a file named `timeline.local.js` next to `timeline.html`:
 
 ```js
@@ -110,16 +108,15 @@ window.TIMELINE_VIEWER_CONFIG = {
 };
 ```
 
-Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console. `timeline.local.js` is listed in `.gitignore`, so it is intended for local use and should not be committed to git.
+Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console.
 
-If `timeline.local.js` does not exist, your browser may show a harmless failed-load message in DevTools. The viewer will continue by using the in-app prompt or the `timeline.html` fallback.
+_Option 2: Edit `timeline.html`_
 
-#### Option 2: Edit `timeline.html`
 Open `timeline.html` in a text editor and find the code below, near the top:
 
 ```html
 <script>
-    window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Optional fallback; leave unchanged to use the in-app key prompt.
+   window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Optional fallback; leave unchanged to use the in-app key prompt.
 ```
 
 Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, and save.
@@ -127,11 +124,11 @@ Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, 
 
 ## View Your Timeline
 1. **Open the timeline.html File:**
-    - Open the file on your computer or mobile device. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
-    - At the top left of the page, click Load Data and navigate to the folder that contains your Timeline data.
-        - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
-        - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
-    - Note that on Android you may not be allowed to load the data if it's in certain folders, such as Downloads -- move the data file to an accessible location.
+   - Open the file on your computer or mobile device. Supported browsers include Chrome and Microsoft Edge. Firefox will unfortunately not work.
+   - At the top left of the page, click Load Data and navigate to the folder that contains your Timeline data.
+      - For Google Takeout data: The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History". Once you are within the "Semantic Location History" folder, and see subfolders for each year, click "Select Folder" on the dialog. (Do not navigate into one of the year folders.)
+      - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
+   - Note that on Android you may not be allowed to load the data if it's in certain folders, such as Downloads -- move the data file to an accessible location.
 
 ## Note on API Usage & Billing
 - You can find the free usage limits, and over-the-limit pricing here: https://developers.google.com/maps/billing-and-pricing/pricing#places-pricing

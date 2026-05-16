@@ -1,1 +1,7 @@
+/.idea
+/Location History (Timeline)
 timeline.local.js
+Timeline.json
+TimelineEdits.json
+TimelinePlaceCache.json
+TimelineViewerSettings.json

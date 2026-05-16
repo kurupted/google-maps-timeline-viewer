@@ -2,12 +2,13 @@
 <html lang="en">
 
 <!-- -----
-        You can enter your Google Maps API key in the app, set it in
-        timeline.local.js, or replace "YOUR_API_KEY" below.
 
-        Version:  April 21, 2026
+        Version:  May 16, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
+
+        Note: You will need a Google Maps API Key. The app will prompt you for one,
+        or you can (A) set it in timeline.local.js, or (B) replace "YOUR_API_KEY" below.
 
     ----  -->
 
@@ -228,15 +229,15 @@
             border: 1px solid #ced4da;
             font-size: 14px;
         }
-		.settings-text-input {
-			width: 100%;
-			padding: 8px;
-			margin-bottom: 10px;
-			border-radius: 4px;
-			border: 1px solid #ced4da;
-			font-size: 13px;
-			box-sizing: border-box;
-		}
+        .settings-text-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
 
         /* --- Date Picker --- */
         #datePickerContainer {
@@ -1113,16 +1114,16 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         /* --- Edit Controls --- */
         .timeline-item .edit-item-btn {
             display: none;
-            position: absolute; 
-            top: 5px; 
-            right: 5px; 
-            background: none; 
-            border: none; 
-            cursor: pointer; 
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
             font-size: 14px;
             opacity: 0.6;
         }
@@ -1146,7 +1147,7 @@
         .highlighted .edited-indicator {
             opacity: 1;
         }
-        
+
         /* For Charts */
         #summary-charts-container {
             background-color: #ffffff;
@@ -1188,101 +1189,101 @@
             background-color: #007bff;
             color: white;
         }
-        
-		/*
-		========================================
-		RESPONSIVE STYLES
-		========================================
-		*/
 
-		/* --- Mobile View Switcher --- */
-		#mobile-view-switcher {
-			display: none; /* Hidden on desktop */
-			position: fixed;
-			bottom: 0;
-			left: 0;
-			width: 100%;
-			height: 55px;
-			/* Accomodate for iOS safe area (the notch/home bar) */
-			padding-bottom: env(safe-area-inset-bottom, 0);
-			box-sizing: content-box;
-			background-color: #f8f9fa;
-			border-top: 1px solid #dee2e6;
-			z-index: 500;
-			box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-		}
+        /*
+        ========================================
+        RESPONSIVE STYLES
+        ========================================
+        */
 
-		#mobile-view-switcher button {
-			flex: 1;
-			background: none;
-			border: none;
-			border-right: 1px solid #dee2e6;
-			font-size: 16px;
-			font-weight: 500;
-			color: #495057;
-			cursor: pointer;
-			transition: background-color 0.2s ease, color 0.2s ease;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 8px;
-		}
+        /* --- Mobile View Switcher --- */
+        #mobile-view-switcher {
+            display: none; /* Hidden on desktop */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            /* Accomodate for iOS safe area (the notch/home bar) */
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            box-sizing: content-box;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            z-index: 500;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
 
-		#mobile-view-switcher button:last-child {
-			border-right: none;
-		}
+        #mobile-view-switcher button {
+            flex: 1;
+            background: none;
+            border: none;
+            border-right: 1px solid #dee2e6;
+            font-size: 16px;
+            font-weight: 500;
+            color: #495057;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
 
-		#mobile-view-switcher button.active {
-			background-color: #e9ecef;
-			color: #007bff;
-		}
+        #mobile-view-switcher button:last-child {
+            border-right: none;
+        }
 
-		/* --- Main Responsive Layout --- */
-		@media (max-width: 768px) {
-			#container {
-				display: block; /* Remove flex, stack elements */
-			}
+        #mobile-view-switcher button.active {
+            background-color: #e9ecef;
+            color: #007bff;
+        }
 
-			#mobile-view-switcher {
-				display: flex; /* Show the switcher on mobile */
-			}
+        /* --- Main Responsive Layout --- */
+        @media (max-width: 768px) {
+            #container {
+                display: block; /* Remove flex, stack elements */
+            }
 
-			#sidebar {
-				width: 100%;
-				/* Use dvh instead of vh to account for browser UI */
-				height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
-				border-right: none;
-			}
+            #mobile-view-switcher {
+                display: flex; /* Show the switcher on mobile */
+            }
 
-			#map {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
-				z-index: 1;
-			}
+            #sidebar {
+                width: 100%;
+                /* Use dvh instead of vh to account for browser UI */
+                height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
+                border-right: none;
+            }
 
-			.map-custom-controls {
-				bottom: calc(55px + env(safe-area-inset-bottom, 0) + 15px); 
-				right: 15px;
-			}
+            #map {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
+                z-index: 1;
+            }
 
-			#summaryView, #howToMessage {
-				left: 0;
-				width: 100%;
-				height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
-				box-sizing: border-box;
-				padding: 15px;
-				border-left: none;
-			}
+            .map-custom-controls {
+                bottom: calc(55px + env(safe-area-inset-bottom, 0) + 15px);
+                right: 15px;
+            }
 
-			.mobile-hidden {
-				display: none !important;
-			}
-		}
+            #summaryView, #howToMessage {
+                left: 0;
+                width: 100%;
+                height: calc(100dvh - 55px - env(safe-area-inset-bottom, 0));
+                box-sizing: border-box;
+                padding: 15px;
+                border-left: none;
+            }
 
-		/* --- Debug Overlay --- */
+            .mobile-hidden {
+                display: none !important;
+            }
+        }
+
+        /* --- Debug Overlay --- */
         #debugOverlay {
             display: none;
             position: absolute;
@@ -1448,15 +1449,14 @@
     <div class="modal-content">
         <h3 id="apiKeyModalTitle">Enter API Key</h3>
         <p id="apiKeyModalMessage">A Google Maps API Key is required. Please enter it below to continue.</p>
+        <p id="apiKeyModalHelp" class="settings-help">For details on how to obtain a key, please see the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank" rel="noopener">project page</a>.</p>
         <input type="text" id="apiKeyInput" placeholder="Paste your API key here">
         <label class="remember-key">
             <input type="checkbox" id="rememberApiKey" checked>
             Remember this key in this browser
         </label>
-        <p id="apiKeyModalHelp" class="settings-help"></p>
         <button id="apiKeySubmit">Submit</button>
         <button id="apiKeyCancel" class="secondary" style="display: none;">Cancel</button>
-        <p><small>For instructions on getting a key or storing it outside the browser, see the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank" rel="noopener">project page</a>.</small></p>
     </div>
 </div>
 <div id="container">
@@ -1513,35 +1513,33 @@
                         <div id="worldUpdatePrompt" style="display: none; background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin-bottom: 15px; width: 100%; box-sizing: border-box; flex-shrink: 0;">
                             <strong style="color: #856404; display: block; margin-bottom: 5px;">Cache Update Needed</strong>
                             <p style="margin: 0 0 10px 0; font-size: 13px; color: #856404;">
-                                There are <strong id="legacyCacheCount">0</strong> places missing details. An API call will be needed for each place.
+                                There are <strong id="legacyCacheCount">0</strong> places missing location details. An API call will be needed for each place.
                             </p>
-
                             <div style="display: flex; gap: 8px;">
-                                <button id="updateLegacyCache100Btn" class="control-btn" style="flex: 1; background-color: #ffc107; color: #212529; font-weight: bold; padding: 10px 5px; cursor: pointer;">Update 100</button>
-                                <button id="updateLegacyCacheBtn" class="control-btn" style="flex: 1; background-color: #6c757d; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Update All</button>
+                                <button id="updateLegacyCache100Btn" class="control-btn" style="flex: 1; background-color: #6c757d; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Update 100</button>
+                                <button id="updateLegacyCacheBtn" class="control-btn" style="flex: 1; background-color: #ffc107; color: #212529; font-weight: bold; padding: 10px 5px; cursor: pointer;">Update All</button>
                             </div>
-
                             <div id="updateCacheProgress" style="display: none; margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center; color: #d39e00;">
                                 Progress: <span id="updateCacheCurrent">0</span> / <span id="updateCacheTotal">0</span>
                                 <div id="updateCacheDone" style="display: none; color:#28a745">Updated. Be sure to Save the Place Cache!</div>
                             </div>
                         </div>
+
                         <div id="uncachedPlacesPrompt" style="display: none; background: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; border-radius: 5px; margin-bottom: 15px; width: 100%; box-sizing: border-box; flex-shrink: 0;">
                             <strong style="color: #383d41; display: block; margin-bottom: 5px;">Uncached Places Found</strong>
                             <p style="margin: 0 0 10px 0; font-size: 13px; color: #383d41;">
                                 There are <strong id="uncachedPlacesCount">0</strong> places in your timeline that haven't been fetched yet.
                             </p>
-
                             <div style="display: flex; gap: 8px;">
-                                <button id="fetchUncached100Btn" class="control-btn" style="flex: 1; background-color: #007bff; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Fetch 100</button>
-                                <button id="fetchUncachedBtn" class="control-btn" style="flex: 1; background-color: #6c757d; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Fetch All</button>
+                                <button id="fetchUncached100Btn" class="control-btn" style="flex: 1; background-color: #6c757d; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Fetch 100</button>
+                                <button id="fetchUncachedBtn" class="control-btn" style="flex: 1; background-color: #007bff; color: white; font-weight: bold; padding: 10px 5px; cursor: pointer;">Fetch All</button>
                             </div>
-
                             <div id="fetchUncachedProgress" style="display: none; margin-top: 10px; font-size: 12px; font-weight: bold; text-align: center; color: #0056b3;">
                                 Progress: <span id="fetchUncachedCurrent">0</span> / <span id="fetchUncachedTotal">0</span>
                                 <div id="fetchUncachedDone" style="display: none; color:#28a745">Fetched. Be sure to Save the Place Cache!</div>
                             </div>
                         </div>
+
                         <div id="worldListsContainer" style="display: none;">
                             <details class="world-details" open>
                                 <summary>Countries (<span id="count-countries">0</span>)</summary>
@@ -1613,70 +1611,70 @@
                     <button id="clearApiKeyBtn" class="control-btn" style="flex: 1; padding: 6px; background-color: #6c757d;">Clear Saved Key</button>
                 </div>
                 <p id="apiKeyHelp" class="settings-help"></p>
-                <p id="settingsLockedMessage">The rest of Settings unlocks after Timeline data is loaded.</p>
+                <p id="settingsLockedMessage">All other Settings will unlock after Timeline data is loaded.</p>
 
                 <fieldset id="settingsDataControls" disabled>
-                <h4>Timezone</h4>
-                <label for="timezone-select">Display times in:</label>
-                <select id="timezone-select"></select>
-                <h4>Distance Units</h4>
-                <label for="distance-unit-select">Display distances in:</label>
-                <select id="distance-unit-select">
-                    <option value="km" selected>Kilometers</option>
-                    <option value="mi">Miles</option>
-                </select>
-				<h4>Display Options</h4>
-                <label class="settings-option">
-                    <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
-                </label>
-                <label class="settings-option">
-                    <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
-                </label>
-                <div id="activityFilters" style="margin-left: 20px;"></div>
-                
-				<h4>Map Theme</h4>
-                <label for="map-theme-select">Select map style:</label>
-                <select id="map-theme-select" style="width: 100%; padding: 8px; margin-bottom:10px; border-radius: 4px; border: 1px solid #ced4da; font-size: 14px;">
-                    <option value="FOLLOW_SYSTEM" selected>System Default</option>
-                    <option value="LIGHT">Light</option>
-                    <option value="DARK">Dark</option>
-                </select>
+                    <h4>Timezone</h4>
+                    <label for="timezone-select">Display times in:</label>
+                    <select id="timezone-select"></select>
+                    <h4>Distance Units</h4>
+                    <label for="distance-unit-select">Display distances in:</label>
+                    <select id="distance-unit-select">
+                        <option value="km" selected>Kilometers</option>
+                        <option value="mi">Miles</option>
+                    </select>
+                    <h4>Display Options</h4>
+                    <label class="settings-option">
+                        <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
+                    </label>
+                    <label class="settings-option">
+                        <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
+                    </label>
+                    <div id="activityFilters" style="margin-left: 20px;"></div>
 
-                <h4>Advanced Settings</h4>
-                
-				<label class="settings-option" style="margin-bottom: 15px;">
-                    <input type="checkbox" id="debugModeToggle" class="settings-checkbox"> Enable Debug Mode
-                </label>
-                
-				<label for="homePlaceIdsInput">Home Place IDs (comma-separated):</label>
-				<input type="text" id="homePlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
+                    <h4>Map Theme</h4>
+                    <label for="map-theme-select">Select map style:</label>
+                    <select id="map-theme-select" style="width: 100%; padding: 8px; margin-bottom:10px; border-radius: 4px; border: 1px solid #ced4da; font-size: 14px;">
+                        <option value="FOLLOW_SYSTEM" selected>System Default</option>
+                        <option value="LIGHT">Light</option>
+                        <option value="DARK">Dark</option>
+                    </select>
 
-				<label for="workPlaceIdsInput">Work Place IDs (comma-separated):</label>
-				<input type="text" id="workPlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
+                    <h4>Advanced Settings</h4>
 
-				<div class="settings-button-row">
-					<button id="saveAdvancedSettingsBtn" class="control-btn" style="flex: 1; padding: 6px;">Save IDs</button>
-				</div>
+                    <label class="settings-option" style="margin-bottom: 15px;">
+                        <input type="checkbox" id="debugModeToggle" class="settings-checkbox"> Enable Debug Mode
+                    </label>
 
-                <h4 style="margin-top: 20px; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    Import Photo GPS Data
-                </h4>
-                <p style="font-size: 11px; color: #666; margin-bottom: 15px; margin-top: 0">
-                    Select the <code>gps_data.txt</code> file generated by ExifTool.
-                    Points will be grouped by location and geocoded to find Place IDs.<br>
-                    <a href="#" id="exiftoolInstructionsLink" style="font-size: 11px; font-weight: bold; color: #007bff; text-decoration: none;">Instructions</a>
-                </p>
-                <input type="file" id="importPhotoGpsFile" accept=".txt" style="font-size: 12px; margin-bottom: 10px;">
-                <button id="processPhotoGpsBtn" class="control-btn" style="width: 100%;">Process & Add to Timeline</button>
-                <div id="importProgress" style="font-size: 11px; margin-top: 8px; display: none; color: #007bff;">Processing...</div>
-                <br>
+                    <label for="homePlaceIdsInput">Home Place IDs (comma-separated):</label>
+                    <input type="text" id="homePlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
 
-				<h4 style="margin-top: 15px;">Data & Settings</h4>
-				<div style="display: flex; gap: 5px; padding-bottom: 30px;">
-					<button id="exportSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Export Settings</button>
-					<button id="importSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Import Settings</button>
-				</div>
-				<input type="file" id="importSettingsFile" accept=".json" style="display: none;">
+                    <label for="workPlaceIdsInput">Work Place IDs (comma-separated):</label>
+                    <input type="text" id="workPlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
+
+                    <div class="settings-button-row">
+                        <button id="saveAdvancedSettingsBtn" class="control-btn" style="flex: 1; padding: 6px;">Save IDs</button>
+                    </div>
+
+                    <h4 style="margin-top: 20px; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        Import Photo GPS Data
+                    </h4>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 15px; margin-top: 0">
+                        Select the <code>gps_data.txt</code> file generated by ExifTool.
+                        Points will be grouped by location and geocoded to find Place IDs.<br>
+                        <a href="#" id="exiftoolInstructionsLink" style="font-size: 11px; font-weight: bold; color: #007bff; text-decoration: none;">Instructions</a>
+                    </p>
+                    <input type="file" id="importPhotoGpsFile" accept=".txt" style="font-size: 12px; margin-bottom: 10px;">
+                    <button id="processPhotoGpsBtn" class="control-btn" style="width: 100%;">Process & Add to Timeline</button>
+                    <div id="importProgress" style="font-size: 11px; margin-top: 8px; display: none; color: #007bff;">Processing...</div>
+                    <br>
+
+                    <h4 style="margin-top: 15px;">Data & Settings</h4>
+                    <div style="display: flex; gap: 5px; padding-bottom: 30px;">
+                        <button id="exportSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Export Settings</button>
+                        <button id="importSettingsBtn" class="control-btn" style="flex: 1; background-color: #6c757d; padding: 6px;">Import Settings</button>
+                    </div>
+                    <input type="file" id="importSettingsFile" accept=".json" style="display: none;">
                 </fieldset>
             </div>
         </div>
@@ -1687,7 +1685,7 @@
         </div>
 
         <div id="status-bar-container">
-			<div id="status-info">
+            <div id="status-info">
                 <div id="edits-indicator" style="display: none; align-items: center; gap: 8px; font-size: 10px; margin-bottom: 2px;">
                     <span>
                         Timeline Edits:
@@ -1731,11 +1729,11 @@
         <div id="summary-months">
             <p>Select a year above.</p>
         </div><br>
-		<div id="summary-charts-container" style="display: none;">
+        <div id="summary-charts-container" style="display: none;">
             <h4 id="chart-section-title">Activity Charts</h4>
             <div id="chart-filters" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-                </div>
-			<div class="chart-wrapper">
+            </div>
+            <div class="chart-wrapper">
                 <canvas id="distanceChart"></canvas>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; margin-top: 15px;">
@@ -1750,7 +1748,7 @@
     </div>
 
     <div id="map" class=""></div>
-    
+
     <div id="debugOverlay">
         <div id="debugOverlayHeader">
             <strong>Item Debug Info</strong>
@@ -1758,10 +1756,10 @@
         </div>
         <pre id="debugOverlayContent"></pre>
     </div>
-    
+
     <div id="editEntryModal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2000; width: 350px;">
         <h3 id="editEntryTitle" style="margin-top: 0;">Edit Entry</h3>
-        
+
         <label>Entry Type:</label>
         <select id="editEntryType" style="width: 100%; margin-bottom: 10px; padding: 5px;">
             <option value="placeVisit">Place Visit</option>
@@ -1778,16 +1776,16 @@
 
             <label>Place ID:</label>
             <input type="text" id="editPlaceId" style="width: 100%; margin-bottom: 10px; padding: 5px; background-color: #f8f9fa;" readonly placeholder="ChIJ...">
-            
+
             <label>Location Name (Fallback):</label>
             <input type="text" id="editPlaceName" style="width: 100%; margin-bottom: 10px; padding: 5px;">
         </div>
 
-		<div id="editActivityFields" style="display: none;">
+        <div id="editActivityFields" style="display: none;">
             <label>Activity Type:</label>
             <select id="editActivityType" style="width: 100%; margin-bottom: 10px; padding: 5px;">
-                </select>
-            
+            </select>
+
             <label>Distance (meters):</label>
             <input type="number" id="editActivityDistance" style="width: 100%; margin-bottom: 10px; padding: 5px;" min="0" step="1">
 
@@ -1801,7 +1799,7 @@
         <label>End Time:</label>
         <input type="datetime-local" id="editEndTime" style="width: 100%; margin-bottom: 15px; padding: 5px;" step="1">
 
-		<div style="display: flex; justify-content: space-between;">
+        <div style="display: flex; justify-content: space-between;">
             <div>
                 <button id="deleteEntryBtn" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Delete</button>
                 <button id="restoreEntryBtn" style="background: #ffc107; color: #333; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; display: none; margin-left: 5px;">Restore Original</button>
@@ -1810,8 +1808,8 @@
                 <button id="cancelEditBtn" style="background: #ccc; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Cancel</button>
                 <button id="saveEditBtn" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Save</button>
             </div>
-        </div>        
-        
+        </div>
+
     </div>
 
     <div id="exiftoolInstructionsOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 3000; align-items: center; justify-content: center;">
@@ -1869,12 +1867,12 @@
 </div>
 
 <div id="pathEditOverlay" style="display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2000; text-align: center; width: 300px;">
-	<h3 style="margin-top: 0; margin-bottom: 5px;">Editing Path</h3>
-	<p style="font-size: 12px; color: #666; margin-bottom: 15px;">Drag white dots to move points.<br>Drag faded midpoints to add points.<br><strong>Right-click</strong> a dot to delete it.</p>
-	<div style="display: flex; justify-content: space-between;">
-		<button id="cancelPathEditBtn" style="background: #ccc; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; flex-grow: 1; margin-right: 5px;">Cancel</button>
-		<button id="savePathEditBtn" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; flex-grow: 1;">Done</button>
-	</div>
+    <h3 style="margin-top: 0; margin-bottom: 5px;">Editing Path</h3>
+    <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Drag white dots to move points.<br>Drag faded midpoints to add points.<br><strong>Right-click</strong> a dot to delete it.</p>
+    <div style="display: flex; justify-content: space-between;">
+        <button id="cancelPathEditBtn" style="background: #ccc; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; flex-grow: 1; margin-right: 5px;">Cancel</button>
+        <button id="savePathEditBtn" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; flex-grow: 1;">Done</button>
+    </div>
 </div>
 
 
@@ -1882,7 +1880,7 @@
 <script>
     // --- Global Variables ---
     let map;
-	let currentMapTheme = 'standard';
+    let currentMapTheme = 'standard';
     let markers = [];
     let polylines = [];
     let infoWindows = [];
@@ -1908,7 +1906,7 @@
     let isDebugMode = false;
     let timelineEdits = { additions: [], modifications: [], deletions: [] };
     let initialEditsCount = 0;
-	let savedEditsSnapshot = JSON.stringify({ additions: [], modifications: [], deletions: [] });
+    let savedEditsSnapshot = JSON.stringify({ additions: [], modifications: [], deletions: [] });
     let editModeActiveItem = null; // Stores original timestamps when editing an item
     let editModeActiveFullItem = null;
     let homePlaceIds = [];
@@ -1930,13 +1928,13 @@
     let selectedSummaryYear = null; // Track which year's months are shown
     let summaryViewVisible = false; // Track summary view state
     let worldViewVisible = false;
-    
-    let distanceChartInstance = null;
-	let visitsChartInstance = null;
-	let currentChartStartDate = null;
-	let currentChartEndDate = null;
 
-	// --- Activity Type Mapping ---
+    let distanceChartInstance = null;
+    let visitsChartInstance = null;
+    let currentChartStartDate = null;
+    let currentChartEndDate = null;
+
+    // --- Activity Type Mapping ---
     // Groups similar activity types for display and filtering
     const activityGroupMapping = {
         'DRIVING': ['IN_VEHICLE', 'IN_PASSENGER_VEHICLE', 'DRIVE', 'DRIVING'],
@@ -2070,7 +2068,7 @@
         }
 
         // Return 'other' for anything that has no types, or types we aren't tracking
-        return isFetched ? 'other' : 'unknown_place'; 
+        return isFetched ? 'other' : 'unknown_place';
     }
 
     // --- API Key Resolution ---
@@ -2124,12 +2122,15 @@
             const cancel = document.getElementById('apiKeyCancel');
 
             title.textContent = options.title || 'Enter API Key';
-            message.textContent = options.message || 'A Google Maps API Key is required. Please enter it below to continue.';
+            if (options.message) {
+                message.textContent = options.message;
+            }
             input.value = '';
             remember.checked = options.rememberDefault !== false;
             remember.disabled = options.forceRemember === true;
-            help.textContent = options.help || '';
-            help.style.display = options.help ? 'block' : 'none';
+            if (options.help) {
+                help.textContent = options.help;
+            }
             cancel.style.display = options.allowCancel ? 'inline-block' : 'none';
 
             const cleanup = () => {
@@ -2332,7 +2333,7 @@
             const { Map } = await google.maps.importLibrary("maps");
             const {ColorScheme} = await google.maps.importLibrary("core")
             const geometryModule = await google.maps.importLibrary("geometry");
-			window.googleGeometry = geometryModule;
+            window.googleGeometry = geometryModule;
             GoogleMap = Map;
             map = new GoogleMap(document.getElementById('map'), {
                 center: { lat: 25.034170, lng: 121.564560 },
@@ -2698,15 +2699,15 @@
         const timelineItem = document.createElement('div');
         timelineItem.className = 'timeline-item';
         timelineItem.dataset.index = index; // Use the global index
-        
-		try {
+
+        try {
             timelineItem.dataset.rawJson = JSON.stringify(item);
         } catch (e) {
             console.error("Error stringifying raw data for item:", item, e);
             timelineItem.dataset.rawJson = '{"error": "Could not serialize data"}';
         }
 
-		// Check if a date header needs to be added for this date
+        // Check if a date header needs to be added for this date
         const existingHeader = document.querySelector(`.date-header[data-date="${currentDate}"]`);
         if (!existingHeader) {
             const dateHeader = document.createElement('div');
@@ -2714,10 +2715,10 @@
             dateHeader.dataset.date = currentDate;
             // UPDATE THIS LINE to include the Add button (+):
             dateHeader.innerHTML = `<span>${formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY')}</span> <button class="add-entry-btn" style="margin-left:auto; background:none; border:none; cursor:pointer;" title="Add Entry">➕</button>`;
-            
+
             const timelineContainer = document.getElementById('timeline');
             timelineContainer.appendChild(dateHeader);
-            
+
             // Add Listener
             dateHeader.querySelector('.add-entry-btn').addEventListener('click', () => {
                 openEditModal(null, currentDate); // null item = Add New
@@ -2740,7 +2741,7 @@
             const rawSemantic = isIOS ? locationData?.semanticType : locationData.semanticType;
             const semanticType = getCustomSemanticType(placeId, rawSemantic)?.toUpperCase();
             const lowerName = locationData?.name?.toLowerCase();
-            
+
             if (semanticType === "HOME" || semanticType === "TYPE_HOME" || lowerName === "home") {
                 locationName = "Home";
             } else if (semanticType === "WORK" || semanticType === "TYPE_WORK" || lowerName === "work") {
@@ -2759,7 +2760,7 @@
 
             const isFetched = placeId ? !!placeDetailsCache[placeId] : false;
             const placeStyle = getPlaceStyle(placeTypesForStyle, isFetched, semanticType);
-            
+
             timelineItem.classList.add('place-visit-item');
             timelineItem.innerHTML = `
                 <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
@@ -2804,12 +2805,12 @@
             timelineItem.appendChild(checkmark);
         }
 
-		// Add Edit Button
+        // Add Edit Button
         const editBtn = document.createElement('button');
         editBtn.className = 'edit-item-btn';
         editBtn.textContent = '✏️';
         editBtn.title = "Edit Entry";
-        
+
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent map fly-to when clicking edit
             openEditModal(item, currentDate);
@@ -2897,8 +2898,8 @@
         if (itemData.placeVisit) { // Standard format
             const placeVisit = itemData.placeVisit;
             placeId = placeVisit.location.placeId; // Grab placeId first for custom check
-            semanticTypeStr = getCustomSemanticType(placeId, placeVisit.location.semanticType); 
-            
+            semanticTypeStr = getCustomSemanticType(placeId, placeVisit.location.semanticType);
+
             const upperSemantic = semanticTypeStr?.toUpperCase();
             const lowerName = placeVisit.location.name?.toLowerCase();
 
@@ -2917,8 +2918,8 @@
         } else if (itemData.visit) { // iOS format (itemData is the raw timeline object)
             const visit = itemData.visit; // The 'visit' sub-object
             placeId = visit.topCandidate?.placeID;
-            semanticTypeStr = getCustomSemanticType(placeId, visit.topCandidate?.semanticType); 
-            
+            semanticTypeStr = getCustomSemanticType(placeId, visit.topCandidate?.semanticType);
+
             const upperSemantic = semanticTypeStr?.toUpperCase();
             const lowerName = visit.topCandidate?.name?.toLowerCase();
 
@@ -3073,14 +3074,14 @@
             'id',               // Basic identifier
             'displayName',
             'addressComponents',
-            'formattedAddress', 
+            'formattedAddress',
             'location',           // geometry field (lat/lng)
             'svgIconMaskURI',     // icon URL field
             'iconBackgroundColor',
             'googleMapsURI',
             'types'
         ];
-        
+
         // --- CONCURRENCY LOCK ---
         // Wait if this placeId is already being fetched right now
         if (pendingPlaceRequests[placeId]) {
@@ -3141,7 +3142,7 @@
 
                         const newPlaceId = refreshPlace.id;
                         console.log(`Refresh successful. Old ID: ${placeId} -> New ID: ${newPlaceId}. Fetching full details...`);
-                        
+
                         // Fetch full details using the NEW ID
                         const newPlace = new Place({ id: newPlaceId });
                         await newPlace.fetchFields({ fields: fields });
@@ -3195,7 +3196,7 @@
 
         // Store the promise in the global lock so duplicates wait on it
         pendingPlaceRequests[placeId] = fetchPromise;
-        
+
         // Wait for it to finish, then delete the lock
         await fetchPromise;
         delete pendingPlaceRequests[placeId];
@@ -3254,7 +3255,7 @@
         // Determine the display name, prioritizing "Home" or "Work" if applicable
         let displayName = place.displayName;
         const placeId = place.id; // Use place.id
-        
+
         const originalSemanticType = getCustomSemanticType(placeId, placeVisit.location.semanticType); // From original data (e.g., TYPE_HOME or "Home")
         if (originalSemanticType) {
             const upperSemanticType = originalSemanticType.toUpperCase();
@@ -4210,7 +4211,7 @@
         const resultItem = document.createElement('div');
         resultItem.className = 'timeline-item place-visit-item';
         resultItem.dataset.index = index;
-        
+
         try {
             resultItem.dataset.rawJson = JSON.stringify(item);
         } catch (e) {}
@@ -4267,7 +4268,7 @@
         const resultItem = document.createElement('div');
         resultItem.className = 'timeline-item place-visit-item consolidated';
         resultItem.dataset.index = index;
-        
+
         try {
             resultItem.dataset.rawJson = JSON.stringify(placeData);
         } catch (e) {}
@@ -4783,8 +4784,8 @@
         return summary;
     }
 
-	// Displays the summary for the currently selected date range
-	// Displays the summary for the currently selected date range
+    // Displays the summary for the currently selected date range
+    // Displays the summary for the currently selected date range
     function displaySelectedDatesSummary(startDate, endDate) {
         const container = document.getElementById('summary-selected-dates');
         container.innerHTML = ''; // Clear previous
@@ -4796,7 +4797,7 @@
         const title = startStr === endStr ? startStr : `${startStr} to ${endStr}`;
 
         const item = document.createElement('div');
-        item.className = 'summary-selected-item'; 
+        item.className = 'summary-selected-item';
 
         let activityHtml = '<ul>';
         const sortedActivities = Object.keys(summaryData.distanceByActivity).sort((a, b) => summaryData.distanceByActivity[b] - summaryData.distanceByActivity[a]);
@@ -4825,48 +4826,48 @@
         container.appendChild(item);
     }
 
-	// Displays the yearly summary items
-	function displayYearSummary() {
-		const yearContainer = document.getElementById('summary-years'); 
-		const summaryView = document.getElementById('summaryView');
-		yearContainer.innerHTML = ''; // Clear previous years
+    // Displays the yearly summary items
+    function displayYearSummary() {
+        const yearContainer = document.getElementById('summary-years');
+        const summaryView = document.getElementById('summaryView');
+        yearContainer.innerHTML = ''; // Clear previous years
 
         // BUG FIX: Ensure monthly view and selected year label are fully reset
         document.getElementById('summary-selected-year').textContent = '';
         document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
         selectedSummaryYear = null;
 
-		if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
-			yearContainer.innerHTML = '<p>No summary data available.</p>';
-			document.getElementById('summary-months').style.display = 'none';
-			document.getElementById('backToYearsBtn').style.display = 'none';
-			summaryView.classList.remove('expanded-year-active');
-			return;
-		}
+        if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
+            yearContainer.innerHTML = '<p>No summary data available.</p>';
+            document.getElementById('summary-months').style.display = 'none';
+            document.getElementById('backToYearsBtn').style.display = 'none';
+            summaryView.classList.remove('expanded-year-active');
+            return;
+        }
 
-		const sortedYears = Object.keys(allYearlySummaries).map(Number).sort((a, b) => b - a); // Sort descending
+        const sortedYears = Object.keys(allYearlySummaries).map(Number).sort((a, b) => b - a); // Sort descending
 
-		sortedYears.forEach(year => {
-			const data = allYearlySummaries[year];
-			const item = document.createElement('div');
-			item.className = 'summary-year-item';
-			item.dataset.year = year;
+        sortedYears.forEach(year => {
+            const data = allYearlySummaries[year];
+            const item = document.createElement('div');
+            item.className = 'summary-year-item';
+            item.dataset.year = year;
 
-			let activityHtml = '<ul>';
-			const sortedActivities = Object.keys(data.distanceByActivity || {}).sort((a, b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
+            let activityHtml = '<ul>';
+            const sortedActivities = Object.keys(data.distanceByActivity || {}).sort((a, b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
 
-			if (sortedActivities.length > 0) {
-				sortedActivities.forEach(activityGroup => {
-					const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-					const icon = getActivityIcon(activityGroup);
-					activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
-				});
-			} else if (data.distanceMeters > 0) {
-				activityHtml += '<li>No distance breakdown available</li>';
-			} else {
-				activityHtml += '<li>No distance recorded</li>';
-			}
-			activityHtml += '</ul>';
+            if (sortedActivities.length > 0) {
+                sortedActivities.forEach(activityGroup => {
+                    const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const icon = getActivityIcon(activityGroup);
+                    activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
+                });
+            } else if (data.distanceMeters > 0) {
+                activityHtml += '<li>No distance breakdown available</li>';
+            } else {
+                activityHtml += '<li>No distance recorded</li>';
+            }
+            activityHtml += '</ul>';
 
             item.innerHTML = `
 					<strong>${year}</strong>
@@ -4880,73 +4881,73 @@
 					</div>
             `;
 
-			// --- Year Click Listener ---
-			item.addEventListener('click', () => {
-				// Mark this year as selected and expand it
-				yearContainer.querySelectorAll('.summary-year-item').forEach(el => el.classList.remove('is-selected-year'));
-				item.classList.add('is-selected-year');
+            // --- Year Click Listener ---
+            item.addEventListener('click', () => {
+                // Mark this year as selected and expand it
+                yearContainer.querySelectorAll('.summary-year-item').forEach(el => el.classList.remove('is-selected-year'));
+                item.classList.add('is-selected-year');
 
-				// Add class to parent to control visibility via CSS
-				summaryView.classList.add('expanded-year-active');
+                // Add class to parent to control visibility via CSS
+                summaryView.classList.add('expanded-year-active');
 
-				// Show months for this year
-				displayMonthSummary(year);
+                // Show months for this year
+                displayMonthSummary(year);
 
-				// Update Chart to show the selected year's data
-				const tz = getSelectedTimezone();
-				const yearStart = moment.tz({ year: year }, tz).startOf('year').toDate();
-				const yearEnd = moment.tz({ year: year }, tz).endOf('year').toDate();
-				updateCharts(yearStart, yearEnd);
+                // Update Chart to show the selected year's data
+                const tz = getSelectedTimezone();
+                const yearStart = moment.tz({ year: year }, tz).startOf('year').toDate();
+                const yearEnd = moment.tz({ year: year }, tz).endOf('year').toDate();
+                updateCharts(yearStart, yearEnd);
 
-				// Scroll to the top of the summary view
-				summaryView.scrollTop = 0;
-			});
+                // Scroll to the top of the summary view
+                summaryView.scrollTop = 0;
+            });
 
-			yearContainer.appendChild(item);
-		});
+            yearContainer.appendChild(item);
+        });
 
-		summaryView.classList.remove('expanded-year-active');
-		document.getElementById('summary-months').style.display = 'none';
-		document.getElementById('backToYearsBtn').style.display = 'none';
-	}
+        summaryView.classList.remove('expanded-year-active');
+        document.getElementById('summary-months').style.display = 'none';
+        document.getElementById('backToYearsBtn').style.display = 'none';
+    }
 
-	// Displays the monthly summary items for a given year
-	function displayMonthSummary(year) {
-		selectedSummaryYear = year; 
-		document.getElementById('summary-selected-year').textContent = '('+year+')'; 
-		const container = document.getElementById('summary-months');
-		container.innerHTML = ''; 
+    // Displays the monthly summary items for a given year
+    function displayMonthSummary(year) {
+        selectedSummaryYear = year;
+        document.getElementById('summary-selected-year').textContent = '('+year+')';
+        const container = document.getElementById('summary-months');
+        container.innerHTML = '';
 
-		if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
-			container.innerHTML = `<p>No monthly data available for ${year}.</p>`;
-			return;
-		}
+        if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
+            container.innerHTML = `<p>No monthly data available for ${year}.</p>`;
+            return;
+        }
 
-		const sortedMonths = Object.keys(allMonthlySummaries[year]).map(Number).sort((a, b) => a - b);
+        const sortedMonths = Object.keys(allMonthlySummaries[year]).map(Number).sort((a, b) => a - b);
 
-		sortedMonths.forEach(monthIndex => {
-			const data = allMonthlySummaries[year][monthIndex];
-			const monthName = moment().month(monthIndex).format("MMMM"); 
-			const item = document.createElement('div');
-			item.className = 'summary-month-item';
-			item.dataset.year = year;
-			item.dataset.month = monthIndex;
+        sortedMonths.forEach(monthIndex => {
+            const data = allMonthlySummaries[year][monthIndex];
+            const monthName = moment().month(monthIndex).format("MMMM");
+            const item = document.createElement('div');
+            item.className = 'summary-month-item';
+            item.dataset.year = year;
+            item.dataset.month = monthIndex;
 
-			let activityHtml = '<ul>';
-			const sortedActivities = Object.keys(data.distanceByActivity).sort((a,b) => data.distanceByActivity[b] - data.distanceByActivity[a]); 
+            let activityHtml = '<ul>';
+            const sortedActivities = Object.keys(data.distanceByActivity).sort((a,b) => data.distanceByActivity[b] - data.distanceByActivity[a]);
 
-			if (sortedActivities.length > 0) {
-				sortedActivities.forEach(activityGroup => {
-					const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-					const icon = getActivityIcon(activityGroup);
-					activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
-				});
-			} else if (data.distanceMeters > 0) {
-				activityHtml += '<li>No distance breakdown available</li>';
-			} else {
-				activityHtml += '<li>No distance recorded</li>';
-			}
-			activityHtml += '</ul>';
+            if (sortedActivities.length > 0) {
+                sortedActivities.forEach(activityGroup => {
+                    const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const icon = getActivityIcon(activityGroup);
+                    activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
+                });
+            } else if (data.distanceMeters > 0) {
+                activityHtml += '<li>No distance breakdown available</li>';
+            } else {
+                activityHtml += '<li>No distance recorded</li>';
+            }
+            activityHtml += '</ul>';
 
             item.innerHTML = `
 					<strong>${monthName}</strong>
@@ -4961,35 +4962,35 @@
 					<button class="view-map-btn" data-year="${year}" data-month="${monthIndex}">View on Map</button>
 				`;
 
-			// Click listener for the whole month card (Updates Chart or goes to map)
-			item.addEventListener('click', (e) => {
-				// If they clicked the button specifically, go to map
-				if (e.target.classList.contains('view-map-btn')) {
-					navigateToMonth(year, monthIndex);
-					return;
-				}
-				
-				// Otherwise, update charts for this month
-				const tz = getSelectedTimezone();
-				const monthStart = moment.tz({ year: year, month: monthIndex }, tz).startOf('month').toDate();
-				const monthEnd = moment.tz({ year: year, month: monthIndex }, tz).endOf('month').toDate();
-				
-				updateCharts(monthStart, monthEnd);
+            // Click listener for the whole month card (Updates Chart or goes to map)
+            item.addEventListener('click', (e) => {
+                // If they clicked the button specifically, go to map
+                if (e.target.classList.contains('view-map-btn')) {
+                    navigateToMonth(year, monthIndex);
+                    return;
+                }
 
-				// Highlight the selected month card
-				container.querySelectorAll('.summary-month-item').forEach(el => el.style.borderColor = '#ced4da');
-				item.style.borderColor = '#007bff';
-				
-				// Scroll up to see the chart
-				document.getElementById('summaryView').scrollTop = 0;
-			});
+                // Otherwise, update charts for this month
+                const tz = getSelectedTimezone();
+                const monthStart = moment.tz({ year: year, month: monthIndex }, tz).startOf('month').toDate();
+                const monthEnd = moment.tz({ year: year, month: monthIndex }, tz).endOf('month').toDate();
 
-			container.appendChild(item);
-		});
-		
-		document.getElementById('summary-months').style.display = 'flex';
-		document.getElementById('backToYearsBtn').style.display = 'flex';
-	}
+                updateCharts(monthStart, monthEnd);
+
+                // Highlight the selected month card
+                container.querySelectorAll('.summary-month-item').forEach(el => el.style.borderColor = '#ced4da');
+                item.style.borderColor = '#007bff';
+
+                // Scroll up to see the chart
+                document.getElementById('summaryView').scrollTop = 0;
+            });
+
+            container.appendChild(item);
+        });
+
+        document.getElementById('summary-months').style.display = 'flex';
+        document.getElementById('backToYearsBtn').style.display = 'flex';
+    }
 
     // Navigates from the summary view to the map view for a specific month
     function navigateToMonth(year, monthIndex) {
@@ -5217,7 +5218,7 @@
         const closeSummaryBtn = document.getElementById('closeSummaryBtn');
         const summaryView = document.getElementById('summaryView');
         const mapElement = document.getElementById('map');
-        const mapBtn = document.getElementById('mapBtn'); 
+        const mapBtn = document.getElementById('mapBtn');
         const backBtn = document.getElementById('backToYearsBtn');
         const uniqueVisitsToggle = document.getElementById('uniqueVisitsToggle');
 
@@ -5237,17 +5238,17 @@
                 if (!allYearlySummaries) {
                     calculateSummaries();
                 }
-                
+
                 renderChartFilters();
-                
-                displaySelectedDatesSummary( 
+
+                displaySelectedDatesSummary(
                     new Date(document.getElementById('startDatePicker').value),
                     new Date(document.getElementById('endDatePicker').value)
                 );
-                
+
                 displayYearSummary();
-                summaryView.classList.remove('expanded-year-active'); 
-                
+                summaryView.classList.remove('expanded-year-active');
+
                 // Set the default chart to ALL TIME when summary view is opened
                 if (globalMinDate && globalMaxDate) {
                     updateCharts(globalMinDate, globalMaxDate);
@@ -5257,7 +5258,7 @@
                 mapElement.classList.add('hidden');
                 summaryViewVisible = true;
             }
-            updateViewToggleButtons(); 
+            updateViewToggleButtons();
 
             const mobileSwitcher = document.getElementById('mobile-view-switcher');
             if (window.getComputedStyle(mobileSwitcher).display === 'flex') { // Check if on mobile
@@ -5270,17 +5271,17 @@
             summaryView.style.display = 'none';
             mapElement.classList.remove('hidden');
             summaryViewVisible = false;
-            updateViewToggleButtons(); 
+            updateViewToggleButtons();
         });
 
         // Switch to Map View using Map button
         mapBtn.addEventListener('click', () => {
-            if (!uiEnabled) return; 
-            if (summaryViewVisible) { 
+            if (!uiEnabled) return;
+            if (summaryViewVisible) {
                 summaryView.style.display = 'none';
                 mapElement.classList.remove('hidden');
                 summaryViewVisible = false;
-                updateViewToggleButtons(); 
+                updateViewToggleButtons();
             }
         });
 
@@ -5291,9 +5292,9 @@
             if (selectedYearItem) {
                 selectedYearItem.classList.remove('is-selected-year');
             }
-            
-            document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>'; 
-            document.getElementById('summary-selected-year').textContent = ''; 
+
+            document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
+            document.getElementById('summary-selected-year').textContent = '';
             document.getElementById('backToYearsBtn').style.display = 'none';
 
             // Revert chart to ALL TIME
@@ -5460,7 +5461,7 @@
         try {
             // --- Step 1: Scan for Timeline.json and TimelinePlaceCache.json at current level (non-recursive) ---
             let editsFile = null;
-			if (!isRecursive) {
+            if (!isRecursive) {
                 for await (const entry of dirHandle.values()) {
                     if (entry.kind === 'file') {
                         if (entry.name.toLowerCase() === 'timeline.json') {
@@ -5472,7 +5473,7 @@
                         }
                     }
                 }
-                
+
                 if (editsFile) {
                     try {
                         const file = await editsFile.getFile();
@@ -5797,7 +5798,7 @@
                                     editConfirmationStatus: segment.visit.editConfirmationStatus
                                 }
                             };
-                        // Process Activity Segment
+                            // Process Activity Segment
                         } else if (segment.activity) {
                             let startLat, startLng, endLat, endLng;
                             if (segment.activity.start?.latLng) {
@@ -5956,7 +5957,7 @@
 
             // --- Step 4: Post Loading (only on initial call) ---
             if (!isRecursive) {
-				applyTimelineEdits();
+                applyTimelineEdits();
                 if (Object.keys(timelineData).length > 0) {
                     // Set the global locationBias from the latest found location
                     locationBias = latestLocation;
@@ -6001,7 +6002,7 @@
             }
         }
     }
-    
+
     // --- Edit Modal Logic ---
 
     document.getElementById('editEntryType').addEventListener('change', (e) => {
@@ -6013,7 +6014,7 @@
         document.getElementById('editEntryModal').style.display = 'none';
     });
 
-	function openEditModal(item, baseDateStr) {
+    function openEditModal(item, baseDateStr) {
         const modal = document.getElementById('editEntryModal');
         const title = document.getElementById('editEntryTitle');
         const deleteBtn = document.getElementById('deleteEntryBtn');
@@ -6030,10 +6031,10 @@
             // Editing existing
             title.textContent = "Edit Entry";
             deleteBtn.style.display = "block";
-            
+
             const itemStart = item.placeVisit?.duration?.startTimestamp || item.activitySegment?.duration?.startTimestamp || item.startTime;
             const itemEnd = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp || item.endTime;
-            
+
             editModeActiveItem = { startTimestamp: itemStart, endTimestamp: itemEnd };
 
             document.getElementById('editStartTime').value = moment.tz(itemStart, tz).format('YYYY-MM-DDTHH:mm:ss');
@@ -6050,11 +6051,11 @@
                 document.getElementById('editEntryType').value = 'activitySegment';
                 const activityType = item.activitySegment?.activityType || 'UNKNOWN';
                 document.getElementById('editActivityType').value = getGroupedActivityType(activityType);
-                
+
                 const dist = item.activitySegment?.distance || item.activitySegment?.simplifiedRawPath?.distanceMeters || item.activitySegment?.waypointPath?.distanceMeters || 0;
                 document.getElementById('editActivityDistance').value = dist;
             }
-            
+
             // Show Restore button ONLY if it's currently an override
             if (item.isEdited) {
                 document.getElementById('restoreEntryBtn').style.display = 'inline-block';
@@ -6066,11 +6067,11 @@
             title.textContent = "Add Entry";
             deleteBtn.style.display = "none";
             editModeActiveItem = null; // Denotes Add Mode
-            
+
             // Default to noon of the selected date
             document.getElementById('editStartTime').value = moment.tz(baseDateStr, tz).set({hour:12, minute:0}).format('YYYY-MM-DDTHH:mm:ss');
             document.getElementById('editEndTime').value = moment.tz(baseDateStr, tz).set({hour:13, minute:0}).format('YYYY-MM-DDTHH:mm:ss');
-            
+
             document.getElementById('editEntryType').value = 'placeVisit';
             document.getElementById('editPlaceId').value = '';
             document.getElementById('editPlaceName').value = '';
@@ -6082,7 +6083,7 @@
         modal.style.display = 'block';
     }
 
-	function saveEditsToFile() {
+    function saveEditsToFile() {
         const jsonData = JSON.stringify(timelineEdits, null, 2);
         const blob = new Blob([jsonData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -6094,190 +6095,190 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         console.log("TimelineEdits.json downloaded.");
-        
+
         // Treat current edits as 'saved' for the remainder of the session
         initialEditsCount = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
         savedEditsSnapshot = JSON.stringify(timelineEdits);
         updateEditsIndicator();
     }
 
-	document.getElementById('deleteEntryBtn').addEventListener('click', () => {
-		if (!editModeActiveItem) return;
-		if (!confirm("Remove this entry?")) return;
+    document.getElementById('deleteEntryBtn').addEventListener('click', () => {
+        if (!editModeActiveItem) return;
+        if (!confirm("Remove this entry?")) return;
 
-		// Ensure we target the original unedited timestamps
-		const origTimes = editModeActiveFullItem.isEdited ? {
-			startTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.startTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.startTimestamp || editModeActiveFullItem.originalItem.startTime,
-			endTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.endTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.endTimestamp || editModeActiveFullItem.originalItem.endTime
-		} : editModeActiveItem;
+        // Ensure we target the original unedited timestamps
+        const origTimes = editModeActiveFullItem.isEdited ? {
+            startTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.startTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.startTimestamp || editModeActiveFullItem.originalItem.startTime,
+            endTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.endTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.endTimestamp || editModeActiveFullItem.originalItem.endTime
+        } : editModeActiveItem;
 
-		if (editModeActiveFullItem.isAdded) {
-			// If it was a manually added entry, just remove it from the additions array
-			timelineEdits.additions = timelineEdits.additions.filter(a => {
-				const aStart = a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime;
-				const aEnd = a.placeVisit?.duration?.endTimestamp || a.activitySegment?.duration?.endTimestamp || a.endTime;
-				return !(aStart === origTimes.startTimestamp && aEnd === origTimes.endTimestamp);
-			});
-		} else {
-			// Otherwise, it's a base entry (edited or not). Add it to deletions.
-			if (!timelineEdits.deletions) timelineEdits.deletions = [];
-			timelineEdits.deletions.push({
-				match: {
-					startTimestamp: origTimes.startTimestamp,
-					endTimestamp: origTimes.endTimestamp
-				}
-			});
+        if (editModeActiveFullItem.isAdded) {
+            // If it was a manually added entry, just remove it from the additions array
+            timelineEdits.additions = timelineEdits.additions.filter(a => {
+                const aStart = a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime;
+                const aEnd = a.placeVisit?.duration?.endTimestamp || a.activitySegment?.duration?.endTimestamp || a.endTime;
+                return !(aStart === origTimes.startTimestamp && aEnd === origTimes.endTimestamp);
+            });
+        } else {
+            // Otherwise, it's a base entry (edited or not). Add it to deletions.
+            if (!timelineEdits.deletions) timelineEdits.deletions = [];
+            timelineEdits.deletions.push({
+                match: {
+                    startTimestamp: origTimes.startTimestamp,
+                    endTimestamp: origTimes.endTimestamp
+                }
+            });
 
-			// If we delete an item we previously modified, remove it from the modifications list to keep the file clean
-			if (editModeActiveFullItem.isEdited) {
-				timelineEdits.modifications = timelineEdits.modifications.filter(m => 
-					!(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
-				);
-			}
-		}
+            // If we delete an item we previously modified, remove it from the modifications list to keep the file clean
+            if (editModeActiveFullItem.isEdited) {
+                timelineEdits.modifications = timelineEdits.modifications.filter(m =>
+                    !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
+                );
+            }
+        }
 
-		liveUpdateTimelineData('delete', null, editModeActiveItem);
-		document.getElementById('editEntryModal').style.display = 'none';
-		
-		updateEditsIndicator(); 
-		if (uiEnabled) document.getElementById('goBtn').click();
-	});
+        liveUpdateTimelineData('delete', null, editModeActiveItem);
+        document.getElementById('editEntryModal').style.display = 'none';
+
+        updateEditsIndicator();
+        if (uiEnabled) document.getElementById('goBtn').click();
+    });
 
     document.getElementById('saveEditBtn').addEventListener('click', () => {
-		const tz = getSelectedTimezone();
-		const type = document.getElementById('editEntryType').value;
-		const newStart = moment.tz(document.getElementById('editStartTime').value, tz).utc().toISOString();
-		const newEnd = moment.tz(document.getElementById('editEndTime').value, tz).utc().toISOString();
+        const tz = getSelectedTimezone();
+        const type = document.getElementById('editEntryType').value;
+        const newStart = moment.tz(document.getElementById('editStartTime').value, tz).utc().toISOString();
+        const newEnd = moment.tz(document.getElementById('editEndTime').value, tz).utc().toISOString();
 
-		let newObj = {};
+        let newObj = {};
 
-		if (type === 'placeVisit') {
-			const typesStr = document.getElementById('editPlaceTypes').value;
-			const placeTypes = typesStr ? JSON.parse(typesStr) : [];
-			
-			// Preserve coordinates if placeId hasn't changed to prevent map marker issues
+        if (type === 'placeVisit') {
+            const typesStr = document.getElementById('editPlaceTypes').value;
+            const placeTypes = typesStr ? JSON.parse(typesStr) : [];
+
+            // Preserve coordinates if placeId hasn't changed to prevent map marker issues
             let existingLatE7, existingLngE7, existingSemantic;
-			if (editModeActiveFullItem && editModeActiveFullItem.placeVisit) {
-				if (editModeActiveFullItem.placeVisit.location.placeId === document.getElementById('editPlaceId').value) {
-					existingLatE7 = editModeActiveFullItem.placeVisit.location.latitudeE7;
-					existingLngE7 = editModeActiveFullItem.placeVisit.location.longitudeE7;
-					existingSemantic = editModeActiveFullItem.placeVisit.location.semanticType;
-				}
-			}
-			
-			newObj = {
-				placeVisit: {
-					location: {
-						placeId: document.getElementById('editPlaceId').value,
-						name: document.getElementById('editPlaceName').value,
-						placeTypes: placeTypes,
-						latitudeE7: existingLatE7,
-						longitudeE7: existingLngE7,
-						semanticType: existingSemantic
-					},
-					duration: { startTimestamp: newStart, endTimestamp: newEnd },
-					editConfirmationStatus: "CONFIRMED"
-				}
-			};
-		} else {
-			const distance = parseFloat(document.getElementById('editActivityDistance').value) || 0;
-			
-			let existingPath = { distanceMeters: distance, points: [] };
-			let existingStartLoc = {};
-			let existingEndLoc = {};
+            if (editModeActiveFullItem && editModeActiveFullItem.placeVisit) {
+                if (editModeActiveFullItem.placeVisit.location.placeId === document.getElementById('editPlaceId').value) {
+                    existingLatE7 = editModeActiveFullItem.placeVisit.location.latitudeE7;
+                    existingLngE7 = editModeActiveFullItem.placeVisit.location.longitudeE7;
+                    existingSemantic = editModeActiveFullItem.placeVisit.location.semanticType;
+                }
+            }
 
-			if (editModeActiveFullItem && editModeActiveFullItem.activitySegment) {
-				existingPath = editModeActiveFullItem.activitySegment.simplifiedRawPath || editModeActiveFullItem.activitySegment.waypointPath || editModeActiveFullItem.activitySegment.path || existingPath;
-				existingStartLoc = editModeActiveFullItem.activitySegment.startLocation || {};
-				existingEndLoc = editModeActiveFullItem.activitySegment.endLocation || {};
-			}
+            newObj = {
+                placeVisit: {
+                    location: {
+                        placeId: document.getElementById('editPlaceId').value,
+                        name: document.getElementById('editPlaceName').value,
+                        placeTypes: placeTypes,
+                        latitudeE7: existingLatE7,
+                        longitudeE7: existingLngE7,
+                        semanticType: existingSemantic
+                    },
+                    duration: { startTimestamp: newStart, endTimestamp: newEnd },
+                    editConfirmationStatus: "CONFIRMED"
+                }
+            };
+        } else {
+            const distance = parseFloat(document.getElementById('editActivityDistance').value) || 0;
 
-			// Override with visually modified path if one exists
-			const modifiedPathStr = document.getElementById('editModifiedPath').value;
-			if (modifiedPathStr) {
-				const coords = JSON.parse(modifiedPathStr);
-				if (coords.length >= 2) {
-					const start = coords[0];
-					const end = coords[coords.length - 1];
-					
-					existingStartLoc = { latitudeE7: Math.round(start.lat * 1e7), longitudeE7: Math.round(start.lng * 1e7) };
-					existingEndLoc = { latitudeE7: Math.round(end.lat * 1e7), longitudeE7: Math.round(end.lng * 1e7) };
-					
-					existingPath.points = coords.map(c => ({ 
-						latE7: Math.round(c.lat * 1e7), 
-						lngE7: Math.round(c.lng * 1e7) 
-					}));
-				}
-			}
-			existingPath = { ...existingPath, distanceMeters: distance };
+            let existingPath = { distanceMeters: distance, points: [] };
+            let existingStartLoc = {};
+            let existingEndLoc = {};
 
-			newObj = {
-				activitySegment: {
-					activityType: document.getElementById('editActivityType').value,
-					distance: distance,
-					duration: { startTimestamp: newStart, endTimestamp: newEnd },
-					editConfirmationStatus: "CONFIRMED",
-					startLocation: existingStartLoc,
-					endLocation: existingEndLoc,
-					simplifiedRawPath: existingPath
-				}
-			};
-		}
+            if (editModeActiveFullItem && editModeActiveFullItem.activitySegment) {
+                existingPath = editModeActiveFullItem.activitySegment.simplifiedRawPath || editModeActiveFullItem.activitySegment.waypointPath || editModeActiveFullItem.activitySegment.path || existingPath;
+                existingStartLoc = editModeActiveFullItem.activitySegment.startLocation || {};
+                existingEndLoc = editModeActiveFullItem.activitySegment.endLocation || {};
+            }
 
-		if (editModeActiveFullItem && editModeActiveFullItem.isAdded) {
-			// Modifying a previously ADDED item
-			newObj.isAdded = true;
-			if (!timelineEdits.additions) timelineEdits.additions = [];
-			// Strip out the old version of this addition
-			timelineEdits.additions = timelineEdits.additions.filter(a => {
-				const aStart = a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime;
-				const aEnd = a.placeVisit?.duration?.endTimestamp || a.activitySegment?.duration?.endTimestamp || a.endTime;
-				return !(aStart === editModeActiveItem.startTimestamp && aEnd === editModeActiveItem.endTimestamp);
-			});
-			// Push the corrected version
-			timelineEdits.additions.push(newObj);
-			liveUpdateTimelineData('modify', newObj, editModeActiveItem);
+            // Override with visually modified path if one exists
+            const modifiedPathStr = document.getElementById('editModifiedPath').value;
+            if (modifiedPathStr) {
+                const coords = JSON.parse(modifiedPathStr);
+                if (coords.length >= 2) {
+                    const start = coords[0];
+                    const end = coords[coords.length - 1];
 
-		} else if (editModeActiveItem) {
-			newObj.isEdited = true;
-			newObj.originalItem = editModeActiveFullItem.isEdited ? editModeActiveFullItem.originalItem : editModeActiveFullItem;
+                    existingStartLoc = { latitudeE7: Math.round(start.lat * 1e7), longitudeE7: Math.round(start.lng * 1e7) };
+                    existingEndLoc = { latitudeE7: Math.round(end.lat * 1e7), longitudeE7: Math.round(end.lng * 1e7) };
 
-			// Use the TRUE original timestamps for the match block
-			const origTimes = {
-				startTimestamp: newObj.originalItem.placeVisit?.duration?.startTimestamp || newObj.originalItem.activitySegment?.duration?.startTimestamp || newObj.originalItem.startTime,
-				endTimestamp: newObj.originalItem.placeVisit?.duration?.endTimestamp || newObj.originalItem.activitySegment?.duration?.endTimestamp || newObj.originalItem.endTime
-			};
+                    existingPath.points = coords.map(c => ({
+                        latE7: Math.round(c.lat * 1e7),
+                        lngE7: Math.round(c.lng * 1e7)
+                    }));
+                }
+            }
+            existingPath = { ...existingPath, distanceMeters: distance };
 
-			if (!timelineEdits.modifications) timelineEdits.modifications = [];
-			
-			timelineEdits.modifications = timelineEdits.modifications.filter(m => 
-				!(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
-			);
+            newObj = {
+                activitySegment: {
+                    activityType: document.getElementById('editActivityType').value,
+                    distance: distance,
+                    duration: { startTimestamp: newStart, endTimestamp: newEnd },
+                    editConfirmationStatus: "CONFIRMED",
+                    startLocation: existingStartLoc,
+                    endLocation: existingEndLoc,
+                    simplifiedRawPath: existingPath
+                }
+            };
+        }
 
-			timelineEdits.modifications.push({
-				match: { startTimestamp: origTimes.startTimestamp, endTimestamp: origTimes.endTimestamp },
-				replaceWith: newObj
-			});
-			liveUpdateTimelineData('modify', newObj, editModeActiveItem);
-			
-		} else {
-			// ADDING a brand new item from scratch
-			newObj.isAdded = true;
-			if (!timelineEdits.additions) timelineEdits.additions = [];
-			timelineEdits.additions.push(newObj);
-			liveUpdateTimelineData('add', newObj, null);
-		}
+        if (editModeActiveFullItem && editModeActiveFullItem.isAdded) {
+            // Modifying a previously ADDED item
+            newObj.isAdded = true;
+            if (!timelineEdits.additions) timelineEdits.additions = [];
+            // Strip out the old version of this addition
+            timelineEdits.additions = timelineEdits.additions.filter(a => {
+                const aStart = a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime;
+                const aEnd = a.placeVisit?.duration?.endTimestamp || a.activitySegment?.duration?.endTimestamp || a.endTime;
+                return !(aStart === editModeActiveItem.startTimestamp && aEnd === editModeActiveItem.endTimestamp);
+            });
+            // Push the corrected version
+            timelineEdits.additions.push(newObj);
+            liveUpdateTimelineData('modify', newObj, editModeActiveItem);
 
-		document.getElementById('editEntryModal').style.display = 'none';
-		
-		updateEditsIndicator(); 
-		if (uiEnabled) {
-			populateActivityFilters(); 
-			document.getElementById('goBtn').click();
-		}
-	});
-    
-	document.getElementById('restoreEntryBtn').addEventListener('click', () => {
+        } else if (editModeActiveItem) {
+            newObj.isEdited = true;
+            newObj.originalItem = editModeActiveFullItem.isEdited ? editModeActiveFullItem.originalItem : editModeActiveFullItem;
+
+            // Use the TRUE original timestamps for the match block
+            const origTimes = {
+                startTimestamp: newObj.originalItem.placeVisit?.duration?.startTimestamp || newObj.originalItem.activitySegment?.duration?.startTimestamp || newObj.originalItem.startTime,
+                endTimestamp: newObj.originalItem.placeVisit?.duration?.endTimestamp || newObj.originalItem.activitySegment?.duration?.endTimestamp || newObj.originalItem.endTime
+            };
+
+            if (!timelineEdits.modifications) timelineEdits.modifications = [];
+
+            timelineEdits.modifications = timelineEdits.modifications.filter(m =>
+                !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
+            );
+
+            timelineEdits.modifications.push({
+                match: { startTimestamp: origTimes.startTimestamp, endTimestamp: origTimes.endTimestamp },
+                replaceWith: newObj
+            });
+            liveUpdateTimelineData('modify', newObj, editModeActiveItem);
+
+        } else {
+            // ADDING a brand new item from scratch
+            newObj.isAdded = true;
+            if (!timelineEdits.additions) timelineEdits.additions = [];
+            timelineEdits.additions.push(newObj);
+            liveUpdateTimelineData('add', newObj, null);
+        }
+
+        document.getElementById('editEntryModal').style.display = 'none';
+
+        updateEditsIndicator();
+        if (uiEnabled) {
+            populateActivityFilters();
+            document.getElementById('goBtn').click();
+        }
+    });
+
+    document.getElementById('restoreEntryBtn').addEventListener('click', () => {
         if (!editModeActiveItem || !editModeActiveFullItem || !editModeActiveFullItem.originalItem) return;
         if (!confirm("Remove override and restore original entry?")) return;
 
@@ -6286,18 +6287,18 @@
             endTimestamp: editModeActiveFullItem.originalItem.placeVisit?.duration?.endTimestamp || editModeActiveFullItem.originalItem.activitySegment?.duration?.endTimestamp || editModeActiveFullItem.originalItem.endTime
         };
 
-        timelineEdits.modifications = timelineEdits.modifications.filter(m => 
+        timelineEdits.modifications = timelineEdits.modifications.filter(m =>
             !(m.match.startTimestamp === origTimes.startTimestamp && m.match.endTimestamp === origTimes.endTimestamp)
         );
 
         liveUpdateTimelineData('restore', editModeActiveFullItem.originalItem, editModeActiveItem);
         document.getElementById('editEntryModal').style.display = 'none';
-        
-        updateEditsIndicator(); 
+
+        updateEditsIndicator();
         if (uiEnabled) document.getElementById('goBtn').click();
     });
-    
-	let editingPolyline = null;
+
+    let editingPolyline = null;
 
 
     document.getElementById('editPathOnMapBtn').addEventListener('click', () => {
@@ -6310,7 +6311,7 @@
         const modifiedPathStr = document.getElementById('editModifiedPath').value;
         if (modifiedPathStr) {
             pathCoords = JSON.parse(modifiedPathStr);
-        } 
+        }
         // 2. Otherwise, extract from the existing item
         else if (editModeActiveFullItem && editModeActiveFullItem.activitySegment) {
             const seg = editModeActiveFullItem.activitySegment;
@@ -6381,26 +6382,26 @@
             const pathArray = editingPolyline.getPath().getArray();
             const newCoords = pathArray.map(p => ({ lat: p.lat(), lng: p.lng() }));
             document.getElementById('editModifiedPath').value = JSON.stringify(newCoords);
-            
+
             // Auto-calculate the new distance
             if (window.googleGeometry && window.googleGeometry.spherical) {
                 const newDist = Math.round(window.googleGeometry.spherical.computeLength(editingPolyline.getPath()));
                 document.getElementById('editActivityDistance').value = newDist;
             }
-            
+
             editingPolyline.setMap(null);
         }
         document.getElementById('pathEditOverlay').style.display = 'none';
         document.getElementById('editEntryModal').style.display = 'block';
     });
-    
+
     // Helper to safely apply edits to the running data without reloading files
     function liveUpdateTimelineData(action, newObj, originalTimestamps) {
         // 1. Remove the old item
         if (action === 'modify' || action === 'delete' || action === 'restore') {
             const oldDate = new Date(originalTimestamps.startTimestamp);
             const oldMonthKey = `${oldDate.getFullYear()}_${moment(oldDate).format('MMMM').toUpperCase()}`;
-            
+
             if (timelineData[oldMonthKey]) {
                 const objs = timelineData[oldMonthKey].timelineObjects;
                 const idx = objs.findIndex(item => {
@@ -6417,57 +6418,57 @@
             const newStart = newObj.placeVisit?.duration?.startTimestamp || newObj.activitySegment?.duration?.startTimestamp || newObj.startTime;
             const newDate = new Date(newStart);
             const newMonthKey = `${newDate.getFullYear()}_${moment(newDate).format('MMMM').toUpperCase()}`;
-            
+
             if (!timelineData[newMonthKey]) timelineData[newMonthKey] = { timelineObjects: [] };
             timelineData[newMonthKey].timelineObjects.push(newObj);
-            
+
             timelineData[newMonthKey].timelineObjects.sort((a, b) => {
                 const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
                 const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
                 return timeA - timeB;
             });
-            
+
             if (newObj.activitySegment) activityTypes.add(newObj.activitySegment.activityType);
         }
 
-        allYearlySummaries = null; 
+        allYearlySummaries = null;
         allMonthlySummaries = null;
     }
-    
-	function updateEditsIndicator() {
-		const indicator = document.getElementById('edits-indicator');
-		const savedSpan = document.getElementById('saved-edits-count');
-		const newSpan = document.getElementById('new-edits-count');
-		const saveBtn = document.getElementById('saveEditsBtn');
-		
-		const currentTotal = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
-		const newCount = currentTotal - initialEditsCount;
-		
-		// Check for ACTUAL changes by comparing the current state to the last saved snapshot
-		const hasUnsavedChanges = JSON.stringify(timelineEdits) !== savedEditsSnapshot;
-		
-		if (currentTotal > 0 || initialEditsCount > 0 || hasUnsavedChanges) {
-			indicator.style.display = 'flex';
-			savedSpan.textContent = initialEditsCount;
-			
-			// Update the text to be less confusing based on what action was taken
-			if (newCount < 0) {
-				newSpan.textContent = Math.abs(newCount);
-				newSpan.nextElementSibling.textContent = " removed";
-			} else if (newCount === 0 && hasUnsavedChanges) {
-				newSpan.textContent = "Modified";
-				newSpan.nextElementSibling.textContent = "";
-			} else {
-				newSpan.textContent = newCount;
-				newSpan.nextElementSibling.textContent = " new";
-			}
-			
-			// Enable save button based on true differences
-			saveBtn.disabled = !hasUnsavedChanges;
-		} else {
-			indicator.style.display = 'none';
-		}
-	}
+
+    function updateEditsIndicator() {
+        const indicator = document.getElementById('edits-indicator');
+        const savedSpan = document.getElementById('saved-edits-count');
+        const newSpan = document.getElementById('new-edits-count');
+        const saveBtn = document.getElementById('saveEditsBtn');
+
+        const currentTotal = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
+        const newCount = currentTotal - initialEditsCount;
+
+        // Check for ACTUAL changes by comparing the current state to the last saved snapshot
+        const hasUnsavedChanges = JSON.stringify(timelineEdits) !== savedEditsSnapshot;
+
+        if (currentTotal > 0 || initialEditsCount > 0 || hasUnsavedChanges) {
+            indicator.style.display = 'flex';
+            savedSpan.textContent = initialEditsCount;
+
+            // Update the text to be less confusing based on what action was taken
+            if (newCount < 0) {
+                newSpan.textContent = Math.abs(newCount);
+                newSpan.nextElementSibling.textContent = " removed";
+            } else if (newCount === 0 && hasUnsavedChanges) {
+                newSpan.textContent = "Modified";
+                newSpan.nextElementSibling.textContent = "";
+            } else {
+                newSpan.textContent = newCount;
+                newSpan.nextElementSibling.textContent = " new";
+            }
+
+            // Enable save button based on true differences
+            saveBtn.disabled = !hasUnsavedChanges;
+        } else {
+            indicator.style.display = 'none';
+        }
+    }
 
 
     function initEditModal() {
@@ -6551,7 +6552,7 @@
             }
         });
     }
-    
+
 
     // Initializes the "Load Data" button
     async function initFolderPicker() {
@@ -6776,7 +6777,7 @@
             }
         });
     }
-    
+
     function initAdvancedSettings() {
         const homeInput = document.getElementById('homePlaceIdsInput');
         const workInput = document.getElementById('workPlaceIdsInput');
@@ -6784,7 +6785,7 @@
         const changeApiKeyBtn = document.getElementById('changeApiKeyBtn');
         const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
         updateApiKeySettingsUi();
-        
+
         // --- ADD DEBUG LISTENERS ---
         const debugModeToggle = document.getElementById('debugModeToggle');
         debugModeToggle.addEventListener('change', async (e) => {
@@ -6848,7 +6849,7 @@
         saveAdvancedBtn.addEventListener('click', async () => {
             homePlaceIds = homeInput.value.split(',').map(s => s.trim()).filter(s => s);
             workPlaceIds = workInput.value.split(',').map(s => s.trim()).filter(s => s);
-            
+
             await saveSetting('homePlaceIds', homePlaceIds);
             await saveSetting('workPlaceIds', workPlaceIds);
             alert('Custom Home and Work IDs saved! If data is already loaded, you may need to reload the date range or summary to see all changes.');
@@ -6861,15 +6862,15 @@
         themeSelect.addEventListener('change', async (e) => {
             currentMapTheme = e.target.value;
             await saveSetting('mapTheme', currentMapTheme);
-            
+
             if (map) {
                 // The API strictly requires recreating the map to change the color scheme
                 const { Map } = await google.maps.importLibrary("maps");
                 const { ColorScheme } = await google.maps.importLibrary("core");
-                
+
                 const currentCenter = map.getCenter();
                 const currentZoom = map.getZoom();
-                
+
                 map = new Map(document.getElementById('map'), {
                     center: currentCenter,
                     zoom: currentZoom,
@@ -6881,13 +6882,13 @@
                     fullscreenControl: true,
                     cameraControl: false
                 });
-                
+
                 // Re-attach existing markers and polylines to the new map instance
                 markers.forEach(marker => marker.map = map);
                 polylines.forEach(polyline => polyline.setMap(map));
             }
         });
-        
+
         exportBtn.addEventListener('click', async () => {
             const settingsToExport = {
                 displayTimezone: await getSetting('displayTimezone') || 'default',
@@ -6919,7 +6920,7 @@
             reader.onload = async (e) => {
                 try {
                     const importedSettings = JSON.parse(e.target.result);
-                    
+
                     if (importedSettings.displayTimezone) {
                         displayTimezone = importedSettings.displayTimezone;
                         await saveSetting('displayTimezone', displayTimezone);
@@ -7033,8 +7034,8 @@
         });
         return allItemsInRange;
     }
-    
-    
+
+
     function applyTimelineEdits() {
         if (!timelineEdits || (!timelineEdits.additions.length && !timelineEdits.modifications.length && !timelineEdits.deletions.length)) return;
 
@@ -7056,29 +7057,29 @@
                 const itemEnd = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp || item.endTime;
 
                 // Check Modifications
-				const mod = timelineEdits.modifications.find(m => m.match.startTimestamp === itemStart && m.match.endTimestamp === itemEnd);
+                const mod = timelineEdits.modifications.find(m => m.match.startTimestamp === itemStart && m.match.endTimestamp === itemEnd);
                 if (mod) {
                     const replaced = { ...mod.replaceWith };
                     replaced.isEdited = true;
                     replaced.originalItem = item; // Stash the original so we can restore it!
                     return replaced;
                 }
-                
+
                 return item;
             });
         }
 
-		// 2. Process Additions
+        // 2. Process Additions
         timelineEdits.additions.forEach(addition => {
             const addClone = { ...addition };
             addClone.isAdded = true; // Tag it!
 
             const addStart = addClone.placeVisit?.duration?.startTimestamp || addClone.activitySegment?.duration?.startTimestamp;
             if (!addStart) return;
-            
+
             const date = new Date(addStart);
             const monthKey = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
-            
+
             if (!timelineData[monthKey]) timelineData[monthKey] = { timelineObjects: [] };
             timelineData[monthKey].timelineObjects.push(addClone);
         });
@@ -7242,8 +7243,8 @@ Departed: ${end}</description>
         document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
     }
-    
-    
+
+
     // Generates the toggle checkboxes for the charts
     function renderChartFilters() {
         const container = document.getElementById('chart-filters');
@@ -7255,21 +7256,21 @@ Departed: ${end}</description>
 
         sortedGroups.forEach(group => {
             if(group === 'STATIONARY') return;
-            
+
             const color = getActivityColor(group);
             // Enforce strict Title Case
             const formattedName = group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            
+
             const label = document.createElement('label');
             label.className = 'chart-filter-label';
             label.dataset.color = color; // Store the color for toggling
-            
+
             label.innerHTML = `
                 <input type="checkbox" class="chart-filter-checkbox" value="${group}" checked>
                 <span style="color: #000;">${getActivityIcon(group)}</span>
                 <strong style="color: #000; font-weight: 600;">${formattedName}</strong>
             `;
-            
+
             // Set initial inline styles
             label.style.backgroundColor = color;
             label.style.color = '#000';
@@ -7287,10 +7288,10 @@ Departed: ${end}</description>
 
                 if (currentChartStartDate && currentChartEndDate) {
                     // Pass false so it doesn't auto-uncheck other boxes when user manually clicks
-                    updateCharts(currentChartStartDate, currentChartEndDate, false); 
+                    updateCharts(currentChartStartDate, currentChartEndDate, false);
                 }
             });
-            
+
             container.appendChild(label);
         });
     }
@@ -7299,7 +7300,7 @@ Departed: ${end}</description>
     function updateCharts(startDate, endDate, autoUncheck = true) {
         currentChartStartDate = startDate;
         currentChartEndDate = endDate;
-        
+
         const chartContainer = document.getElementById('summary-charts-container');
         if (chartContainer) chartContainer.style.display = 'block';
 
@@ -7307,7 +7308,7 @@ Departed: ${end}</description>
         const startMoment = moment.tz(startDate, tz).startOf('day');
         const endMoment = moment.tz(endDate, tz).endOf('day');
         const dayDiff = endMoment.diff(startMoment, 'days');
-        
+
         const titleEl = document.getElementById('chart-section-title');
         if (titleEl) {
             titleEl.textContent = `Activity Charts (${startMoment.format('MMM DD, YYYY')} - ${endMoment.format('MMM DD, YYYY')})`;
@@ -7315,8 +7316,8 @@ Departed: ${end}</description>
 
         let groupBy = 'day';
         let formatStr = 'MMM DD';
-        if (dayDiff > 730) { groupBy = 'year'; formatStr = 'YYYY'; } 
-        else if (dayDiff > 90) { groupBy = 'month'; formatStr = 'MMM YYYY'; } 
+        if (dayDiff > 730) { groupBy = 'year'; formatStr = 'YYYY'; }
+        else if (dayDiff > 90) { groupBy = 'month'; formatStr = 'MMM YYYY'; }
 
         // 1. Initialize data structures
         const allPossibleGroups = Array.from(document.querySelectorAll('.chart-filter-checkbox')).map(cb => cb.value);
@@ -7335,7 +7336,7 @@ Departed: ${end}</description>
             visitsDataByGroup[g] = [];
             visitTotals[g] = 0;
         });
-        
+
         const labels = [];
         const isUniqueOnly = document.getElementById('uniqueVisitsToggle')?.checked;
         const seenPlaceIds = new Set();
@@ -7347,17 +7348,17 @@ Departed: ${end}</description>
 
             let periodDistances = {};
             allPossibleGroups.forEach(g => periodDistances[g] = 0);
-            
+
             let periodVisits = {};
             allVisitGroups.forEach(g => periodVisits[g] = 0);
 
             const periodStart = current.clone().startOf(groupBy);
             const periodEnd = current.clone().endOf(groupBy);
-            
+
             let monthWalker = periodStart.clone().startOf('month');
             while(monthWalker.isSameOrBefore(periodEnd, 'month')) {
                 const monthKey = `${monthWalker.year()}_${monthWalker.format('MMMM').toUpperCase()}`;
-                
+
                 if (timelineData[monthKey] && timelineData[monthKey].timelineObjects) {
                     timelineData[monthKey].timelineObjects.forEach(item => {
                         let itemStart, itemEnd;
@@ -7366,7 +7367,7 @@ Departed: ${end}</description>
                         else if (item.visit || item.activity) { itemStart = item.startTime; itemEnd = item.endTime; }
 
                         if (!itemStart || !itemEnd) return;
-                        
+
                         const iStart = moment(itemStart);
                         const iEnd = moment(itemEnd);
 
@@ -7385,17 +7386,17 @@ Departed: ${end}</description>
                             const cat = getVisitCategory(item);
                             periodVisits[cat]++;
                             visitTotals[cat]++;
-                            
+
                         } else if (item.activitySegment) {
                             const actType = getGroupedActivityType(item.activitySegment.activityType || (item.activitySegment.activities && item.activitySegment.activities[0]?.activityType) || (item.activitySegment.waypointPath && item.activitySegment.waypointPath.travelMode) || 'UNKNOWN');
-                            
+
                             if (allPossibleGroups.includes(actType)) {
                                 let dist = parseFloat(item.activitySegment.distance || item.activitySegment.simplifiedRawPath?.distanceMeters || item.activitySegment.waypointPath?.distanceMeters || 0);
                                 if (isNaN(dist)) dist = 0;
                                 dist = distanceUnit === 'mi' ? dist * 0.000621371 : dist / 1000;
-                                
+
                                 periodDistances[actType] += dist;
-                                activityTotals[actType] += dist; 
+                                activityTotals[actType] += dist;
                             }
                         }
                     });
@@ -7412,9 +7413,9 @@ Departed: ${end}</description>
         allPossibleGroups.forEach(g => {
             const cb = document.querySelector(`.chart-filter-checkbox[value="${g}"]`);
             const label = cb.closest('.chart-filter-label');
-            
+
             if (autoUncheck) cb.checked = activityTotals[g] > 0;
-            
+
             if (cb.checked) {
                 label.style.backgroundColor = label.dataset.color;
                 label.style.borderColor = label.dataset.color;
@@ -7451,8 +7452,8 @@ Departed: ${end}</description>
             options: {
                 responsive: true, maintainAspectRatio: false,
                 scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Distance (' + distanceUnit + ')' } } },
-                plugins: { 
-                    legend: { display: false }, 
+                plugins: {
+                    legend: { display: false },
                     title: { display: true, text: 'Distance by Activity' },
                     tooltip: {
                         callbacks: {
@@ -7478,19 +7479,19 @@ Departed: ${end}</description>
             data: { labels, datasets: visitsDatasets },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                scales: { 
+                scales: {
                     x: { stacked: true }, // Add stacked to X
                     y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Visits' }, ticks: { stepSize: 1 } } // Add stacked to Y
                 },
-                plugins: { 
+                plugins: {
                     legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }, // Show legend
-                    title: { display: true, text: 'Places Visited by Category' } 
+                    title: { display: true, text: 'Places Visited by Category' }
                 }
             }
         });
     }
-    
-    
+
+
     // Helper to override semantic type based on user-defined Home/Work Place IDs
     function getCustomSemanticType(placeId, originalSemantic) {
         if (!placeId) return originalSemantic;
@@ -8276,45 +8277,45 @@ Departed: ${end}</description>
 </div>
 
 <script>
-	// --- Mobile View Switcher Logic ---
-	document.addEventListener('DOMContentLoaded', () => {
-		const showSidebarBtn = document.getElementById('show-sidebar-btn');
-		const showMapBtn = document.getElementById('show-map-btn');
-		const sidebar = document.getElementById('sidebar');
-		const mapContainer = document.getElementById('map');
+    // --- Mobile View Switcher Logic ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const showSidebarBtn = document.getElementById('show-sidebar-btn');
+        const showMapBtn = document.getElementById('show-map-btn');
+        const sidebar = document.getElementById('sidebar');
+        const mapContainer = document.getElementById('map');
 
-		// This logic only applies if the switcher elements are present
-		if (!showSidebarBtn || !showMapBtn || !sidebar || !mapContainer) {
-			return;
-		}
+        // This logic only applies if the switcher elements are present
+        if (!showSidebarBtn || !showMapBtn || !sidebar || !mapContainer) {
+            return;
+        }
 
-		const switchView = (viewToShow) => {
-			// This function should only run on mobile-sized screens where the switcher is visible
-			if (window.getComputedStyle(showSidebarBtn.parentElement).display !== 'flex') {
-				return;
-			}
+        const switchView = (viewToShow) => {
+            // This function should only run on mobile-sized screens where the switcher is visible
+            if (window.getComputedStyle(showSidebarBtn.parentElement).display !== 'flex') {
+                return;
+            }
 
-			if (viewToShow === 'map') {
-				sidebar.classList.add('mobile-hidden');
-				mapContainer.classList.remove('mobile-hidden');
-				showMapBtn.classList.add('active');
-				showSidebarBtn.classList.remove('active');
-			} else { // 'sidebar'
-				sidebar.classList.remove('mobile-hidden');
-				mapContainer.classList.add('mobile-hidden');
-				showMapBtn.classList.remove('active');
-				showSidebarBtn.classList.add('active');
-			}
-		};
-		
-		showSidebarBtn.addEventListener('click', () => switchView('sidebar'));
-		showMapBtn.addEventListener('click', () => switchView('map'));
+            if (viewToShow === 'map') {
+                sidebar.classList.add('mobile-hidden');
+                mapContainer.classList.remove('mobile-hidden');
+                showMapBtn.classList.add('active');
+                showSidebarBtn.classList.remove('active');
+            } else { // 'sidebar'
+                sidebar.classList.remove('mobile-hidden');
+                mapContainer.classList.add('mobile-hidden');
+                showMapBtn.classList.remove('active');
+                showSidebarBtn.classList.add('active');
+            }
+        };
 
-		// Set the initial view state when the page loads on a mobile device
-		if (window.innerWidth <= 768) {
-			mapContainer.classList.add('mobile-hidden');
-		}
-	});
+        showSidebarBtn.addEventListener('click', () => switchView('sidebar'));
+        showMapBtn.addEventListener('click', () => switchView('map'));
+
+        // Set the initial view state when the page loads on a mobile device
+        if (window.innerWidth <= 768) {
+            mapContainer.classList.add('mobile-hidden');
+        }
+    });
 </script>
 
 
