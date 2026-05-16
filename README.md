@@ -91,14 +91,38 @@ Setup procedure:
 ##  Final Set Up
 1. **Download The Google Maps Timeline Viewer:**
     - Save this project's [timeline.html](https://raw.githubusercontent.com/kurupted/google-maps-timeline-viewer/refs/heads/main/timeline.html) file anywhere you like, either on your computer (eg in My Documents) or on your mobile device. (To save, copy/paste the text into eg Notepad, and save as "timeline.html")
-   
-4. **Add your API key:**
-   - Open the timeline.html file in a text editor and find the code below, near the top:
-     ```html
-     <script>
-		  window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Replace YOUR_API_KEY with your actual key
-     ```
-   - Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, and save.
+
+2. **Add your API key:**
+    - When you first open `timeline.html`, the app will ask for your Google Maps API key. If you choose to remember it, the key is saved in this browser's storage and reused the next time you open the viewer.
+    - Browser storage is local to this browser and device. If you use another browser, clear site/browser data, use private browsing, or move/rename the local `timeline.html` file, you may need to enter the key again.
+    - Browser storage is a convenience feature, not secure secret storage.
+    - For best results, restrict your API key in Google Cloud Console to only the APIs used by this project.
+
+### Alternative API Key Setup
+If you prefer not to use browser storage, you can provide the key in either of these ways.
+
+#### Option 1: Local config file
+Create a file named `timeline.local.js` next to `timeline.html`:
+
+```js
+window.TIMELINE_VIEWER_CONFIG = {
+    googleMapsApiKey: "YOUR_API_KEY"
+};
+```
+
+Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console. `timeline.local.js` is listed in `.gitignore`, so it is intended for local use and should not be committed to git.
+
+If `timeline.local.js` does not exist, your browser may show a harmless failed-load message in DevTools. The viewer will continue by using the in-app prompt or the `timeline.html` fallback.
+
+#### Option 2: Edit `timeline.html`
+Open `timeline.html` in a text editor and find the code below, near the top:
+
+```html
+<script>
+    window.GOOGLE_MAPS_API_KEY = "YOUR_API_KEY"; // Optional fallback; leave unchanged to use the in-app key prompt.
+```
+
+Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, and save.
 
 
 ## View Your Timeline
