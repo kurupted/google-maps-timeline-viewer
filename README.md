@@ -130,7 +130,7 @@ Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, 
       - For On-Device exported data: Simply choose the folder that contains your exported Timeline.json file.
    - Note that on Android you may not be allowed to load the data if it's in certain folders, such as Downloads -- move the data file to an accessible location.
   
-     (Note: You can [run timeline.html directly from GitHub](https://kurupted.github.io/google-maps-timeline-viewer/timeline.html), but I don't recommend it beyond a quick try-out, because you won't be able to take advantage of important features such as cached place data or Timeline edits. If you do try it, know that no data is transmitted to GitHub or to me; everything still runs locally in your browser.)
+     Alternatively, you can [run timeline.html directly from GitHub](https://kurupted.github.io/google-maps-timeline-viewer/timeline.html). No data is transmitted to GitHub or to me; everything still runs locally in your browser.
 
 ## Note on API Usage & Billing
 - You can find the free usage limits, and over-the-limit pricing here: https://developers.google.com/maps/billing-and-pricing/pricing#places-pricing
