@@ -148,17 +148,6 @@
             cursor: not-allowed;
             color: #6c757d;
         }
-        #reloadBtn {
-            display:none; /* don't need this atm */
-            flex-grow: 0; /* Don't let it grow */
-            padding: 10px;
-            background-color: #6c757d;
-        }
-        #reloadBtn:hover:not(:disabled) {
-            background-color: #5a6268;
-        }
-
-
         /* --- Settings View --- */
         #settingsView {
             display: none; /* Initially hidden */
@@ -1481,7 +1470,6 @@
         <div id="controls-container">
             <div id="controls-left">
                 <button id="folderPicker" class="control-btn">Load Data</button>
-                <button id="reloadBtn" class="icon-btn" title="Reload last used folder" style="display: none;">&#x21bb;</button>
             </div>
             <div id="controls-right">
                 <button id="calendarBtn" class="icon-btn" title="Date View" disabled>📅</button>
@@ -1628,6 +1616,11 @@
                     <button id="clearApiKeyBtn" class="control-btn" style="flex: 1; padding: 6px; background-color: #6c757d;">Clear Saved Key</button>
                 </div>
                 <p id="apiKeyHelp" class="settings-help"></p>
+                <h4>Data Loading</h4>
+                <label class="settings-option">
+                    <input type="checkbox" id="autoLoadLastFolder" class="settings-checkbox"> Load last data folder on startup
+                </label>
+                <p id="autoLoadLastFolderHelp" class="settings-help"></p>
                 <p id="settingsLockedMessage">All other Settings will unlock after Timeline data is loaded.</p>
 
                 <fieldset id="settingsDataControls" disabled>
@@ -1916,6 +1909,7 @@
     let displayTimezone = 'default'; // User-selected timezone
     let distanceUnit = 'km'; // User-selected distance unit ('km' or 'mi')
     let storedDirHandle = null; // For storing last used directory handle
+    let autoLoadLastFolderOnStartup = false;
     let locationBias = null; // For biasing autocomplete results
     let lastAreaSearchResults = [];
     let lastAreaSearchMode = 'all';
@@ -5197,6 +5191,7 @@
         const activityFiltersDiv = document.getElementById('activityFilters');
 
         // Toggle settings tab visibility
+        settingsBtn.disabled = false;
         settingsBtn.addEventListener('click', () => {
             showSidebarTab('settings');
         });
@@ -5396,7 +5391,6 @@
             document.getElementById('worldBtn'),
             document.getElementById('mapBtn'),
             document.getElementById('kmlBtn'),
-            document.getElementById('reloadBtn'),
             document.getElementById('searchBtn')
         ];
         elementsToToggle.forEach(el => {
@@ -5405,13 +5399,7 @@
 
         document.getElementById('saveCacheBtn').disabled = !enabled || (Object.keys(placeDetailsCache).length - initialCacheSizeFromFile <= 0);
 
-        if (enabled && storedDirHandle) {
-            document.getElementById('reloadBtn').disabled = false;
-        } else {
-            document.getElementById('reloadBtn').disabled = true;
-        }
-
-        const settingsCheckboxes = document.querySelectorAll('#settingsView input[type="checkbox"]');
+        const settingsCheckboxes = document.querySelectorAll('#settingsDataControls input[type="checkbox"]');
         settingsCheckboxes.forEach(cb => cb.disabled = !enabled);
         document.getElementById('timezone-select').disabled = !enabled;
         document.getElementById('distance-unit-select').disabled = !enabled;
@@ -5448,7 +5436,8 @@
     }
 
     // Reads files from the selected directory (handles Takeout structure and single Timeline.json)
-    async function readFilesFromDirectory(dirHandle, isRecursive=false) {
+    async function readFilesFromDirectory(dirHandle, isRecursive=false, options={}) {
+        const showAlerts = options.showAlerts !== false;
         let timelineJsonFile = null;
         let dataSourceText = 'Unknown';
         let placeCacheFile = null;
@@ -5528,7 +5517,7 @@
                         console.error("Error reading or parsing TimelinePlaceCache.json:", cacheError);
                         loadWarnings.push('TimelinePlaceCache.json could not be loaded. The place cache was ignored.');
                         setDataLoadStatus(loadWarnings.join(' '), 'warning');
-                        alert("Error loading TimelinePlaceCache.json. It might be corrupted.");
+                        if (showAlerts) alert("Error loading TimelinePlaceCache.json. It might be corrupted.");
                         placeDetailsCache = {};
                         initialCacheSizeFromFile = 0;
                     }
@@ -5966,7 +5955,7 @@
                         // Make recursive call for subdirectories (e.g., year folders)
                         console.log(`Recursively checking directory: ${entry.name}`);
                         // Await the recursive call to ensure all subfolders are processed before proceeding
-                        await readFilesFromDirectory(entry, true);
+                        await readFilesFromDirectory(entry, true, options);
                     }
                 }
 
@@ -5990,8 +5979,12 @@
                     // Update the data source indicator text
                     updateCacheIndicator(); // Display the initial cache counts
 
-                    await saveDirectoryHandle(dirHandle);
+                    const rememberedFolder = await saveDirectoryHandle(dirHandle);
                     storedDirHandle = dirHandle;
+                    if (!rememberedFolder) {
+                        loadWarnings.push('The folder loaded, but it could not be remembered for startup loading.');
+                    }
+                    setAutoLoadLastFolderHelp();
 
                     populateActivityFilters();
                     displayMinMaxDates();
@@ -6014,17 +6007,21 @@
                 } else {
                     // No data was successfully loaded
                     setUIEnabled(false);
-                    alert("No valid timeline data could be loaded from the selected folder.");
+                    if (showAlerts) alert("No valid timeline data could be loaded from the selected folder.");
+                    return false;
                 }
             }
+            return Object.keys(timelineData).length > 0;
 
         } catch (err) {
             console.error('Error processing directory:', err);
             if (!isRecursive) { // Show error and disable UI on initial call failure
-                alert(`Error processing folder: ${err.message}`);
+                if (showAlerts) alert(`Error processing folder: ${err.message}`);
                 setUIEnabled(false);
+                return false;
             }
             // Don't re-throw if recursive, allow parent to handle
+            return false;
         } finally {
             // Hide loading overlay ONLY on the initial, non-recursive call completion
             if (!isRecursive) {
@@ -6587,7 +6584,6 @@
     // Initializes the "Load Data" button
     async function initFolderPicker() {
         const folderPicker = document.getElementById('folderPicker');
-        const reloadBtn = document.getElementById('reloadBtn');
 
         // Check if showDirectoryPicker is supported
         if ('showDirectoryPicker' in window) {
@@ -6617,22 +6613,6 @@
                 }
             });
 
-            // Add listener for the reload button
-            reloadBtn.addEventListener('click', async () => {
-                if (storedDirHandle) {
-                    console.log("Reloading from stored directory handle.");
-                    // Verify permission - this will re-prompt the user if needed
-                    if (await verifyPermission(storedDirHandle, false)) { // Ask for READ-ONLY
-                        await readFilesFromDirectory(storedDirHandle);
-                    } else {
-                        console.warn("Permission to reload directory was denied.");
-                        alert("Permission to access the previous folder was denied. Please choose the folder again.");
-                    }
-                } else {
-                    alert("No previous folder is stored. Please choose a folder first.");
-                }
-            });
-
         } else {
             // Fallback or message for unsupported browsers
             folderPicker.disabled = true;
@@ -6645,6 +6625,13 @@
     // --- IndexedDB Functions for Directory Handle & Settings ---
     const DB_NAME = 'TimelineViewerDB';
     const STORE_NAME = 'settings';
+    const AUTO_LOAD_LAST_FOLDER_KEY = 'autoLoadLastFolderOnStartup';
+    const AUTO_LOAD_HELP_DEFAULT = '';
+    const AUTO_LOAD_HELP_NO_FOLDER = 'Select a Timeline folder with Load Data once before enabling automatic startup loading.';
+    const AUTO_LOAD_HELP_PERMISSION = 'Browser permission is needed before the last data folder can load automatically. Select the folder again with Load Data.';
+    const AUTO_LOAD_HELP_LOAD_FAILED = 'Could not load the last data folder. Select the folder again with Load Data.';
+    const AUTO_LOAD_HELP_SAVE_FAILED = 'Auto-load could not be saved in this browser.';
+    const AUTO_LOAD_HELP_UNSUPPORTED = 'Automatic startup loading requires a browser with folder picker support.';
 
     function openDB() {
         return new Promise((resolve, reject) => {
@@ -6715,11 +6702,17 @@
     }
 
     async function saveDirectoryHandle(dirHandle) {
-        await saveSetting('lastDirectoryHandle', dirHandle);
+        return await saveSetting('lastDirectoryHandle', dirHandle);
     }
 
     async function getDirectoryHandle() {
         return await getSetting('lastDirectoryHandle');
+    }
+
+    function setAutoLoadLastFolderHelp(message) {
+        const help = document.getElementById('autoLoadLastFolderHelp');
+        if (!help) return;
+        help.textContent = message || AUTO_LOAD_HELP_DEFAULT;
     }
 
     function setDataLoadStatus(message, type = '') {
@@ -6736,23 +6729,85 @@
         }, 0);
     }
 
-    async function verifyPermission(fileHandle, readWrite) {
-        const options = {};
-        if (readWrite) {
-            options.mode = 'readwrite';
-        } else {
-            options.mode = 'read';
+    async function disableAutoLoadLastFolder(message) {
+        const saved = await saveSetting(AUTO_LOAD_LAST_FOLDER_KEY, false);
+        if (!saved) {
+            setDataLoadStatus(AUTO_LOAD_HELP_SAVE_FAILED, 'warning');
+            setAutoLoadLastFolderHelp(message || AUTO_LOAD_HELP_SAVE_FAILED);
+            return false;
         }
-        // Check if permission was already granted. If so, return true.
-        if ((await fileHandle.queryPermission(options)) === 'granted') {
-            return true;
+
+        autoLoadLastFolderOnStartup = false;
+        const checkbox = document.getElementById('autoLoadLastFolder');
+        if (checkbox) {
+            checkbox.checked = false;
         }
-        // Request permission. If the user grants it, return true.
-        if ((await fileHandle.requestPermission(options)) === 'granted') {
-            return true;
+        setAutoLoadLastFolderHelp(message);
+        return true;
+    }
+
+    async function canAccessStoredDirectory() {
+        if (!storedDirHandle) {
+            return false;
         }
-        // The user didn't grant permission, so return false.
-        return false;
+
+        try {
+            return (await storedDirHandle.queryPermission({ mode: 'read' })) === 'granted';
+        } catch (err) {
+            console.warn('Could not check access to the last data folder:', err);
+            return false;
+        }
+    }
+
+    async function requestStoredDirectoryAccess() {
+        if (!storedDirHandle) {
+            return false;
+        }
+
+        const options = { mode: 'read' };
+        try {
+            let permission = await storedDirHandle.queryPermission(options);
+            if (permission !== 'granted') {
+                permission = await storedDirHandle.requestPermission(options);
+            }
+            return permission === 'granted';
+        } catch (err) {
+            console.warn('Could not request access to the last data folder:', err);
+            return false;
+        }
+    }
+
+    async function loadStoredDirectoryHandle({ showAlerts = false } = {}) {
+        if (!storedDirHandle) {
+            setAutoLoadLastFolderHelp(AUTO_LOAD_HELP_NO_FOLDER);
+            if (showAlerts) alert(AUTO_LOAD_HELP_NO_FOLDER);
+            return false;
+        }
+
+        const hasAccess = await canAccessStoredDirectory();
+        if (!hasAccess) {
+            setAutoLoadLastFolderHelp(AUTO_LOAD_HELP_PERMISSION);
+            if (showAlerts) alert(AUTO_LOAD_HELP_PERMISSION);
+            return false;
+        }
+
+        try {
+            setAutoLoadLastFolderHelp('Loading the last data folder...');
+            const loaded = await readFilesFromDirectory(storedDirHandle, false, { showAlerts });
+            if (loaded) {
+                setAutoLoadLastFolderHelp();
+                return true;
+            }
+
+            setAutoLoadLastFolderHelp(AUTO_LOAD_HELP_LOAD_FAILED);
+            if (showAlerts) alert(AUTO_LOAD_HELP_LOAD_FAILED);
+            return false;
+        } catch (err) {
+            console.error('Error loading the last data folder:', err);
+            setAutoLoadLastFolderHelp(AUTO_LOAD_HELP_LOAD_FAILED);
+            if (showAlerts) alert(AUTO_LOAD_HELP_LOAD_FAILED);
+            return false;
+        }
     }
 
     // --- Timezone and Units Functions ---
@@ -6829,6 +6884,61 @@
         const changeApiKeyBtn = document.getElementById('changeApiKeyBtn');
         const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
         updateApiKeySettingsUi();
+        const autoLoadLastFolderCheckbox = document.getElementById('autoLoadLastFolder');
+
+        if (autoLoadLastFolderCheckbox) {
+            autoLoadLastFolderCheckbox.checked = autoLoadLastFolderOnStartup;
+            autoLoadLastFolderCheckbox.disabled = !('showDirectoryPicker' in window);
+            setAutoLoadLastFolderHelp(
+                autoLoadLastFolderCheckbox.disabled
+                    ? AUTO_LOAD_HELP_UNSUPPORTED
+                    : undefined
+            );
+            autoLoadLastFolderCheckbox.addEventListener('change', async (e) => {
+                if (!e.target.checked) {
+                    const disabled = await disableAutoLoadLastFolder();
+                    if (!disabled) {
+                        autoLoadLastFolderOnStartup = true;
+                        e.target.checked = true;
+                        alert(AUTO_LOAD_HELP_SAVE_FAILED);
+                    }
+                    return;
+                }
+
+                if (!storedDirHandle) {
+                    alert(AUTO_LOAD_HELP_NO_FOLDER);
+                    await disableAutoLoadLastFolder(AUTO_LOAD_HELP_NO_FOLDER);
+                    return;
+                }
+
+                const hasAccess = await requestStoredDirectoryAccess();
+                if (!hasAccess) {
+                    alert(AUTO_LOAD_HELP_PERMISSION);
+                    await disableAutoLoadLastFolder(AUTO_LOAD_HELP_PERMISSION);
+                    return;
+                }
+
+                autoLoadLastFolderOnStartup = true;
+                const saved = await saveSetting(AUTO_LOAD_LAST_FOLDER_KEY, true);
+                if (!saved) {
+                    autoLoadLastFolderOnStartup = false;
+                    e.target.checked = false;
+                    setAutoLoadLastFolderHelp(AUTO_LOAD_HELP_SAVE_FAILED);
+                    setDataLoadStatus(AUTO_LOAD_HELP_SAVE_FAILED, 'warning');
+                    alert(AUTO_LOAD_HELP_SAVE_FAILED);
+                    return;
+                }
+
+                setAutoLoadLastFolderHelp();
+
+                if (!uiEnabled && confirm('Auto-load is enabled for next startup. The last data folder is not loaded yet. Load it now?')) {
+                    const loaded = await loadStoredDirectoryHandle({ showAlerts: true });
+                    if (!loaded) {
+                        setDataLoadStatus(AUTO_LOAD_HELP_LOAD_FAILED, 'error');
+                    }
+                }
+            });
+        }
 
         // --- ADD DEBUG LISTENERS ---
         const debugModeToggle = document.getElementById('debugModeToggle');
@@ -8184,6 +8294,12 @@ Departed: ${end}</description>
                 distanceUnit = storedUnit;
                 console.log(`Loaded distance unit setting from DB: ${distanceUnit}`);
             }
+            const storedAutoLoadLastFolder = await getSetting(AUTO_LOAD_LAST_FOLDER_KEY);
+            if (storedAutoLoadLastFolder === true) {
+                autoLoadLastFolderOnStartup = true;
+            } else if (storedAutoLoadLastFolder !== undefined && storedAutoLoadLastFolder !== false) {
+                await saveSetting(AUTO_LOAD_LAST_FOLDER_KEY, false);
+            }
             const storedHomeIds = await getSetting('homePlaceIds');
             if (storedHomeIds) {
                 homePlaceIds = storedHomeIds;
@@ -8205,6 +8321,10 @@ Departed: ${end}</description>
                 const themeSelect = document.getElementById('map-theme-select');
                 if (themeSelect) themeSelect.value = currentMapTheme;
             }
+            storedDirHandle = await getDirectoryHandle();
+            if (storedDirHandle) {
+                console.log("Found stored directory handle.");
+            }
 
             // Initialize settings before the map so API key recovery remains available if Maps fails to load.
             initSettingsButton();
@@ -8212,7 +8332,6 @@ Departed: ${end}</description>
             initDistanceUnitSelector();
             initAdvancedSettings(); // Initialize the new settings pane controls
             setUIEnabled(false);
-            document.getElementById('settingsBtn').disabled = false;
 
             const mapInitialized = await initMap();
             if (!mapInitialized) {
@@ -8245,10 +8364,25 @@ Departed: ${end}</description>
                 clearMap();
             });
 
-            // Check for stored directory handle
-            storedDirHandle = await getDirectoryHandle();
-            if (storedDirHandle) {
-                console.log("Found stored directory handle.");
+            if (autoLoadLastFolderOnStartup) {
+                if (!('showDirectoryPicker' in window)) {
+                    setAutoLoadLastFolderHelp(AUTO_LOAD_HELP_UNSUPPORTED);
+                    setDataLoadStatus(AUTO_LOAD_HELP_UNSUPPORTED, 'warning');
+                } else if (!storedDirHandle) {
+                    const disabled = await disableAutoLoadLastFolder(AUTO_LOAD_HELP_NO_FOLDER);
+                    setDataLoadStatus(
+                        disabled ? AUTO_LOAD_HELP_NO_FOLDER : `${AUTO_LOAD_HELP_NO_FOLDER} ${AUTO_LOAD_HELP_SAVE_FAILED}`,
+                        'warning'
+                    );
+                } else if (await canAccessStoredDirectory()) {
+                    const loaded = await loadStoredDirectoryHandle({ showAlerts: false });
+                    if (!loaded) {
+                        setDataLoadStatus(AUTO_LOAD_HELP_LOAD_FAILED, 'error');
+                    }
+                } else {
+                    setAutoLoadLastFolderHelp(AUTO_LOAD_HELP_PERMISSION);
+                    setDataLoadStatus(AUTO_LOAD_HELP_PERMISSION, 'warning');
+                }
             }
 
             // Add global key listeners for date navigation
