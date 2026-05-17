@@ -2890,6 +2890,234 @@
         return null;
     }
 
+    function getRenderableCoordinate(location, allowShortE7 = false, allowDirectLatLng = true) {
+        if (!location) return null;
+
+        const latE7 = location.latitudeE7 ?? (allowShortE7 ? location.latE7 : undefined);
+        const lngE7 = location.longitudeE7 ?? (allowShortE7 ? location.lngE7 : undefined);
+        const lat = latE7 !== undefined ? latE7 / 1e7 : (allowDirectLatLng ? Number(location.lat) : NaN);
+        const lng = lngE7 !== undefined ? lngE7 / 1e7 : (allowDirectLatLng ? Number(location.lng) : NaN);
+        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    }
+
+    function getRenderableVisitCoordinate(item) {
+        if (item.placeVisit) {
+            return getRenderableCoordinate(item.placeVisit.location, false, false);
+        }
+
+        if (item.visit) {
+            const geo = parseGeoString(item.visit.topCandidate?.placeLocation);
+            if (geo) return geo;
+
+            if (item.visit.location?.latitudeE7 && item.visit.location?.longitudeE7) {
+                return {
+                    lat: item.visit.location.latitudeE7 / 1e7,
+                    lng: item.visit.location.longitudeE7 / 1e7
+                };
+            }
+
+            if (item.visit.centerLatE7 && item.visit.centerLngE7) {
+                return {
+                    lat: item.visit.centerLatE7 / 1e7,
+                    lng: item.visit.centerLngE7 / 1e7
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function getPlaceVisitPlaceIdForInitialLoad(item) {
+        return item.placeVisit?.location?.placeId || item.visit?.topCandidate?.placeID;
+    }
+
+    function canRenderPlaceVisitForInitialLoad(item) {
+        if (getRenderableVisitCoordinate(item)) return true;
+
+        const placeId = getPlaceVisitPlaceIdForInitialLoad(item);
+        if (!placeId) return false;
+
+        const cachedPlace = placeDetailsCache[placeId];
+        if (cachedPlace) {
+            return !cachedPlace.isMissing && Boolean(cachedPlace.location);
+        }
+
+        // The initial default should be visible before async Place Details fetches complete.
+        return false;
+    }
+
+    function canTryPlaceDetailsForInitialLoad(item) {
+        if (getRenderableVisitCoordinate(item)) return false;
+
+        const placeId = getPlaceVisitPlaceIdForInitialLoad(item);
+        if (!placeId || apiCallsDisabled) return false;
+
+        const cachedPlace = placeDetailsCache[placeId];
+        return !cachedPlace || !cachedPlace.isMissing;
+    }
+
+    function getRenderableActivityEndpointCoordinate(location) {
+        if (!location) return null;
+
+        const lat = location.latitudeE7 / 1e7 || location.lat;
+        const lng = location.longitudeE7 / 1e7 || location.lng;
+        const numericLat = Number(lat);
+        const numericLng = Number(lng);
+        return Number.isFinite(numericLat) && Number.isFinite(numericLng) ? { lat: numericLat, lng: numericLng } : null;
+    }
+
+    function isRenderableActivitySegment(activitySegment) {
+        if (!activitySegment) return false;
+
+        const path = [];
+        const addPoint = (coordinate, skipDuplicate = false) => {
+            if (!coordinate) return;
+
+            const lastPoint = path[path.length - 1];
+            if (skipDuplicate && lastPoint && lastPoint.lat === coordinate.lat && lastPoint.lng === coordinate.lng) {
+                return;
+            }
+
+            path.push(coordinate);
+        };
+
+        addPoint(getRenderableActivityEndpointCoordinate(activitySegment.startLocation));
+
+        const intermediatePoints = activitySegment.simplifiedRawPath?.points ||
+            activitySegment.timelinePath?.points ||
+            activitySegment.waypointPath?.waypoints ||
+            activitySegment.path;
+        if (intermediatePoints) {
+            intermediatePoints.forEach(point => {
+                const pLat = point.latE7 !== undefined ? point.latE7 / 1e7 : point.lat;
+                const pLng = point.lngE7 !== undefined ? point.lngE7 / 1e7 : point.lng;
+                addPoint(getRenderableCoordinate({ lat: pLat, lng: pLng }));
+            });
+        }
+
+        addPoint(getRenderableActivityEndpointCoordinate(activitySegment.endLocation), true);
+        return path.length >= 2;
+    }
+
+    function getTimelineItemStartTimestamp(item) {
+        return item.placeVisit?.duration?.startTimestamp ||
+            item.activitySegment?.duration?.startTimestamp ||
+            item.startTime;
+    }
+
+    function getTimelineItemEndTimestamp(item) {
+        return item.placeVisit?.duration?.endTimestamp ||
+            item.activitySegment?.duration?.endTimestamp ||
+            item.endTime;
+    }
+
+    function getTimelineDataKey(dateMoment) {
+        return `${dateMoment.year()}_${dateMoment.format('MMMM').toUpperCase()}`;
+    }
+
+    function getInitialLoadCandidateDay(item, dataKey, tz) {
+        const startTimestamp = getTimelineItemStartTimestamp(item);
+        const endTimestamp = getTimelineItemEndTimestamp(item);
+        if (!startTimestamp || !endTimestamp) return null;
+
+        const startMoment = moment.tz(startTimestamp, tz);
+        const endMoment = moment.tz(endTimestamp, tz);
+        if (!startMoment.isValid() || !endMoment.isValid()) return null;
+
+        const firstDay = startMoment.clone().startOf('day');
+        const candidateDay = endMoment.clone().startOf('day');
+        while (candidateDay.isSameOrAfter(firstDay, 'day') && getTimelineDataKey(candidateDay) !== dataKey) {
+            candidateDay.subtract(1, 'day');
+        }
+
+        return candidateDay.isBefore(firstDay, 'day') ? null : candidateDay;
+    }
+
+    function isTimelineItemRenderableForInitialLoad(item) {
+        if (item.placeVisit || item.visit) {
+            return canRenderPlaceVisitForInitialLoad(item);
+        }
+
+        if (item.activitySegment) {
+            return isRenderableActivitySegment(item.activitySegment);
+        }
+
+        return false;
+    }
+
+    function placeHasRenderableLocation(place) {
+        return !place?.isMissing && Boolean(place?.location);
+    }
+
+    async function fetchPlaceDetailsForInitialLoad(placeId) {
+        if (!placeId || apiCallsDisabled || !Place) return false;
+
+        if (pendingPlaceRequests[placeId]) {
+            await pendingPlaceRequests[placeId];
+            return placeHasRenderableLocation(placeDetailsCache[placeId]);
+        }
+
+        try {
+            const place = await fetchAndCachePlaceDetails(placeId);
+            return placeHasRenderableLocation(place);
+        } catch (error) {
+            const errorString = error?.message || String(error);
+            console.warn(`Initial Place Details lookup failed for ${placeId}:`, errorString);
+
+            if (errorString.includes("NOT_FOUND") || errorString.includes("no longer valid")) {
+                placeDetailsCache[placeId] = {
+                    id: placeId,
+                    isMissing: true,
+                    fetchAttempted: true
+                };
+                updateCacheIndicator();
+            }
+        }
+
+        return false;
+    }
+
+    async function setDatePickersToLatestRenderableDate() {
+        const tz = getSelectedTimezone();
+        let latestRenderableMoment = null;
+        let latestPlaceDetailsCandidate = null;
+
+        Object.entries(timelineData).forEach(([dataKey, monthData]) => {
+            monthData.timelineObjects?.forEach(item => {
+                const candidateDay = getInitialLoadCandidateDay(item, dataKey, tz);
+                if (!candidateDay) return;
+
+                if (isTimelineItemRenderableForInitialLoad(item)) {
+                    if (!latestRenderableMoment || candidateDay.isAfter(latestRenderableMoment)) {
+                        latestRenderableMoment = candidateDay;
+                    }
+                } else if ((item.placeVisit || item.visit) && canTryPlaceDetailsForInitialLoad(item)) {
+                    if (!latestPlaceDetailsCandidate || candidateDay.isAfter(latestPlaceDetailsCandidate.moment)) {
+                        latestPlaceDetailsCandidate = {
+                            moment: candidateDay,
+                            placeId: getPlaceVisitPlaceIdForInitialLoad(item)
+                        };
+                    }
+                }
+            });
+        });
+
+        if (latestPlaceDetailsCandidate &&
+            (!latestRenderableMoment || latestPlaceDetailsCandidate.moment.isAfter(latestRenderableMoment))) {
+            const resolved = await fetchPlaceDetailsForInitialLoad(latestPlaceDetailsCandidate.placeId);
+            if (resolved) {
+                latestRenderableMoment = latestPlaceDetailsCandidate.moment;
+            }
+        }
+
+        if (!latestRenderableMoment) return false;
+
+        const latestDate = latestRenderableMoment.format('YYYY-MM-DD');
+        document.getElementById('startDatePicker').value = latestDate;
+        document.getElementById('endDatePicker').value = latestDate;
+        return true;
+    }
+
     // Renders a place visit marker (handles both standard and iOS formats)
     function renderPlaceVisit(itemData, index, sidebarItem = null) {
         let locationName, placeId, lat, lng, startTimestamp, endTimestamp, originalVisitData, semanticTypeStr;
@@ -3057,6 +3285,40 @@
         }
     }
 
+    function getPlaceDetailsFields() {
+        const fields = [
+            'id',               // Basic identifier
+            'displayName',
+            'addressComponents',
+            'formattedAddress',
+            'location',           // geometry field (lat/lng)
+            'svgIconMaskURI',     // icon URL field
+            'iconBackgroundColor',
+            'googleMapsURI',
+            'types'
+        ];
+
+        return fields;
+    }
+
+    async function fetchAndCachePlaceDetails(placeId, fields = getPlaceDetailsFields()) {
+        const place = new Place({ id: placeId });
+        await place.fetchFields({ fields: fields });
+        incrementApiCallCount();
+
+        const extracted = extractLocationDetails(place.addressComponents);
+        place.extractedCity = extracted.city;
+        place.extractedState = extracted.state;
+        place.extractedCountry = extracted.country;
+
+        // Flag this place so we don't try to "update" it later if it returned sparse data
+        place.fetchAttempted = true;
+
+        placeDetailsCache[placeId] = place;
+        updateCacheIndicator();
+        return place;
+    }
+
     // Fetches place details using the new Place.fetchFields method
     async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index, sidebarItem = null) {
         const lat = placeVisit.location && placeVisit.location.latitudeE7 ? placeVisit.location.latitudeE7 / 1e7 : NaN;
@@ -3070,17 +3332,7 @@
             return;
         }
 
-        const fields = [
-            'id',               // Basic identifier
-            'displayName',
-            'addressComponents',
-            'formattedAddress',
-            'location',           // geometry field (lat/lng)
-            'svgIconMaskURI',     // icon URL field
-            'iconBackgroundColor',
-            'googleMapsURI',
-            'types'
-        ];
+        const fields = getPlaceDetailsFields();
 
         // --- CONCURRENCY LOCK ---
         // Wait if this placeId is already being fetched right now
@@ -3111,20 +3363,7 @@
         // Create the promise for the fetch
         const fetchPromise = (async () => {
             try {
-                const place = new Place({ id: placeId });
-                await place.fetchFields({ fields: fields });
-                incrementApiCallCount();
-
-                const extracted = extractLocationDetails(place.addressComponents);
-                place.extractedCity = extracted.city;
-                place.extractedState = extracted.state;
-                place.extractedCountry = extracted.country;
-
-                // Flag this place so we don't try to "update" it later if it returned sparse data
-                place.fetchAttempted = true;
-
-                placeDetailsCache[placeId] = place;
-                updateCacheIndicator();
+                const place = await fetchAndCachePlaceDetails(placeId, fields);
                 renderPlaceDetails(place, placeVisit, index, sidebarItem);
 
             } catch (error) {
@@ -5976,9 +6215,12 @@
                     displayMinMaxDates();
                     setUIEnabled(true);
 
+                    await setDatePickersToLatestRenderableDate();
+
                     // Perform initial data load for the default date range
-                    const startDate = new Date(document.getElementById('startDatePicker').value);
-                    const endDate = new Date(document.getElementById('endDatePicker').value);
+                    const tz = getSelectedTimezone();
+                    const startDate = moment.tz(document.getElementById('startDatePicker').value, tz).toDate();
+                    const endDate = moment.tz(document.getElementById('endDatePicker').value, tz).toDate();
                     await loadTimelineDataInDateRange(startDate, endDate); // Await initial load
 
                 } else {
