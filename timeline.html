@@ -3057,6 +3057,40 @@
         }
     }
 
+    function getPlaceDetailsFields() {
+        const fields = [
+            'id',               // Basic identifier
+            'displayName',
+            'addressComponents',
+            'formattedAddress',
+            'location',           // geometry field (lat/lng)
+            'svgIconMaskURI',     // icon URL field
+            'iconBackgroundColor',
+            'googleMapsURI',
+            'types'
+        ];
+
+        return fields;
+    }
+
+    async function fetchAndCachePlaceDetails(placeId, fields = getPlaceDetailsFields()) {
+        const place = new Place({ id: placeId });
+        await place.fetchFields({ fields: fields });
+        incrementApiCallCount();
+
+        const extracted = extractLocationDetails(place.addressComponents);
+        place.extractedCity = extracted.city;
+        place.extractedState = extracted.state;
+        place.extractedCountry = extracted.country;
+
+        // Flag this place so we don't try to "update" it later if it returned sparse data
+        place.fetchAttempted = true;
+
+        placeDetailsCache[placeId] = place;
+        updateCacheIndicator();
+        return place;
+    }
+
     // Fetches place details using the new Place.fetchFields method
     async function fetchPlaceDetails(placeId, fallbackName, placeVisit, index, sidebarItem = null) {
         const lat = placeVisit.location && placeVisit.location.latitudeE7 ? placeVisit.location.latitudeE7 / 1e7 : NaN;
@@ -3070,17 +3104,7 @@
             return;
         }
 
-        const fields = [
-            'id',               // Basic identifier
-            'displayName',
-            'addressComponents',
-            'formattedAddress',
-            'location',           // geometry field (lat/lng)
-            'svgIconMaskURI',     // icon URL field
-            'iconBackgroundColor',
-            'googleMapsURI',
-            'types'
-        ];
+        const fields = getPlaceDetailsFields();
 
         // --- CONCURRENCY LOCK ---
         // Wait if this placeId is already being fetched right now
@@ -3111,20 +3135,7 @@
         // Create the promise for the fetch
         const fetchPromise = (async () => {
             try {
-                const place = new Place({ id: placeId });
-                await place.fetchFields({ fields: fields });
-                incrementApiCallCount();
-
-                const extracted = extractLocationDetails(place.addressComponents);
-                place.extractedCity = extracted.city;
-                place.extractedState = extracted.state;
-                place.extractedCountry = extracted.country;
-
-                // Flag this place so we don't try to "update" it later if it returned sparse data
-                place.fetchAttempted = true;
-
-                placeDetailsCache[placeId] = place;
-                updateCacheIndicator();
+                const place = await fetchAndCachePlaceDetails(placeId, fields);
                 renderPlaceDetails(place, placeVisit, index, sidebarItem);
 
             } catch (error) {
