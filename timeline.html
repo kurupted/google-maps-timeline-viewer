@@ -823,6 +823,11 @@
             flex-shrink: 0;
             background-color: #ffffff;
         }
+        code {
+            display: inline-block;
+            background: #f2f3f5;
+            padding: 3px;
+        }
 
 
         /* --- Map Styles --- */
@@ -1844,19 +1849,91 @@
     </div>
 
     <div id="howToMessage">
-        <h3>How to use:</h3>
-        First, complete the initial setup as explained on the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">Github project page</a>.<br><br>
-        Click "Load Data" on the left and navigate to the folder that contains your Timeline data.<br>
-        <h4>For On-Device exported data:</h4>
-        Simply choose the folder that contains your exported Timeline.json file.<br>
-        (On non-English systems, the filename may be different -- rename the file to Timeline.json)<br>
-        If you have a previously saved "TimelinePlaceCache.json" file, be sure it's in the same folder. This can speed up loading and reduce API calls.
-        <h4>For Google Takeout data:</h4>
-        The folder structure should be "Takeout\Location History (Timeline)\Semantic Location History".<br>
-        Navigate into the "Semantic Location History" folder, and then click "Select Folder" on the dialog.<br>
-        (Do not navigate into one of the yearly subfolders.)<br>
-        <br><br><br><br>
-        After the data has loaded, use the date picker to choose a date or date range that contains timeline data.<br>
+        <div style="max-width: 850px; margin: 0 auto; padding-bottom: 40px;">
+            <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0;">Welcome to Google Maps Timeline Viewer</h2>
+            <p style="font-size: 15px; line-height: 1.5; color: #444;">First, ensure you have completed the initial setup as explained on the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank">GitHub project page</a>.</p>
+
+            <h3 style="color: #0056b3; margin-top: 30px; display: flex; align-items: center; gap: 8px;">📂 Loading Your Data</h3>
+            <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <p style="margin-top: 0; font-size: 14.5px;">Click the blue <strong>Load Data</strong> button on the top left and select the folder containing your Timeline data.</p>
+                <ul style="line-height: 1.6; margin-bottom: 0; font-size: 14px; color: #333;">
+                    <li style="margin-bottom: 8px;"><strong>For On-Device exported data:</strong> Choose the folder containing your <code>Timeline.json</code> file.<br>
+                        <span style="color: #666; font-size: 13px;"><em>Note: If your system language isn't English, Google may have named this file differently. Please rename it to <code>Timeline.json</code>.</em></span></li>
+                    <li><strong>For Google Takeout data:</strong> Navigate to <code>Takeout\Location History (Timeline)\Semantic Location History</code>. Select this main parent folder (do <strong>not</strong> navigate into the individual yearly subfolders).</li>
+                </ul>
+            </div>
+
+            <h3 style="color: #0056b3; margin-top: 30px; display: flex; align-items: center; gap: 8px;">🧭 Exploring Your Timeline</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 24px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">📅</div>
+                    <div>
+                        <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">Date View</strong>
+                        <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.4;">Browse your history chronologically. Use the date picker inputs or arrow buttons to view specific days or ranges.</p>
+                    </div>
+                </div>
+
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 24px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">📊</div>
+                    <div>
+                        <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">Summary View</strong>
+                        <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.4;">View aggregated statistics, total distances, place counts, and activity charts for selected dates, months, or entire years.</p>
+                    </div>
+                </div>
+
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 24px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">🌎</div>
+                    <div>
+                        <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">World View</strong>
+                        <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.4;">See a master list of all countries, US states, and cities you've visited. Click a city name to instantly highlight it on the map.</p>
+                    </div>
+                </div>
+
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 20px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef;">🔍 ⬚</div>
+                    <div>
+                        <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">Search & Area View</strong>
+                        <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.4;">Search your history for specific place names, or pan the map and use Area View to find all recorded visits within that visible region.</p>
+                    </div>
+                </div>
+
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 20px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef;">✏️ ➕</div>
+                    <div>
+                        <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">Editing</strong>
+                        <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.4;">Fix inaccurate points, add missing visits, or adjust travel paths. Your edits are saved to a separate file, keeping your original data intact.</p>
+                    </div>
+                </div>
+
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 24px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">⚙️</div>
+                    <div>
+                        <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">Settings</strong>
+                        <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.4;">Customize your display timezone, distance units, and map theme, or access additional advanced features.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="color: #0056b3; margin-top: 30px; display: flex; align-items: center; gap: 8px;">💾 The Place Cache</h3>
+            <div style="background: #e7f1ff; border: 1px solid #b8daff; border-radius: 8px; padding: 20px; color: #004085; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <p style="margin-top: 0; font-size: 14.5px;">To display accurate names, categories, and icons, the app fetches details directly from the Google Maps API. <strong>To save your API quota and drastically speed up loading next time, you must save the Place Cache!</strong></p>
+                <ul style="margin-bottom: 0; font-size: 14px;">
+                    <li style="margin-bottom: 6px;">Whenever new places are fetched from Google, a <strong>Save</strong> button will light up in the bottom left corner under "Place cache".</li>
+                    <li style="margin-bottom: 6px;">Clicking this button downloads a file named <code>TimelinePlaceCache.json</code>.</li>
+                    <li><strong>Important:</strong> You must place this downloaded file and save it to the same folder as your Timeline data (overwriting any previous version).<br>
+                        <em>(Tip: If your browser automatically saves files without asking you for a destination, you will need to manually move the file into your data folder.)</em></li>
+                </ul>
+            </div>
+
+            <h3 style="color: #0056b3; margin-top: 30px; display: flex; align-items: center; gap: 8px;">💡 Pro Tips</h3>
+            <ul style="line-height: 1.6; background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px 20px 20px 40px; margin-bottom: 20px; font-size: 14.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); color: #333;">
+                <li style="margin-bottom: 12px;"><strong>Smart Date Navigation:</strong> Hold down the <code>Ctrl</code> key while clicking the <strong>&lt;</strong> or <strong>&gt;</strong> buttons (or using <code>Ctrl + Left/Right Arrow</code> keys) to stretch your date range. This modifies only the Start Date or End Date individually, rather than shifting the entire viewing window.</li>
+                <li style="margin-bottom: 12px;"><strong>Traveling Across Timezones?</strong> If you are looking at a past trip, go to Settings and change the "Display times in" dropdown to the local timezone of your destination. This forces the timeline to align perfectly with the local days as you experienced them, ignoring your computer's current clock.</li>
+                <li style="margin-bottom: 12px;"><strong>Local Edits:</strong> Any edits or additions you make to your timeline are saved to a <code>TimelineEdits.json</code> file. Just like the cache, make sure this file lives inside your data folder so the app applies your corrections automatically on the next load.</li>
+                <li style="margin-bottom: 12px;"><strong>Generate Visits from Photos:</strong> You can use GPS-tagged photos to fill in missing timeline gaps. Go to Settings and use the "Import Photo GPS Data" tool. Note, however, that the results may be a little messy, as Google will assign the nearest places based on the GPS coordinates, and there won't be any activity tracks (eg Walking) between photos.</li>
+                <li style="margin-bottom: 12px;"><strong>Custom Home & Work Locations:</strong> If you're seeing your home street address instead of the "Home" title and icon, you can set the correct specific Place ID(s) in the Advanced Settings section.</li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -4500,7 +4577,7 @@
         header.style.fontWeight = 'bold';
         header.style.color = '#5f6368';
         header.style.textTransform = 'uppercase';
-        header.textContent = isLocal ? 'Your Saved Places' : 'Google Maps Search';
+        header.textContent = isLocal ? 'Your Visited Places' : 'Google Maps Search';
         resultsContainer.appendChild(header);
 
         suggestions.forEach(suggestion => {
