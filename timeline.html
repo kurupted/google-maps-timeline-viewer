@@ -5071,7 +5071,7 @@
         endDatePicker.value = today;
 
         // Function to navigate days using arrow buttons
-        const navigateDays = (days) => {
+        const navigateDays = (days, isCtrlPressed = false) => {
             if (!uiEnabled) return;
             // Ensure start date is not after end date (can happen if range was > 1 day)
             // If moving back, the end date should also move back by the same amount
@@ -5080,10 +5080,23 @@
             const tz = getSelectedTimezone();
             const originalStart = moment.tz(startDatePicker.value, tz);
             const originalEnd = moment.tz(endDatePicker.value, tz);
-            const diffDays = originalEnd.diff(originalStart, 'days');
 
-            const newStart = originalStart.clone().add(days, 'days');
-            const newEnd = newStart.clone().add(diffDays, 'days'); // Maintain original range duration
+            let newStart = originalStart.clone();
+            let newEnd = originalEnd.clone();
+
+            if (isCtrlPressed) {
+                // If Ctrl is held, only move the date closest to the button clicked
+                if (days < 0) {
+                    newStart.add(days, 'days'); // '<' button modifies only Start Date
+                } else {
+                    newEnd.add(days, 'days');   // '>' button modifies only End Date
+                }
+            } else {
+                // Normal behavior: shift the entire range
+                const diffDays = originalEnd.diff(originalStart, 'days');
+                newStart.add(days, 'days');
+                newEnd = newStart.clone().add(diffDays, 'days'); // Maintain original range duration
+            }
 
             startDatePicker.value = newStart.format('YYYY-MM-DD');
             endDatePicker.value = newEnd.format('YYYY-MM-DD');
@@ -5092,8 +5105,9 @@
             loadTimelineDataInDateRange(newStart.toDate(), newEnd.toDate(), false); // Pass false to skip warning
         };
 
-        prevDayBtn.addEventListener('click', () => navigateDays(-1));
-        nextDayBtn.addEventListener('click', () => navigateDays(1));
+        // Pass the ctrlKey state from the click event
+        prevDayBtn.addEventListener('click', (e) => navigateDays(-1, e.ctrlKey));
+        nextDayBtn.addEventListener('click', (e) => navigateDays(1, e.ctrlKey));
 
         // GO button click handler
         goBtn.addEventListener('click', () => {
@@ -5110,7 +5124,6 @@
                 clearMap();
                 clearTimeline();
                 globalIndex = 0;
-                //placeDetailsCache = {};
                 updateApiCallDisplay();
                 // Clear summary data as well if needed
                 document.getElementById('summary-selected-dates').innerHTML = '';
@@ -8260,13 +8273,14 @@ Departed: ${end}</description>
                 if (targetTagName === 'input' || targetTagName === 'textarea' || targetTagName === 'select') {
                     return; // Don't navigate if typing in an input
                 }
-                // Navigate using arrow keys
+
+                // Navigate using arrow keys (with support for ctrlKey modifier)
                 if (e.key === 'ArrowLeft') {
                     e.preventDefault();
-                    document.getElementById("prevDayBtn").click();
+                    document.getElementById("prevDayBtn").dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: e.ctrlKey }));
                 } else if (e.key === 'ArrowRight') {
                     e.preventDefault();
-                    document.getElementById("nextDayBtn").click();
+                    document.getElementById("nextDayBtn").dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: e.ctrlKey }));
                 }
             });
 
