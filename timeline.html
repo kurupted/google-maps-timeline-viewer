@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  May 16, 2026
+        Version:  June 11, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -2602,6 +2602,10 @@
 
     function formatTimestamp(timestamp, formatString) {
         const tz = getSelectedTimezone();
+        // If the timestamp is a date-only string (YYYY-MM-DD), parse it directly into the target timezone.
+        if (typeof timestamp === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(timestamp)) {
+            return moment.tz(timestamp, 'YYYY-MM-DD', tz).format(formatString);
+        }
         return moment(timestamp).tz(tz).format(formatString);
     }
 
@@ -3903,114 +3907,133 @@
         const startOfDay = moment.tz(selectedDate, tz).startOf('day');
         const endOfDay = moment.tz(selectedDate, tz).endOf('day');
 
-        const year = startOfDay.year();
-        const month = startOfDay.format('MMMM').toUpperCase(); // Use uppercase month name as key
-        const dataKey = `${year}_${month}`;
+        // Timezone shifts can push an event into an adjacent month's bucket.
+        // We must check the previous, current, and next month buckets.
+        const prevMonth = startOfDay.clone().subtract(1, 'month');
+        const nextMonth = startOfDay.clone().add(1, 'month');
 
-        if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
-            const selectedDateStr = startOfDay.format('YYYY-MM-DD'); // For data attribute
+        const keysToCheck = [
+            `${prevMonth.year()}_${prevMonth.format('MMMM').toUpperCase()}`,
+            `${startOfDay.year()}_${startOfDay.format('MMMM').toUpperCase()}`,
+            `${nextMonth.year()}_${nextMonth.format('MMMM').toUpperCase()}`
+        ];
 
-            const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
-                // Determine start/end times consistently across formats
-                let itemStartTime, itemEndTime;
-                if (item.placeVisit) { // Standard format
-                    itemStartTime = item.placeVisit.duration?.startTimestamp;
-                    itemEndTime = item.placeVisit.duration?.endTimestamp;
-                } else if (item.activitySegment) { // Standard format
-                    itemStartTime = item.activitySegment.duration?.startTimestamp;
-                    itemEndTime = item.activitySegment.duration?.endTimestamp;
-                } else if (item.visit || item.activity){ // iOS format (check start/end Time at top level)
-                    itemStartTime = item.startTime;
-                    itemEndTime = item.endTime;
-                }
+        let allRelevantData = [];
+        const seenItems = new Set(); // Prevent duplicates
 
-                // Skip if timestamps are missing
-                if (!itemStartTime || !itemEndTime) return false;
+        const selectedDateStr = startOfDay.format('YYYY-MM-DD'); // For data attribute
 
-                const itemStartMoment = moment(itemStartTime); // These are UTC moments
-                const itemEndMoment = moment(itemEndTime);
-
-                // Check if the item's UTC time range overlaps with the selected day's time range in the chosen timezone
-                if (itemEndMoment.isBefore(startOfDay) || itemStartMoment.isAfter(endOfDay)) {
-                    return false; // Does not overlap
-                }
-
-                // Apply layer filters
-                if (item.placeVisit || item.visit) {
-                    if (!document.getElementById('showVisits').checked) return false;
-                }
-                else if (item.activitySegment) {
-                    if (!document.getElementById('showActivities').checked) return false;
-
-                    const segment = item.activitySegment;
-                    const activityType = segment.activityType ||
-                        (segment.activities && segment.activities[0]?.activityType) ||
-                        (segment.waypointPath && segment.waypointPath.travelMode) ||
-                        'UNKNOWN';
-                    const groupedType = getGroupedActivityType(activityType);
-                    const filterCheckbox = document.getElementById(`filter-${groupedType}`);
-                    if (filterCheckbox && !filterCheckbox.checked) {
-                        return false; // Filtered out
+        keysToCheck.forEach(dataKey => {
+            if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
+                const relevantData = timelineData[dataKey].timelineObjects.filter(item => {
+                    // Determine start/end times consistently across formats
+                    let itemStartTime, itemEndTime;
+                    if (item.placeVisit) { // Standard format
+                        itemStartTime = item.placeVisit.duration?.startTimestamp;
+                        itemEndTime = item.placeVisit.duration?.endTimestamp;
+                    } else if (item.activitySegment) { // Standard format
+                        itemStartTime = item.activitySegment.duration?.startTimestamp;
+                        itemEndTime = item.activitySegment.duration?.endTimestamp;
+                    } else if (item.visit || item.activity){ // iOS format (check start/end Time at top level)
+                        itemStartTime = item.startTime;
+                        itemEndTime = item.endTime;
                     }
-                }
 
-                return true; // Item is relevant
-            });
+                    // Skip if timestamps are missing
+                    if (!itemStartTime || !itemEndTime) return false;
 
-            // Sort data for the day chronologically
-            relevantData.sort((a, b) => {
-                // Determine start times consistently
-                const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
-                const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
-                return timeA - timeB;
-            });
+                    // Prevent duplicates if an item is checked twice across buckets
+                    const uniqueId = itemStartTime + "_" + itemEndTime;
+                    if (seenItems.has(uniqueId)) return false;
 
-            // Process and render the relevant data
-            let firstLocationSet = false;
-            relevantData.forEach((item, localIndex) => {
-                // Center map on the first item of the day
-                if (!firstLocationSet) {
-                    let latLng;
-                    if (item.placeVisit) {
-                        latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
-                    } else if (item.visit) { // iOS visit
-                        const geo = parseGeoString(item.visit.topCandidate?.placeLocation);
-                        if (geo) latLng = geo;
-                        else if (item.visit.centerLatE7 && item.visit.centerLngE7) latLng = {lat: item.visit.centerLatE7 / 1e7, lng: item.visit.centerLngE7 / 1e7};
-                    } else if (item.activitySegment) { // Standard activity
-                        if (item.activitySegment.startLocation) {
-                            latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
+                    const itemStartMoment = moment(itemStartTime); // These are UTC moments
+                    const itemEndMoment = moment(itemEndTime);
+
+                    // Check if the item's UTC time range overlaps with the selected day's time range in the chosen timezone
+                    if (itemEndMoment.isBefore(startOfDay) || itemStartMoment.isAfter(endOfDay)) {
+                        return false; // Does not overlap
+                    }
+
+                    // Apply layer filters
+                    if (item.placeVisit || item.visit) {
+                        if (!document.getElementById('showVisits').checked) return false;
+                    }
+                    else if (item.activitySegment) {
+                        if (!document.getElementById('showActivities').checked) return false;
+
+                        const segment = item.activitySegment;
+                        const activityType = segment.activityType ||
+                            (segment.activities && segment.activities[0]?.activityType) ||
+                            (segment.waypointPath && segment.waypointPath.travelMode) ||
+                            'UNKNOWN';
+                        const groupedType = getGroupedActivityType(activityType);
+                        const filterCheckbox = document.getElementById(`filter-${groupedType}`);
+                        if (filterCheckbox && !filterCheckbox.checked) {
+                            return false; // Filtered out
                         }
-                    } else if (item.activity) { // iOS activity
-                        const geo = parseGeoString(item.activity.start);
-                        if (geo) latLng = geo;
                     }
-                    if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
-                        map.setCenter(latLng);
-                        map.setZoom(15); // Reasonable zoom for a single location/start point
-                        firstLocationSet = true;
+
+                    seenItems.add(uniqueId);
+                    return true; // Item is relevant
+                });
+
+                allRelevantData = allRelevantData.concat(relevantData);
+            }
+        });
+
+        // Sort data for the day chronologically
+        allRelevantData.sort((a, b) => {
+            // Determine start times consistently
+            const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
+            const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+            return timeA - timeB;
+        });
+
+        // Process and render the relevant data
+        let firstLocationSet = false;
+        allRelevantData.forEach((item, localIndex) => {
+            // Center map on the first item of the day
+            if (!firstLocationSet) {
+                let latLng;
+                if (item.placeVisit) {
+                    latLng = { lat: item.placeVisit.location.latitudeE7 / 1e7, lng: item.placeVisit.location.longitudeE7 / 1e7 };
+                } else if (item.visit) { // iOS visit
+                    const geo = parseGeoString(item.visit.topCandidate?.placeLocation);
+                    if (geo) latLng = geo;
+                    else if (item.visit.centerLatE7 && item.visit.centerLngE7) latLng = {lat: item.visit.centerLatE7 / 1e7, lng: item.visit.centerLngE7 / 1e7};
+                } else if (item.activitySegment) { // Standard activity
+                    if (item.activitySegment.startLocation) {
+                        latLng = { lat: item.activitySegment.startLocation.latitudeE7 / 1e7, lng: item.activitySegment.startLocation.longitudeE7 / 1e7 };
                     }
+                } else if (item.activity) { // iOS activity
+                    const geo = parseGeoString(item.activity.start);
+                    if (geo) latLng = geo;
                 }
-
-                // Create timeline item in sidebar
-                const timelineItem = createTimelineItem(item, globalIndex, selectedDateStr);
-                document.getElementById('timeline').appendChild(timelineItem);
-
-                // Render corresponding map elements (marker or polyline)
-                if (item.placeVisit || item.visit) {
-                    renderPlaceVisit(item, globalIndex); // Pass the whole item
-                } else if (item.activitySegment) { // Standard activity segment
-                    renderActivitySegment(item.activitySegment, globalIndex);
-                } else if (item.activity) { // Transformed iOS activity now looks like an activitySegment
-                    // This case should be handled by readFilesFromDirectory transforming iOS activities
-                    // into the { activitySegment: ... } structure.
-                    // If an item with a direct 'activity' property reaches here, it means transformation might have been missed
-                    // or the structure is unexpected. For now, we assume it's already transformed.
-                    console.warn("Direct iOS activity object encountered in loadTimelineDataForDate. Expected transformed activitySegment.", item);
+                if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
+                    map.setCenter(latLng);
+                    map.setZoom(15); // Reasonable zoom for a single location/start point
+                    firstLocationSet = true;
                 }
-                globalIndex++; // Increment global index for unique identification
-            });
-        }
+            }
+
+            // Create timeline item in sidebar
+            const timelineItem = createTimelineItem(item, globalIndex, selectedDateStr);
+            document.getElementById('timeline').appendChild(timelineItem);
+
+            // Render corresponding map elements (marker or polyline)
+            if (item.placeVisit || item.visit) {
+                renderPlaceVisit(item, globalIndex); // Pass the whole item
+            } else if (item.activitySegment) { // Standard activity segment
+                renderActivitySegment(item.activitySegment, globalIndex);
+            } else if (item.activity) { // Transformed iOS activity now looks like an activitySegment
+                // This case should be handled by readFilesFromDirectory transforming iOS activities
+                // into the { activitySegment: ... } structure.
+                // If an item with a direct 'activity' property reaches here, it means transformation might have been missed
+                // or the structure is unexpected. For now, we assume it's already transformed.
+                console.warn("Direct iOS activity object encountered in loadTimelineDataForDate. Expected transformed activitySegment.", item);
+            }
+            globalIndex++; // Increment global index for unique identification
+        });
         // No else needed, if data for the month isn't loaded, nothing happens for this date.
     }
 
@@ -4234,7 +4257,8 @@
             return null;
         }
 
-        const visitDate = moment(visitTimestamp);
+        const tz = getSelectedTimezone();
+        const visitDate = moment(visitTimestamp).tz(tz);
         const placeStyle = getPlaceStyle(placeDetailsCache[placeId]?.types || []);
 
         resultItem.innerHTML = `
@@ -4249,7 +4273,7 @@
         `;
 
         resultItem.addEventListener('click', async () => {
-            const targetDate = moment(visitTimestamp).format('YYYY-MM-DD');
+            const targetDate = moment(visitTimestamp).tz(tz).format('YYYY-MM-DD');
             showSidebarTab('date');
             document.getElementById('startDatePicker').value = targetDate;
             document.getElementById('endDatePicker').value = targetDate;
@@ -4277,11 +4301,13 @@
         const locationName = placeDetailsCache[placeId]?.displayName || placeData.locationName;
         const placeStyle = getPlaceStyle(placeDetailsCache[placeId]?.types || []);
 
-        const datesHtml = placeData.visits.map(visit =>
-            `<span data-date="${moment(visit.date).format('YYYY-MM-DD')}" data-place-id="${placeId}" data-start-timestamp="${visit.date}">
-                ${moment(visit.date).format('YYYY-MM-DD')}
-            </span>`
-        ).join('');
+        const tz = getSelectedTimezone();
+        const datesHtml = placeData.visits.map(visit => {
+            const dateStr = moment(visit.date).tz(tz).format('YYYY-MM-DD');
+            return `<span data-date="${dateStr}" data-place-id="${placeId}" data-start-timestamp="${visit.date}">
+                ${dateStr}
+            </span>`;
+        }).join('');
 
         resultItem.innerHTML = `
             <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
@@ -4570,9 +4596,10 @@
             return;
         }
 
+        const tz = getSelectedTimezone();
         // Group results by date
         const groupedResults = results.reduce((acc, visit) => {
-            const dateKey = moment(visit.date).format('YYYY-MM-DD');
+            const dateKey = moment(visit.date).tz(tz).format('YYYY-MM-DD');
             if (!acc[dateKey]) {
                 acc[dateKey] = [];
             }
@@ -4588,13 +4615,13 @@
             const resultItem = document.createElement('div');
             resultItem.className = 'search-result-item';
 
-            const visitMoment = moment(visitsOnDate[0].date);
+            const visitMoment = moment(visitsOnDate[0].date).tz(tz);
             const dateString = visitMoment.format('MMMM DD, YYYY');
 
             // Create a list of times for that day
             const timesString = visitsOnDate
                 .sort((a,b) => new Date(a.date) - new Date(b.date)) // Sort times chronologically
-                .map(v => moment(v.date).format('hh:mm A, dddd'))
+                .map(v => moment(v.date).tz(tz).format('hh:mm A, dddd'))
                 .join(', ');
 
             resultItem.innerHTML = `
@@ -4720,71 +4747,83 @@
 
         let currentDate = startMoment.clone();
         while (currentDate.isSameOrBefore(endMoment, 'day')) {
-            const year = currentDate.year();
-            const monthKey = currentDate.format('MMMM').toUpperCase();
-            const dataKey = `${year}_${monthKey}`;
+            const dayStart = currentDate.clone().startOf('day');
+            const dayEnd = currentDate.clone().endOf('day');
 
-            if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
-                timelineData[dataKey].timelineObjects.forEach(item => {
-                    // Determine start/end times consistently
-                    let itemStartTime, itemEndTime;
-                    if (item.placeVisit) {
-                        itemStartTime = item.placeVisit.duration?.startTimestamp;
-                        itemEndTime = item.placeVisit.duration?.endTimestamp;
-                    } else if (item.activitySegment) {
-                        itemStartTime = item.activitySegment.duration?.startTimestamp;
-                        itemEndTime = item.activitySegment.duration?.endTimestamp;
-                    } else if (item.visit || item.activity) { // iOS top-level
-                        itemStartTime = item.startTime;
-                        itemEndTime = item.endTime;
-                    }
-                    if (!itemStartTime || !itemEndTime) return; // Skip if no time
+            // Check adjacent buckets for this specific day
+            const keysToCheck = [
+                currentDate.clone().subtract(1, 'month').format('YYYY_MMMM').toUpperCase(),
+                currentDate.format('YYYY_MMMM').toUpperCase(),
+                currentDate.clone().add(1, 'month').format('YYYY_MMMM').toUpperCase()
+            ];
 
-                    const itemStartMoment = moment(itemStartTime); // UTC
-                    const itemEndMoment = moment(itemEndTime); // UTC
+            const seenItemsForDay = new Set();
 
-                    // Check if the item's UTC time range overlaps with the selected day's time range in the chosen timezone
-                    const dayStart = currentDate.clone().startOf('day');
-                    const dayEnd = currentDate.clone().endOf('day');
-                    if (itemEndMoment.isBefore(dayStart) || itemStartMoment.isAfter(dayEnd)) {
-                        return; // Skip items not overlapping this specific day
-                    }
+            keysToCheck.forEach(dataKey => {
+                if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
+                    timelineData[dataKey].timelineObjects.forEach(item => {
+                        // Determine start/end times consistently
+                        let itemStartTime, itemEndTime;
+                        if (item.placeVisit) {
+                            itemStartTime = item.placeVisit.duration?.startTimestamp;
+                            itemEndTime = item.placeVisit.duration?.endTimestamp;
+                        } else if (item.activitySegment) {
+                            itemStartTime = item.activitySegment.duration?.startTimestamp;
+                            itemEndTime = item.activitySegment.duration?.endTimestamp;
+                        } else if (item.visit || item.activity) { // iOS top-level
+                            itemStartTime = item.startTime;
+                            itemEndTime = item.endTime;
+                        }
+                        if (!itemStartTime || !itemEndTime) return; // Skip if no time
 
-                    // Item overlaps the current day, add its stats
-                    if (item.placeVisit || item.visit ) { // Count both visit types
-                        summary.visits++;
+                        const uniqueId = itemStartTime + "_" + itemEndTime;
+                        if (seenItemsForDay.has(uniqueId)) return;
 
-                        let placeId;
-                        if (item.placeVisit) placeId = item.placeVisit.location?.placeId;
-                        else if (item.visit) placeId = item.visit.topCandidate?.placeID;
+                        const itemStartMoment = moment(itemStartTime); // UTC
+                        const itemEndMoment = moment(itemEndTime); // UTC
 
-                        if (placeId && placeDetailsCache[placeId]) {
-                            const cacheHit = placeDetailsCache[placeId];
-                            if (cacheHit.extractedCity && cacheHit.extractedCity !== "Unknown City") {
-                                summary.cities.add(`${cacheHit.extractedCity}, ${cacheHit.extractedCountry}`);
+                        // Check if the item's UTC time range overlaps with the selected day's time range in the chosen timezone
+                        if (itemEndMoment.isBefore(dayStart) || itemStartMoment.isAfter(dayEnd)) {
+                            return; // Skip items not overlapping this specific day
+                        }
+
+                        seenItemsForDay.add(uniqueId);
+
+                        // Item overlaps the current day, add its stats
+                        if (item.placeVisit || item.visit ) { // Count both visit types
+                            summary.visits++;
+
+                            let placeId;
+                            if (item.placeVisit) placeId = item.placeVisit.location?.placeId;
+                            else if (item.visit) placeId = item.visit.topCandidate?.placeID;
+
+                            if (placeId && placeDetailsCache[placeId]) {
+                                const cacheHit = placeDetailsCache[placeId];
+                                if (cacheHit.extractedCity && cacheHit.extractedCity !== "Unknown City") {
+                                    summary.cities.add(`${cacheHit.extractedCity}, ${cacheHit.extractedCountry}`);
+                                }
+                                if (cacheHit.extractedCountry && cacheHit.extractedCountry !== "Unknown Country") {
+                                    summary.countries.add(cacheHit.extractedCountry);
+                                }
                             }
-                            if (cacheHit.extractedCountry && cacheHit.extractedCountry !== "Unknown Country") {
-                                summary.countries.add(cacheHit.extractedCountry);
+                        } else if (item.activitySegment) {
+                            const segment = item.activitySegment;
+                            const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
+                            if (distanceMeters > 0) {
+                                summary.distanceMeters += distanceMeters;
+                                const activityType = segment.activityType || (segment.activities && segment.activities[0]?.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
+                                const groupedType = getGroupedActivityType(activityType);
+                                summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceMeters;
                             }
                         }
-                    } else if (item.activitySegment) {
-                        const segment = item.activitySegment;
-                        const distanceMeters = segment.distance || segment.simplifiedRawPath?.distanceMeters || segment.waypointPath?.distanceMeters || 0;
-                        if (distanceMeters > 0) {
-                            summary.distanceMeters += distanceMeters;
-                            const activityType = segment.activityType || (segment.activities && segment.activities[0]?.activityType) || (segment.waypointPath && segment.waypointPath.travelMode) || 'UNKNOWN';
-                            const groupedType = getGroupedActivityType(activityType);
-                            summary.distanceByActivity[groupedType] = (summary.distanceByActivity[groupedType] || 0) + distanceMeters;
-                        }
-                    }
-                });
-            }
+                    });
+                }
+            });
             currentDate.add(1, 'days');
         }
         return summary;
     }
 
-    // Displays the summary for the currently selected date range
     // Displays the summary for the currently selected date range
     function displaySelectedDatesSummary(startDate, endDate) {
         const container = document.getElementById('summary-selected-dates');
@@ -6996,11 +7035,17 @@
         let currentDate = startOfDay.clone();
         // Create a set to avoid processing the same month's data multiple times
         const monthsToProcess = new Set();
+
+        // FIX: Add +/- 1 month padding to catch boundary shifts
+        monthsToProcess.add(startOfDay.clone().subtract(1, 'month').format('YYYY_MMMM').toUpperCase());
+
         while (currentDate.isSameOrBefore(endOfDay, 'day')) {
             const dataKey = `${currentDate.year()}_${currentDate.format('MMMM').toUpperCase()}`;
             monthsToProcess.add(dataKey);
             currentDate.add(1, 'days');
         }
+
+        monthsToProcess.add(endOfDay.clone().add(1, 'month').format('YYYY_MMMM').toUpperCase());
 
         monthsToProcess.forEach(dataKey => {
             if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
