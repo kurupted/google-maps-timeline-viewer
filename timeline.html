@@ -3279,17 +3279,19 @@
                 await place.fetchFields({ fields: fields });
                 incrementApiCallCount();
 
-                const extracted = extractLocationDetails(place.addressComponents);
-                place.extractedCity = extracted.city;
-                place.extractedState = extracted.state;
-                place.extractedCountry = extracted.country;
+                const plainPlace = convertPlaceToPlainObject(place);
+
+                const extracted = extractLocationDetails(plainPlace.addressComponents);
+                plainPlace.extractedCity = extracted.city;
+                plainPlace.extractedState = extracted.state;
+                plainPlace.extractedCountry = extracted.country;
 
                 // Flag this place so we don't try to "update" it later if it returned sparse data
-                place.fetchAttempted = true;
+                plainPlace.fetchAttempted = true;
 
-                placeDetailsCache[placeId] = place;
+                placeDetailsCache[placeId] = plainPlace;
                 updateCacheIndicator();
-                renderPlaceDetails(place, placeVisit, index, sidebarItem);
+                renderPlaceDetails(plainPlace, placeVisit, index, sidebarItem);
 
             } catch (error) {
                 // Safely extract the error string to catch custom MapsRequestErrors
@@ -3312,19 +3314,21 @@
                         await newPlace.fetchFields({ fields: fields });
                         incrementApiCallCount();
 
-                        const extracted = extractLocationDetails(newPlace.addressComponents);
-                        newPlace.extractedCity = extracted.city;
-                        newPlace.extractedState = extracted.state;
-                        newPlace.extractedCountry = extracted.country;
-                        newPlace.fetchAttempted = true; // Mark as attempted
+                        const plainPlace = convertPlaceToPlainObject(newPlace);
+
+                        const extracted = extractLocationDetails(plainPlace.addressComponents);
+                        plainPlace.extractedCity = extracted.city;
+                        plainPlace.extractedState = extracted.state;
+                        plainPlace.extractedCountry = extracted.country;
+                        plainPlace.fetchAttempted = true; // Mark as attempted
 
                         // Cache the new place under the OLD placeId
-                        placeDetailsCache[placeId] = newPlace;
-                        placeDetailsCache[placeId].originalPlaceId = placeId;
-                        placeDetailsCache[placeId].isReplacement = true;
+                        plainPlace.originalPlaceId = placeId;
+                        plainPlace.isReplacement = true;
+                        placeDetailsCache[placeId] = plainPlace;
 
                         updateCacheIndicator();
-                        renderPlaceDetails(newPlace, placeVisit, index, sidebarItem);
+                        renderPlaceDetails(plainPlace, placeVisit, index, sidebarItem);
                         return;
 
                     } catch (refreshError) {
@@ -3975,6 +3979,11 @@
             state: state || "Unknown State",
             country: country || "Unknown Country"
         };
+    }
+
+    // Helper: Converts a live Google Maps Place class into a plain JSON-safe object
+    function convertPlaceToPlainObject(place) {
+        return typeof place.toJSON === 'function' ? place.toJSON() : JSON.parse(JSON.stringify(place));
     }
 
     // Helper to determine if a cached place needs to be updated based on new extractor rules
@@ -7941,13 +7950,15 @@ Departed: ${end}</description>
                 await place.fetchFields({ fields: fields });
                 incrementApiCallCount();
 
-                const extracted = extractLocationDetails(place.addressComponents);
-                place.extractedCity = extracted.city;
-                place.extractedState = extracted.state;
-                place.extractedCountry = extracted.country;
-                place.fetchAttempted = true; // Mark as attempted
+                const plainPlace = convertPlaceToPlainObject(place);
 
-                placeDetailsCache[placeId] = place;
+                const extracted = extractLocationDetails(plainPlace.addressComponents);
+                plainPlace.extractedCity = extracted.city;
+                plainPlace.extractedState = extracted.state;
+                plainPlace.extractedCountry = extracted.country;
+                plainPlace.fetchAttempted = true; // Mark as attempted
+
+                placeDetailsCache[placeId] = plainPlace;
 
             } catch (error) {
                 const errorString = String(error);
