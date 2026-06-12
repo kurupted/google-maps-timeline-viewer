@@ -17,7 +17,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - Timezone setting for viewing your travel days with local times
 - Toggle layers on and off, eg to view only places, without travel paths
 - Place details retrieved from Google Places API can be saved locally, to reduce future API calls
-- World view shows all of the countries and cities you've visited
+- World View shows a heat map of your activity, and a list of countries and cities visited 
 - Import gps locations from a folder of photos (in combination with exiftool)
 - Export to KML file
 - Mobile-friendly UI, so you can use this on your phone
