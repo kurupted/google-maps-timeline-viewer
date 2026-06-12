@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  June 11, 2026
+        Version:  June 12, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -27,6 +27,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
 
     <style>
         body, html {
@@ -131,6 +132,16 @@
             background: #ced4da;
             cursor: not-allowed;
             color: #6c757d;
+        }
+        .control-btn.inactiveTab {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+        .control-btn.activeTab {
+            background-color: #4a85e5;
+            color: white;
+            border: 1px solid #444;
         }
         #reloadBtn {
             display:none; /* don't need this atm */
@@ -1450,6 +1461,7 @@
     </style>
 </head>
 <body>
+
 <div id="apiKeyModal">
     <div class="modal-content">
         <h3 id="apiKeyModalTitle">Enter API Key</h3>
@@ -1464,6 +1476,7 @@
         <button id="apiKeyCancel" class="secondary" style="display: none;">Cancel</button>
     </div>
 </div>
+
 <div id="container">
     <div id="sidebar">
 
@@ -1544,6 +1557,12 @@
                                 <div id="fetchUncachedDone" style="display: none; color:#28a745">Fetched. Be sure to Save the Place Cache!</div>
                             </div>
                         </div>
+
+                        <div id="worldMapToggleContainer" style="display: none; gap: 8px; margin-bottom: 5px;">
+                            <button id="worldModePinsBtn" class="control-btn inactiveTab" style="flex: 1;">📍 City Pins</button>
+                            <button id="worldModeHeatmapBtn" class="control-btn activeTab" style="flex: 1">🔥 Heatmap</button>
+                        </div>
+                        <button id="toggleHeatmapTunerBtn" class="control-btn" style="display: none; width: 100%; margin-bottom: 15px; padding: 6px; font-size: 12px; background-color: #6c757d;">⚙️ Heatmap Settings</button>
 
                         <div id="worldListsContainer" style="display: none;">
                             <details class="world-details" open>
@@ -1954,6 +1973,38 @@
 </div>
 
 
+<div id="heatmap-tuner" style="display:none; position: fixed; top: 70px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 15px; border-radius: 8px; z-index: 9999; font-family: sans-serif; font-size: 13px; width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); backdrop-filter: blur(4px);">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #555; margin-bottom: 15px; padding-bottom: 8px;">
+        <h4 id="tuner-title" style="margin: 0; color: #4facfe; text-transform: uppercase;">🔥 Tuner</h4>
+        <div style="font-size: 11px; color: #aaa;">Zoom: <span id="val-zoom" style="color: white; font-weight: bold;">10.0</span></div>
+    </div>
+
+    <div class="debug-only" style="margin-top: 10px;">
+        <label style="display: flex; justify-content: space-between;">Radius Pixels <span id="val-radius" style="color: #4facfe; font-weight: bold;">40</span></label>
+        <input type="range" id="tune-radius" min="10" max="150" step="1" value="40" style="width: 100%;">
+    </div>
+
+    <div style="margin-top: 15px;">
+        <label style="display: flex; justify-content: space-between;">Intensity <span id="val-intensity" style="color: #4facfe; font-weight: bold;">1</span></label>
+        <input type="range" id="tune-intensity" min="0.1" max="10" step="0.1" value="1" style="width: 100%;">
+    </div>
+
+    <div class="debug-only" style="margin-top: 15px;">
+        <label style="display: flex; justify-content: space-between;">Threshold <span id="val-threshold" style="color: #4facfe; font-weight: bold;">0.01</span></label>
+        <input type="range" id="tune-threshold" min="0.01" max="0.5" step="0.01" value="0.01" style="width: 100%;">
+    </div>
+
+    <div class="debug-only" style="margin-top: 15px;">
+        <label style="display: flex; justify-content: space-between;">Grid Size <span id="val-grid" style="color: #4facfe; font-weight: bold;">~1.1km (Region)</span></label>
+        <input type="range" id="tune-grid" min="0" max="7" step="1" value="3" style="width: 100%;">
+    </div>
+
+    <div style="margin-top: 15px;">
+        <label style="display: flex; justify-content: space-between;">Grid Cap (Max Weight) <span id="val-cap" style="color: #4facfe; font-weight: bold;">4</span></label>
+        <input type="range" id="tune-cap" min="1" max="20" step="1" value="4" style="width: 100%;">
+    </div>
+</div>
+
 
 <script>
     // --- Global Variables ---
@@ -1989,6 +2040,37 @@
     let editModeActiveFullItem = null;
     let homePlaceIds = [];
     let workPlaceIds = [];
+
+    let worldMapMode = 'pins'; // 'pins' or 'heatmap'
+    let heatmapLayer = null;
+    let heatmapPointsCache = null;
+    let heatmapZoomListener = null;
+    let isTunerVisible = false;
+    let lastSyncedTier = null;
+    // The Mathematical Gears
+    const heatmapGridFactors = [3, 5, 25, 50, 100, 500, 2000, 10000];
+    const heatmapGridLabels = [
+        "~111km (World)",
+        "~22km (Country)",
+        "~4.5km (State)",
+        "~2.2km (Metro)",
+        "~1.1km (Region)",
+        "~200m (City)",
+        "~55m (Neighborhood)",
+        "Exact (Street)"
+    ];
+    // The Zoom Tiers mapped 1-to-1 to the Gears above
+    const heatmapConfigs = {
+        world:        { maxZoom: 4,  r: 35, i: 2,   t: 0.01, gridIdx: 0, cap: 2 },
+        country:      { maxZoom: 6,  r: 35, i: 1,   t: 0.01, gridIdx: 1, cap: 2 },
+        state:        { maxZoom: 8,  r: 38, i: 1,   t: 0.01, gridIdx: 2, cap: 1 },
+        metro:        { maxZoom: 9,  r: 38, i: 1,   t: 0.01, gridIdx: 3, cap: 2 },
+        region:       { maxZoom: 10, r: 45, i: 1,   t: 0.01, gridIdx: 4, cap: 1 },
+        city:         { maxZoom: 12, r: 50, i: 1.4, t: 0.01, gridIdx: 5, cap: 1 },
+        neighborhood: { maxZoom: 13, r: 50, i: 2.1, t: 0.01, gridIdx: 6, cap: 1 },
+        street:       { maxZoom: 99, r: 60, i: 2,   t: 0.01, gridIdx: 7, cap: 1 }
+    };
+
     const API_KEY_PLACEHOLDER = 'YOUR_API_KEY';
     const API_KEY_STORAGE_KEY = 'googleMapsApiKey';
     const API_KEY_SOURCE = Object.freeze({
@@ -7698,6 +7780,14 @@ Departed: ${end}</description>
                 updateViewToggleButtons();
                 if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
                 document.getElementById('goBtn').click(); // Reload regular timeline map
+
+                document.getElementById('heatmap-tuner').style.display = 'none';
+                isTunerVisible = false;
+            }
+
+            if (heatmapLayer) {
+                heatmapLayer.setMap(null);
+                heatmapLayer = null; // Completely destroy the instance
             }
         });
 
@@ -7713,6 +7803,35 @@ Departed: ${end}</description>
             document.getElementById('datePickerContainer').style.display = 'flex';
             document.getElementById('date-range-info').style.display = 'block';
             document.getElementById('go-container').style.display = 'flex';
+
+            document.getElementById('heatmap-tuner').style.display = 'none';
+            isTunerVisible = false;
+            if (heatmapLayer) {
+                heatmapLayer.setMap(null);
+                heatmapLayer = null; // Completely destroy the instance
+            }
+        });
+
+        document.getElementById('worldModePinsBtn').addEventListener('click', () => {
+            worldMapMode = 'pins';
+            applyWorldMapMode();
+        });
+
+        document.getElementById('worldModeHeatmapBtn').addEventListener('click', () => {
+            worldMapMode = 'heatmap';
+            applyWorldMapMode();
+        });
+
+        document.getElementById('toggleHeatmapTunerBtn').addEventListener('click', () => {
+            isTunerVisible = !isTunerVisible;
+            document.getElementById('heatmap-tuner').style.display = isTunerVisible ? 'block' : 'none';
+
+            // Apply debug visibility logic when opening
+            if (isTunerVisible) {
+                document.querySelectorAll('#heatmap-tuner .debug-only').forEach(row => {
+                    row.style.display = isDebugMode ? 'block' : 'none';
+                });
+            }
         });
 
         // Event Listeners for Legacy Cache updates
@@ -7757,6 +7876,7 @@ Departed: ${end}</description>
         }
 
         listContainer.style.display = 'block';
+        document.getElementById('worldMapToggleContainer').style.display = 'flex';
         renderWorldData();
     }
 
@@ -8101,8 +8221,251 @@ Departed: ${end}</description>
         populateClickableList(Object.keys(countryBounds), countryBounds, 'list-countries', 'count-countries', false);
         populateClickableList(Object.keys(stateBounds), stateBounds, 'list-states', 'count-states', false);
         populateClickableList(Object.keys(cityLocations), cityLocations, 'list-cities', 'count-cities', true);
+
+        // Apply the correct map layer mode (Pins vs Heatmap)
+        applyWorldMapMode();
     }
 
+
+
+    // Helper to figure out which tier you are currently looking at
+    function getHeatmapTier(zoom) {
+        if (zoom <= heatmapConfigs.world.maxZoom) return 'world';
+        if (zoom <= heatmapConfigs.country.maxZoom) return 'country';
+        if (zoom <= heatmapConfigs.state.maxZoom) return 'state';
+        if (zoom <= heatmapConfigs.metro.maxZoom) return 'metro';
+        if (zoom <= heatmapConfigs.region.maxZoom) return 'region';
+        if (zoom <= heatmapConfigs.city.maxZoom) return 'city';
+        if (zoom <= heatmapConfigs.neighborhood.maxZoom) return 'neighborhood';
+        return 'street';
+    }
+
+    function generateHeatmapPoints() {
+        if (heatmapPointsCache) return heatmapPointsCache;
+
+        const pointMap = new Map(); // We will use a map to group overlapping points
+
+        for (const monthKey in timelineData) {
+            if (!timelineData[monthKey] || !timelineData[monthKey].timelineObjects) continue;
+
+            timelineData[monthKey].timelineObjects.forEach(item => {
+
+                // Helper to group overlapping points (rounds to 4 decimals, about ~11 meters)
+                const addPoint = (lat, lng, weight) => {
+                    if (isNaN(lat) || isNaN(lng)) return;
+                    const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+                    pointMap.set(key, (pointMap.get(key) || 0) + weight);
+                };
+
+                if (item.placeVisit && item.placeVisit.location) {
+                    addPoint(item.placeVisit.location.latitudeE7 / 1e7, item.placeVisit.location.longitudeE7 / 1e7, 2);
+                } else if (item.visit && item.visit.topCandidate) {
+                    const geo = parseGeoString(item.visit.topCandidate.placeLocation);
+                    if (geo) addPoint(geo.lat, geo.lng, 2);
+                }
+
+                if (item.activitySegment) {
+                    const path = item.activitySegment.simplifiedRawPath?.points || item.activitySegment.waypointPath?.waypoints || item.activitySegment.path;
+                    if (path) {
+                        path.forEach(p => {
+                            const pLat = p.latE7 !== undefined ? p.latE7 / 1e7 : p.lat;
+                            const pLng = p.lngE7 !== undefined ? p.lngE7 / 1e7 : p.lng;
+                            addPoint(pLat, pLng, 0.5);
+                        });
+                    }
+                }
+            });
+        }
+
+        // Cap the maximum weight of any single location
+        const MAX_WEIGHT_CAP = 2;
+
+        const points = [];
+        pointMap.forEach((totalWeight, key) => {
+            const [lat, lng] = key.split(',').map(Number);
+            points.push({
+                position: [lng, lat],
+                weight: Math.min(totalWeight, MAX_WEIGHT_CAP) // Force outliers down to the cap
+            });
+        });
+
+        heatmapPointsCache = points;
+        return points;
+    }
+
+    function applyWorldMapMode() {
+        const pinsBtn = document.getElementById('worldModePinsBtn');
+        const heatmapBtn = document.getElementById('worldModeHeatmapBtn');
+
+        if (worldMapMode === 'heatmap') {
+            pinsBtn.classList.remove('activeTab');
+            pinsBtn.classList.add('inactiveTab');
+            heatmapBtn.classList.remove('inactiveTab');
+            heatmapBtn.classList.add('activeTab');
+            document.getElementById('toggleHeatmapTunerBtn').style.display = 'block';
+
+            // Hide pins
+            worldMarkers.forEach(m => m.map = null);
+            if (window.worldInfoWindow) window.worldInfoWindow.close();
+
+            // Show heatmap
+            if (!heatmapLayer) {
+                document.getElementById('loading-overlay').style.display = "flex";
+                document.getElementById('loading-spinner').nextElementSibling.textContent = "Generating Heatmap...";
+
+                setTimeout(() => {
+                    // Initial Creation
+                    heatmapLayer = new deck.GoogleMapsOverlay({
+                        layers: [getDynamicHeatmapLayer()]
+                    });
+
+                    heatmapLayer.setMap(map);
+
+                    // Listen for zooming
+                    if (!heatmapZoomListener) {
+                        heatmapZoomListener = map.addListener('zoom_changed', () => {
+                            if (worldMapMode === 'heatmap' && heatmapLayer) {
+                                syncSlidersToZoom();
+                                heatmapLayer.setProps({
+                                    layers: [getDynamicHeatmapLayer()]
+                                });
+                            }
+                        });
+                    }
+
+                    document.getElementById('loading-overlay').style.display = "none";
+                    document.getElementById('loading-spinner').nextElementSibling.textContent = "Loading data...";
+                }, 50);
+            } else {
+                // The canvas is already on the map, just give it the data back
+                syncSlidersToZoom(true);
+                heatmapLayer.setProps({
+                    layers: [getDynamicHeatmapLayer()]
+                });
+            }
+        } else {
+            // Pins Mode
+            heatmapBtn.classList.remove('activeTab');
+            heatmapBtn.classList.add('inactiveTab');
+            pinsBtn.classList.remove('inactiveTab');
+            pinsBtn.classList.add('activeTab');
+            document.getElementById('toggleHeatmapTunerBtn').style.display = 'none';
+            document.getElementById('heatmap-tuner').style.display = 'none';
+            isTunerVisible = false;
+
+            // Pass an empty array to turn it invisible without destroying the WebGL context
+            if (heatmapLayer) {
+                heatmapLayer.setProps({ layers: [] });
+            }
+            worldMarkers.forEach(m => m.map = map);
+        }
+    }
+
+    function getGridCappedData(gridFactor, maxCap) {
+        const pointMap = new Map();
+
+        for (const monthKey in timelineData) {
+            if (!timelineData[monthKey] || !timelineData[monthKey].timelineObjects) continue;
+
+            timelineData[monthKey].timelineObjects.forEach(item => {
+                const addPoint = (lat, lng, isPlace) => {
+                    if (isNaN(lat) || isNaN(lng)) return;
+
+                    const gridLat = Math.round(lat * gridFactor) / gridFactor;
+                    const gridLng = Math.round(lng * gridFactor) / gridFactor;
+                    const key = `${gridLat},${gridLng}`;
+
+                    if (isPlace) {
+                        pointMap.set(key, (pointMap.get(key) || 0) + 1);
+                    } else {
+                        if (!pointMap.has(key)) pointMap.set(key, 0.05);
+                    }
+                };
+
+                if (item.placeVisit && item.placeVisit.location) addPoint(item.placeVisit.location.latitudeE7 / 1e7, item.placeVisit.location.longitudeE7 / 1e7, true);
+                else if (item.visit && item.visit.topCandidate) {
+                    const geo = parseGeoString(item.visit.topCandidate.placeLocation);
+                    if (geo) addPoint(geo.lat, geo.lng, true);
+                }
+
+                if (item.activitySegment) {
+                    const path = item.activitySegment.simplifiedRawPath?.points || item.activitySegment.waypointPath?.waypoints || item.activitySegment.path;
+                    if (path) path.forEach(p => addPoint(p.latE7 !== undefined ? p.latE7 / 1e7 : p.lat, p.lngE7 !== undefined ? p.lngE7 / 1e7 : p.lng, false));
+                }
+            });
+        }
+
+        const finalPoints = [];
+        pointMap.forEach((totalWeight, key) => {
+            const [lat, lng] = key.split(',').map(Number);
+            finalPoints.push({ position: [lng, lat], weight: Math.min(totalWeight, maxCap) });
+        });
+
+        return finalPoints;
+    }
+
+    function getDynamicHeatmapLayer() {
+        const zoom = map ? (map.getZoom() || 10) : 10;
+        const tier = getHeatmapTier(zoom);
+        const conf = heatmapConfigs[tier]; // Pull the exact save state for this zoom
+        const factor = heatmapGridFactors[conf.gridIdx];
+
+        return new deck.HeatmapLayer({
+            id: 'heatmapLayer',
+            data: getGridCappedData(factor, conf.cap),
+            getPosition: d => d.position,
+            getWeight: d => d.weight,
+            radiusPixels: conf.r,
+            intensity: conf.i,
+            threshold: conf.t,
+            colorRange: [
+                [0, 0, 255, 0],
+                [65, 105, 225, 255],
+                [0, 255, 255, 255],
+                [0, 255, 0, 255],
+                [255, 255, 0, 255],
+                [255, 0, 0, 255]
+            ]
+        });
+    }
+
+
+    // Sync the heatmap HTML sliders to match the current zoom tier
+    function syncSlidersToZoom(force = false) {
+        const zoom = map ? (map.getZoom() || 10) : 10;
+        const zoomLabel = document.getElementById('val-zoom');
+        if (zoomLabel) zoomLabel.textContent = zoom.toFixed(1);
+        const newTier = getHeatmapTier(zoom);
+
+        document.querySelectorAll('#heatmap-tuner .debug-only').forEach(row => {
+            row.style.display = isDebugMode ? 'block' : 'none';
+        });
+
+        // Only physically move the sliders if we actually crossed into a new zoom tier
+        if (newTier !== lastSyncedTier || force) {
+            lastSyncedTier = newTier;
+            const conf = heatmapConfigs[newTier];
+
+            // Safely update slider handle positions
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+            setVal('tune-radius', conf.r);
+            setVal('tune-intensity', conf.i);
+            setVal('tune-threshold', conf.t);
+            setVal('tune-grid', conf.gridIdx);
+            setVal('tune-cap', conf.cap);
+
+            // Safely update text labels
+            const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setText('val-radius', conf.r);
+            setText('val-intensity', conf.i);
+            setText('val-threshold', conf.t);
+            setText('val-grid', heatmapGridLabels[conf.gridIdx]);
+            setText('val-cap', conf.cap);
+
+            // Update the title so you know exactly which tier you are editing
+            setText('tuner-title', `🔥 Tuner (${newTier})`);
+        }
+    }
 
 
     // --- Photo GPS Import Logic ---
@@ -8389,6 +8752,34 @@ Departed: ${end}</description>
                 exportToKML()
             });
 
+            // Listen to heatmap slider drags
+            document.addEventListener('input', (e) => {
+                if (!e.target.id || !e.target.id.startsWith('tune-')) return;
+
+                const zoom = map ? (map.getZoom() || 10) : 10;
+                const tier = getHeatmapTier(zoom);
+                const conf = heatmapConfigs[tier]; // Grab the active save state
+
+                // Save the new slider positions directly into the state object!
+                conf.r = parseFloat(document.getElementById('tune-radius').value);
+                conf.i = parseFloat(document.getElementById('tune-intensity').value);
+                conf.t = parseFloat(document.getElementById('tune-threshold').value);
+                conf.gridIdx = parseInt(document.getElementById('tune-grid').value);
+                conf.cap = parseFloat(document.getElementById('tune-cap').value);
+
+                // Update the text labels
+                document.getElementById('val-radius').textContent = conf.r;
+                document.getElementById('val-intensity').textContent = conf.i;
+                document.getElementById('val-threshold').textContent = conf.t;
+                document.getElementById('val-grid').textContent = heatmapGridLabels[conf.gridIdx];
+                document.getElementById('val-cap').textContent = conf.cap;
+
+                // Instantly render the new math
+                if (heatmapLayer && worldMapMode === 'heatmap') {
+                    heatmapLayer.setProps({ layers: [getDynamicHeatmapLayer()] });
+                }
+            });
+
         } catch (error) {
             console.error("Error during initialization:", error);
             const modal = document.getElementById('apiKeyModal');
@@ -8453,8 +8844,8 @@ Departed: ${end}</description>
             mapContainer.classList.add('mobile-hidden');
         }
     });
-</script>
 
+</script>
 
 </body>
 </html>
