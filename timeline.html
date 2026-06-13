@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  June 12, 2026
+        Version:  June 13, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -3054,6 +3054,264 @@
         return null;
     }
 
+    /* ---- begin code for setting initial date */
+    function getRenderableCoordinate(location, allowShortE7 = false, allowDirectLatLng = true) {
+        if (!location) return null;
+
+        const latE7 = location.latitudeE7 ?? (allowShortE7 ? location.latE7 : undefined);
+        const lngE7 = location.longitudeE7 ?? (allowShortE7 ? location.lngE7 : undefined);
+        const lat = latE7 !== undefined ? latE7 / 1e7 : (allowDirectLatLng ? Number(location.lat) : NaN);
+        const lng = lngE7 !== undefined ? lngE7 / 1e7 : (allowDirectLatLng ? Number(location.lng) : NaN);
+        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    }
+
+    function getRenderableVisitCoordinate(item) {
+        if (item.placeVisit) {
+            return getRenderableCoordinate(item.placeVisit.location, false, false);
+        }
+
+        if (item.visit) {
+            const geo = parseGeoString(item.visit.topCandidate?.placeLocation);
+            if (geo) return geo;
+
+            if (item.visit.location?.latitudeE7 && item.visit.location?.longitudeE7) {
+                return {
+                    lat: item.visit.location.latitudeE7 / 1e7,
+                    lng: item.visit.location.longitudeE7 / 1e7
+                };
+            }
+
+            if (item.visit.centerLatE7 && item.visit.centerLngE7) {
+                return {
+                    lat: item.visit.centerLatE7 / 1e7,
+                    lng: item.visit.centerLngE7 / 1e7
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function getPlaceVisitPlaceIdForInitialLoad(item) {
+        return item.placeVisit?.location?.placeId || item.visit?.topCandidate?.placeID;
+    }
+
+    function canRenderPlaceVisitForInitialLoad(item) {
+        if (getRenderableVisitCoordinate(item)) return true;
+
+        const placeId = getPlaceVisitPlaceIdForInitialLoad(item);
+        if (!placeId) return false;
+
+        const cachedPlace = placeDetailsCache[placeId];
+        if (cachedPlace) {
+            return !cachedPlace.isMissing && Boolean(cachedPlace.location);
+        }
+
+        // The initial default should be visible before async Place Details fetches complete.
+        return false;
+    }
+
+    function canTryPlaceDetailsForInitialLoad(item) {
+        if (getRenderableVisitCoordinate(item)) return false;
+
+        const placeId = getPlaceVisitPlaceIdForInitialLoad(item);
+        if (!placeId || apiCallsDisabled) return false;
+
+        const cachedPlace = placeDetailsCache[placeId];
+        return !cachedPlace || !cachedPlace.isMissing;
+    }
+
+    function getRenderableActivityEndpointCoordinate(location) {
+        if (!location) return null;
+
+        const lat = location.latitudeE7 / 1e7 || location.lat;
+        const lng = location.longitudeE7 / 1e7 || location.lng;
+        const numericLat = Number(lat);
+        const numericLng = Number(lng);
+        return Number.isFinite(numericLat) && Number.isFinite(numericLng) ? { lat: numericLat, lng: numericLng } : null;
+    }
+
+    function isRenderableActivitySegment(activitySegment) {
+        if (!activitySegment) return false;
+
+        const path = [];
+        const addPoint = (coordinate, skipDuplicate = false) => {
+            if (!coordinate) return;
+
+            const lastPoint = path[path.length - 1];
+            if (skipDuplicate && lastPoint && lastPoint.lat === coordinate.lat && lastPoint.lng === coordinate.lng) {
+                return;
+            }
+
+            path.push(coordinate);
+        };
+
+        addPoint(getRenderableActivityEndpointCoordinate(activitySegment.startLocation));
+
+        const intermediatePoints = activitySegment.simplifiedRawPath?.points ||
+            activitySegment.timelinePath?.points ||
+            activitySegment.waypointPath?.waypoints ||
+            activitySegment.path;
+        if (intermediatePoints) {
+            intermediatePoints.forEach(point => {
+                const pLat = point.latE7 !== undefined ? point.latE7 / 1e7 : point.lat;
+                const pLng = point.lngE7 !== undefined ? point.lngE7 / 1e7 : point.lng;
+                addPoint(getRenderableCoordinate({ lat: pLat, lng: pLng }));
+            });
+        }
+
+        addPoint(getRenderableActivityEndpointCoordinate(activitySegment.endLocation), true);
+        return path.length >= 2;
+    }
+
+    function getTimelineItemStartTimestamp(item) {
+        return item.placeVisit?.duration?.startTimestamp ||
+            item.activitySegment?.duration?.startTimestamp ||
+            item.startTime;
+    }
+
+    function getTimelineItemEndTimestamp(item) {
+        return item.placeVisit?.duration?.endTimestamp ||
+            item.activitySegment?.duration?.endTimestamp ||
+            item.endTime;
+    }
+
+    function getTimelineDataKey(dateMoment) {
+        return `${dateMoment.year()}_${dateMoment.format('MMMM').toUpperCase()}`;
+    }
+
+    function getInitialLoadCandidateDay(item, dataKey, tz) {
+        const startTimestamp = getTimelineItemStartTimestamp(item);
+        const endTimestamp = getTimelineItemEndTimestamp(item);
+        if (!startTimestamp || !endTimestamp) return null;
+
+        const startMoment = moment.tz(startTimestamp, tz);
+        const endMoment = moment.tz(endTimestamp, tz);
+        if (!startMoment.isValid() || !endMoment.isValid()) return null;
+
+        const firstDay = startMoment.clone().startOf('day');
+        const candidateDay = endMoment.clone().startOf('day');
+        while (candidateDay.isSameOrAfter(firstDay, 'day') && getTimelineDataKey(candidateDay) !== dataKey) {
+            candidateDay.subtract(1, 'day');
+        }
+
+        return candidateDay.isBefore(firstDay, 'day') ? null : candidateDay;
+    }
+
+    function isTimelineItemRenderableForInitialLoad(item) {
+        if (item.placeVisit || item.visit) {
+            return canRenderPlaceVisitForInitialLoad(item);
+        }
+
+        if (item.activitySegment) {
+            return isRenderableActivitySegment(item.activitySegment);
+        }
+
+        return false;
+    }
+
+    function placeHasRenderableLocation(place) {
+        return !place?.isMissing && Boolean(place?.location);
+    }
+
+    async function fetchPlaceDetailsForInitialLoad(placeId) {
+        if (!placeId || apiCallsDisabled || !Place) return false;
+
+        if (pendingPlaceRequests[placeId]) {
+            await pendingPlaceRequests[placeId];
+            return placeHasRenderableLocation(placeDetailsCache[placeId]);
+        }
+
+        try {
+            const place = new Place({ id: placeId });
+            const fields = [
+                'id',               // Basic identifier
+                'displayName',
+                'addressComponents',
+                'formattedAddress',
+                'location',           // geometry field (lat/lng)
+                'svgIconMaskURI',     // icon URL field
+                'iconBackgroundColor',
+                'googleMapsURI',
+                'types'
+            ];
+            await place.fetchFields({ fields: fields });
+            incrementApiCallCount();
+
+            const plainPlace = convertPlaceToPlainObject(place);
+
+            const extracted = extractLocationDetails(plainPlace.addressComponents);
+            plainPlace.extractedCity = extracted.city;
+            plainPlace.extractedState = extracted.state;
+            plainPlace.extractedCountry = extracted.country;
+
+            // Flag this place so we don't try to "update" it later if it returned sparse data
+            plainPlace.fetchAttempted = true;
+
+            placeDetailsCache[placeId] = plainPlace;
+            updateCacheIndicator();
+
+            return placeHasRenderableLocation(plainPlace);
+        } catch (error) {
+            const errorString = error?.message || String(error);
+            console.warn(`Initial Place Details lookup failed for ${placeId}:`, errorString);
+
+            if (errorString.includes("NOT_FOUND") || errorString.includes("no longer valid")) {
+                placeDetailsCache[placeId] = {
+                    id: placeId,
+                    isMissing: true,
+                    fetchAttempted: true
+                };
+                updateCacheIndicator();
+            }
+        }
+
+        return false;
+    }
+
+    async function setDatePickersToLatestRenderableDate() {
+        const tz = getSelectedTimezone();
+        let latestRenderableMoment = null;
+        let latestPlaceDetailsCandidate = null;
+
+        Object.entries(timelineData).forEach(([dataKey, monthData]) => {
+            monthData.timelineObjects?.forEach(item => {
+                const candidateDay = getInitialLoadCandidateDay(item, dataKey, tz);
+                if (!candidateDay) return;
+
+                if (isTimelineItemRenderableForInitialLoad(item)) {
+                    if (!latestRenderableMoment || candidateDay.isAfter(latestRenderableMoment)) {
+                        latestRenderableMoment = candidateDay;
+                    }
+                } else if ((item.placeVisit || item.visit) && canTryPlaceDetailsForInitialLoad(item)) {
+                    if (!latestPlaceDetailsCandidate || candidateDay.isAfter(latestPlaceDetailsCandidate.moment)) {
+                        latestPlaceDetailsCandidate = {
+                            moment: candidateDay,
+                            placeId: getPlaceVisitPlaceIdForInitialLoad(item)
+                        };
+                    }
+                }
+            });
+        });
+
+        if (latestPlaceDetailsCandidate &&
+            (!latestRenderableMoment || latestPlaceDetailsCandidate.moment.isAfter(latestRenderableMoment))) {
+            const resolved = await fetchPlaceDetailsForInitialLoad(latestPlaceDetailsCandidate.placeId);
+            if (resolved) {
+                latestRenderableMoment = latestPlaceDetailsCandidate.moment;
+            }
+        }
+
+        if (!latestRenderableMoment) return false;
+
+        const latestDate = latestRenderableMoment.format('YYYY-MM-DD');
+        document.getElementById('startDatePicker').value = latestDate;
+        document.getElementById('endDatePicker').value = latestDate;
+        return true;
+    }
+    /* ---- end code for setting initial date */
+
+
     // Renders a place visit marker (handles both standard and iOS formats)
     function renderPlaceVisit(itemData, index, sidebarItem = null) {
         let locationName, placeId, lat, lng, startTimestamp, endTimestamp, originalVisitData, semanticTypeStr;
@@ -4069,12 +4327,12 @@
     // --- Data Loading and Processing ---
 
     // Loads and renders timeline data for a single date, applying filters
-    async function loadTimelineDataForDate(selectedDate) {
+    async function loadTimelineDataForDate(selectedDateStr) {
         if (!uiEnabled) return;
 
         const tz = getSelectedTimezone();
-        const startOfDay = moment.tz(selectedDate, tz).startOf('day');
-        const endOfDay = moment.tz(selectedDate, tz).endOf('day');
+        const startOfDay = moment.tz(selectedDateStr, tz).startOf('day');
+        const endOfDay = moment.tz(selectedDateStr, tz).endOf('day');
 
         // Timezone shifts can push an event into an adjacent month's bucket.
         // We must check the previous, current, and next month buckets.
@@ -4089,8 +4347,6 @@
 
         let allRelevantData = [];
         const seenItems = new Set(); // Prevent duplicates
-
-        const selectedDateStr = startOfDay.format('YYYY-MM-DD'); // For data attribute
 
         keysToCheck.forEach(dataKey => {
             if (timelineData[dataKey] && timelineData[dataKey].timelineObjects) {
@@ -4208,7 +4464,7 @@
 
 
     // Loads data for a range of dates, clearing previous data first
-    async function loadTimelineDataInDateRange(startDate, endDate, showRangeWarning = true) {
+    async function loadTimelineDataInDateRange(startDateStr, endDateStr, showRangeWarning = true) {
         if (summaryViewVisible) {
             document.getElementById('summaryView').style.display = 'none';
             document.getElementById('map').classList.remove('hidden');
@@ -4218,9 +4474,11 @@
 
         if (!uiEnabled) return;
 
+        const tz = getSelectedTimezone();
+        const startMoment = moment.tz(startDateStr, tz).startOf('day');
+        const endMoment = moment.tz(endDateStr, tz).endOf('day');
+
         if (showRangeWarning) {
-            const startMoment = moment(startDate);
-            const endMoment = moment(endDate);
             const dayDifference = endMoment.diff(startMoment, 'days');
             if (dayDifference > 62) {
                 console.log("Date range warning check in loadTimelineDataInDateRange, difference:", dayDifference);
@@ -4237,9 +4495,10 @@
         // Create a new promise that wraps the entire loading process
         return new Promise(async (resolve, reject) => {
             const promises = [];
-            let currentDate = moment(startDate).clone();
-            while (currentDate.isSameOrBefore(moment(endDate), 'day')) {
-                promises.push(loadTimelineDataForDate(currentDate.toDate()));
+            let currentDate = startMoment.clone();
+
+            while (currentDate.isSameOrBefore(endMoment, 'day')) {
+                promises.push(loadTimelineDataForDate(currentDate.format('YYYY-MM-DD')));
                 currentDate.add(1, 'days');
             }
 
@@ -4451,7 +4710,7 @@
             lastTimelineItemToHighlight = { placeId: placeId, startTimestamp: visitTimestamp };
 
             // Directly call the loading function and await it
-            await loadTimelineDataInDateRange(new Date(targetDate), new Date(targetDate), false);
+            await loadTimelineDataInDateRange(targetDate, targetDate, false);
         });
 
         return resultItem;
@@ -4496,7 +4755,7 @@
                 document.getElementById('endDatePicker').value = targetDate;
 
                 lastTimelineItemToHighlight = { placeId: span.dataset.placeId, startTimestamp: span.dataset.startTimestamp };
-                await loadTimelineDataInDateRange(new Date(targetDate), new Date(targetDate), false);
+                await loadTimelineDataInDateRange(targetDate, targetDate, false);
             });
         });
 
@@ -4908,11 +5167,12 @@
     }
 
     // Calculates summary specifically for the selected date range
-    function calculateSelectedDatesSummary(startDate, endDate) {
+    function calculateSelectedDatesSummary(startDateStr, endDateStr) {
         const summary = { visits: 0, distanceMeters: 0, distanceByActivity: {}, cities: new Set(), countries: new Set() };
+
         const tz = getSelectedTimezone();
-        const startMoment = moment.tz(startDate, tz).startOf('day');
-        const endMoment = moment.tz(endDate, tz).endOf('day');
+        const startMoment = moment.tz(startDateStr, tz).startOf('day');
+        const endMoment = moment.tz(endDateStr, tz).endOf('day');
 
         let currentDate = startMoment.clone();
         while (currentDate.isSameOrBefore(endMoment, 'day')) {
@@ -4994,14 +5254,15 @@
     }
 
     // Displays the summary for the currently selected date range
-    function displaySelectedDatesSummary(startDate, endDate) {
+    function displaySelectedDatesSummary(startDateStr, endDateStr) {
         const container = document.getElementById('summary-selected-dates');
         container.innerHTML = ''; // Clear previous
 
-        const summaryData = calculateSelectedDatesSummary(startDate, endDate);
+        const summaryData = calculateSelectedDatesSummary(startDateStr, endDateStr);
 
-        const startStr = formatTimestamp(startDate, 'MMM DD, YYYY');
-        const endStr = formatTimestamp(endDate, 'MMM DD, YYYY');
+        const tz = getSelectedTimezone();
+        const startStr = moment.tz(startDateStr, tz).format('MMM DD, YYYY');
+        const endStr = moment.tz(endDateStr, tz).format('MMM DD, YYYY');
         const title = startStr === endStr ? startStr : `${startStr} to ${endStr}`;
 
         const item = document.createElement('div');
@@ -5103,8 +5364,8 @@
 
                 // Update Chart to show the selected year's data
                 const tz = getSelectedTimezone();
-                const yearStart = moment.tz({ year: year }, tz).startOf('year').toDate();
-                const yearEnd = moment.tz({ year: year }, tz).endOf('year').toDate();
+                const yearStart = moment.tz({ year: year }, tz).startOf('year').format('YYYY-MM-DD');
+                const yearEnd = moment.tz({ year: year }, tz).endOf('year').format('YYYY-MM-DD');
                 updateCharts(yearStart, yearEnd);
 
                 // Scroll to the top of the summary view
@@ -5180,10 +5441,10 @@
 
                 // Otherwise, update charts for this month
                 const tz = getSelectedTimezone();
-                const monthStart = moment.tz({ year: year, month: monthIndex }, tz).startOf('month').toDate();
-                const monthEnd = moment.tz({ year: year, month: monthIndex }, tz).endOf('month').toDate();
+                const monthStartStr = moment.tz({ year: year, month: monthIndex }, tz).startOf('month').format('YYYY-MM-DD');
+                const monthEndStr = moment.tz({ year: year, month: monthIndex }, tz).endOf('month').format('YYYY-MM-DD');
 
-                updateCharts(monthStart, monthEnd);
+                updateCharts(monthStartStr, monthEndStr);
 
                 // Highlight the selected month card
                 container.querySelectorAll('.summary-month-item').forEach(el => el.style.borderColor = '#ced4da');
@@ -5271,7 +5532,7 @@
             endDatePicker.value = newEnd.format('YYYY-MM-DD');
 
             // Load data for the new range (without the 62-day warning for arrow navigation)
-            loadTimelineDataInDateRange(newStart.toDate(), newEnd.toDate(), false); // Pass false to skip warning
+            loadTimelineDataInDateRange(newStart.format('YYYY-MM-DD'), newEnd.format('YYYY-MM-DD'), false); // Pass false to skip warning
         };
 
         // Pass the ctrlKey state from the click event
@@ -5310,7 +5571,7 @@
                 }
             }
 
-            loadTimelineDataInDateRange(startDate.toDate(), endDate.toDate(), true); // Pass true or remove for default warning behavior in loadTimelineDataInDateRange if needed
+            loadTimelineDataInDateRange(startDatePicker.value, endDatePicker.value, true); // Pass true or remove for default warning behavior in loadTimelineDataInDateRange if needed
         });
     }
 
@@ -5386,9 +5647,7 @@
                 document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
 
                 // Reload data with current date range and new filters
-                const startDate = new Date(document.getElementById('startDatePicker').value);
-                const endDate = new Date(document.getElementById('endDatePicker').value);
-                loadTimelineDataInDateRange(startDate, endDate, false);
+                loadTimelineDataInDateRange(document.getElementById('startDatePicker').value, document.getElementById('endDatePicker').value, false);
             });
         });
     }
@@ -5408,9 +5667,7 @@
         // Function to reload data based on current filters and date range
         const reloadData = () => {
             if (!uiEnabled) return;
-            const startDate = new Date(document.getElementById('startDatePicker').value);
-            const endDate = new Date(document.getElementById('endDatePicker').value);
-            loadTimelineDataInDateRange(startDate, endDate, false);
+            loadTimelineDataInDateRange(document.getElementById('startDatePicker').value, document.getElementById('endDatePicker').value, false);
         };
 
         // Reload data when "Show Visits" changes
@@ -5432,7 +5689,6 @@
         document.getElementById('fitMapBtn').addEventListener('click', fitMapToData);
     }
 
-    // Initializes the Summary View buttons and interactions
     // Initializes the Summary View buttons and interactions
     function initSummaryView() {
         const summaryBtn = document.getElementById('summaryBtn');
@@ -5463,8 +5719,8 @@
                 renderChartFilters();
 
                 displaySelectedDatesSummary(
-                    new Date(document.getElementById('startDatePicker').value),
-                    new Date(document.getElementById('endDatePicker').value)
+                    document.getElementById('startDatePicker').value,
+                    document.getElementById('endDatePicker').value
                 );
 
                 displayYearSummary();
@@ -5472,7 +5728,10 @@
 
                 // Set the default chart to ALL TIME when summary view is opened
                 if (globalMinDate && globalMaxDate) {
-                    updateCharts(globalMinDate, globalMaxDate);
+                    const tz = getSelectedTimezone();
+                    const minDateStr = moment(globalMinDate).tz(tz).format('YYYY-MM-DD');
+                    const maxDateStr = moment(globalMaxDate).tz(tz).format('YYYY-MM-DD');
+                    updateCharts(minDateStr, maxDateStr);
                 }
 
                 summaryView.style.display = 'block';
@@ -5520,7 +5779,10 @@
 
             // Revert chart to ALL TIME
             if (globalMinDate && globalMaxDate) {
-                updateCharts(globalMinDate, globalMaxDate);
+                const tz = getSelectedTimezone();
+                const minDateStr = moment(globalMinDate).tz(tz).format('YYYY-MM-DD');
+                const maxDateStr = moment(globalMaxDate).tz(tz).format('YYYY-MM-DD');
+                updateCharts(minDateStr, maxDateStr);
             }
         });
     }
@@ -5744,6 +6006,7 @@
             // --- Step 2: Process single Timeline.json if found ---
             if (timelineJsonFile) {
                 console.log("Found Timeline.json, attempting to parse...");
+                const tz = getSelectedTimezone();
                 const file = await timelineJsonFile.getFile();
                 const content = await file.text();
                 const jsonData = JSON.parse(content); // Renamed to jsonData to avoid conflict
@@ -5793,8 +6056,9 @@
                         if (!item || !item.startTime || !item.endTime) return; // Basic check
 
                         const startTimestamp = item.startTime;
-                        const date = new Date(startTimestamp);
-                        if (isNaN(date.getTime())) return;
+                        const dateMoment = moment.tz(startTimestamp, tz);
+                        if (!dateMoment.isValid()) return;
+                        const date = dateMoment.toDate();
 
                         // Update min/max dates
                         if (!globalMinDate || date < globalMinDate) globalMinDate = date;
@@ -5808,7 +6072,7 @@
                             }
                         }
 
-                        const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
+                        const key = `${dateMoment.year()}_${dateMoment.format('MMMM').toUpperCase()}`;
                         if (!processedData[key]) processedData[key] = { timelineObjects: [] };
 
                         let processedItem = { ...item }; // Clone item to avoid modifying original if needed elsewhere
@@ -5915,7 +6179,8 @@
                             }
                         }
 
-                        const key = `${new Date(startTimestamp).getFullYear()}_${moment(new Date(startTimestamp)).format('MMMM').toUpperCase()}`;
+                        const dateMoment = moment.tz(startTimestamp, tz);
+                        const key = `${dateMoment.year()}_${dateMoment.format('MMMM').toUpperCase()}`;
                         if (!processedData[key]) processedData[key] = { timelineObjects: [] };
                         processedData[key].timelineObjects.push(item);
                         if (item.activitySegment?.activityType) activityTypes.add(item.activitySegment.activityType);
@@ -6094,9 +6359,9 @@
                     // Group by year and month
                     processedTimelineObjects.forEach(item => {
                         const timestamp = item.placeVisit ? item.placeVisit.duration.startTimestamp : item.activitySegment.duration.startTimestamp;
-                        const date = new Date(timestamp);
-                        if (isNaN(date.getTime())) return;
-                        const key = `${date.getFullYear()}_${moment(date).format('MMMM').toUpperCase()}`;
+                        const dateMoment = moment.tz(timestamp, tz);
+                        if (!dateMoment.isValid()) return;
+                        const key = `${dateMoment.year()}_${dateMoment.format('MMMM').toUpperCase()}`;
                         if (!processedData[key]) processedData[key] = { timelineObjects: [] };
                         processedData[key].timelineObjects.push(item);
                         if (item.activitySegment) activityTypes.add(item.activitySegment.activityType);
@@ -6196,11 +6461,10 @@
                     populateActivityFilters();
                     displayMinMaxDates();
                     setUIEnabled(true);
+                    await setDatePickersToLatestRenderableDate();
 
                     // Perform initial data load for the default date range
-                    const startDate = new Date(document.getElementById('startDatePicker').value);
-                    const endDate = new Date(document.getElementById('endDatePicker').value);
-                    await loadTimelineDataInDateRange(startDate, endDate); // Await initial load
+                    await loadTimelineDataInDateRange(document.getElementById('startDatePicker').value, document.getElementById('endDatePicker').value);
 
                 } else {
                     // No data was successfully loaded
@@ -6987,8 +7251,8 @@
                 document.getElementById('goBtn').click();
                 if (summaryViewVisible) {
                     displaySelectedDatesSummary(
-                        new Date(document.getElementById('startDatePicker').value),
-                        new Date(document.getElementById('endDatePicker').value)
+                        document.getElementById('startDatePicker').value,
+                        document.getElementById('endDatePicker').value
                     );
                     displayYearSummary();
                     if (selectedSummaryYear !== null) {
@@ -7524,16 +7788,16 @@ Departed: ${end}</description>
     }
 
     // Gathers data and draws the charts
-    function updateCharts(startDate, endDate, autoUncheck = true) {
-        currentChartStartDate = startDate;
-        currentChartEndDate = endDate;
+    function updateCharts(startDateStr, endDateStr, autoUncheck = true) {
+        currentChartStartDate = startDateStr;
+        currentChartEndDate = endDateStr;
 
         const chartContainer = document.getElementById('summary-charts-container');
         if (chartContainer) chartContainer.style.display = 'block';
 
         const tz = getSelectedTimezone();
-        const startMoment = moment.tz(startDate, tz).startOf('day');
-        const endMoment = moment.tz(endDate, tz).endOf('day');
+        const startMoment = moment.tz(startDateStr, tz).startOf('day');
+        const endMoment = moment.tz(endDateStr, tz).endOf('day');
         const dayDiff = endMoment.diff(startMoment, 'days');
 
         const titleEl = document.getElementById('chart-section-title');
