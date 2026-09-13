@@ -31,10 +31,17 @@
     <script src="https://unpkg.com/tz-lookup@6.1.25/tz.js"></script>
 
     <style>
+        @font-face {
+            font-family: "Twemoji Country Flags";
+            src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.8/dist/TwemojiCountryFlags.woff2") format("woff2");
+            unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E007F;
+            font-display: swap;
+        }
+
         body, html {
             height: 100%;
             margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: "Twemoji Country Flags", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: #f8f9fa;
             overflow: hidden; /* Prevent body scroll */
         }
@@ -1386,11 +1393,22 @@
             overflow-y: auto;
         }
         .world-list li {
-            padding: 4px 0;
+            padding: 5px 0;
             border-bottom: 1px dashed #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .world-list li:last-child {
             border-bottom: none;
+        }
+        .world-flag-icon {
+            font-family: "Twemoji Country Flags", "Segoe UI Emoji", system-ui, sans-serif;
+            font-size: 17px;
+            line-height: 1;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
         }
 
         /* For API Key Modal */
@@ -1779,9 +1797,23 @@
         .trip-card-flags {
             display: flex;
             align-items: center;
-            gap: 4px;
-            font-size: 16px;
+            gap: 5px;
+            font-size: 19px;
             flex-shrink: 0;
+            font-family: "Twemoji Country Flags", "Segoe UI Emoji", system-ui, sans-serif;
+            line-height: 1;
+        }
+        .trip-flag-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Twemoji Country Flags", "Segoe UI Emoji", system-ui, sans-serif;
+            cursor: default;
+            user-select: none;
+            transition: transform 0.15s ease;
+        }
+        .trip-flag-item:hover {
+            transform: scale(1.15);
         }
         .trip-chevron {
             color: #94a3b8;
@@ -9304,8 +9336,17 @@ Departed: ${end}</description>
 
             // Marker Click Listener (Map Pin -> Sidebar List)
             marker.addListener('click', () => {
+                const parts = cityKey.split(',').map(s => s.trim());
+                const countryName = parts.length > 1 ? parts[parts.length - 1] : '';
+                const flagEmoji = countryName ? getCountryFlagEmoji(countryName) : '';
+
                 // Show InfoWindow
-                window.worldInfoWindow.setContent(`<div style="padding: 3px 6px; font-family: sans-serif; font-size: 14px; font-weight: 500; color: #333;">${cityKey}</div>`);
+                window.worldInfoWindow.setContent(`
+                    <div style="padding: 4px 6px; font-family: 'Twemoji Country Flags', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                        ${flagEmoji ? `<span style="font-size: 18px; line-height: 1;">${flagEmoji}</span>` : ''}
+                        <span>${escapeHtml(cityKey)}</span>
+                    </div>
+                `);
                 window.worldInfoWindow.open({ map: map, anchor: marker });
 
                 // Find in list, highlight, and scroll into view
@@ -9337,10 +9378,38 @@ Departed: ${end}</description>
 
             arr.forEach(itemName => {
                 const li = document.createElement('li');
-                li.textContent = itemName;
                 li.dataset.itemName = itemName;
                 li.style.cursor = 'pointer';
                 li.style.transition = 'color 0.2s, font-weight 0.2s';
+
+                let flagEmoji = '';
+                let displayName = itemName;
+
+                if (listId === 'list-countries') {
+                    flagEmoji = getCountryFlagEmoji(itemName);
+                    displayName = formatCountryName(itemName) || itemName;
+                } else if (isCity) {
+                    const parts = itemName.split(',').map(s => s.trim());
+                    const countryName = parts.length > 1 ? parts[parts.length - 1] : '';
+                    if (countryName) flagEmoji = getCountryFlagEmoji(countryName);
+                } else if (listId === 'list-states') {
+                    flagEmoji = getCountryFlagEmoji('United States');
+                }
+
+                if (flagEmoji) {
+                    const flagSpan = document.createElement('span');
+                    flagSpan.className = 'world-flag-icon';
+                    flagSpan.textContent = flagEmoji;
+                    flagSpan.style.fontSize = listId === 'list-countries' ? '18px' : '15px';
+                    li.appendChild(flagSpan);
+                }
+
+                const labelSpan = document.createElement('span');
+                labelSpan.textContent = displayName;
+                labelSpan.style.overflow = 'hidden';
+                labelSpan.style.textOverflow = 'ellipsis';
+                labelSpan.style.whiteSpace = 'nowrap';
+                li.appendChild(labelSpan);
 
                 // Hover Effects
                 li.addEventListener('mouseover', () => { if(li.style.fontWeight !== 'bold') li.style.color = '#007bff'; });
@@ -10881,10 +10950,21 @@ Departed: ${end}</description>
                 }
             }
 
-            const flags = (cleanRouteCountries.length > 0 ? cleanRouteCountries : (routeCountries.length > 0 ? routeCountries : [homeCountry]))
-                .map(c => getCountryFlagEmoji(c))
-                .filter(Boolean);
-            const uniqueFlags = [...new Set(flags)];
+            const tripFlags = (cleanRouteCountries.length > 0 ? cleanRouteCountries : (routeCountries.length > 0 ? routeCountries : [homeCountry]))
+                .map(c => ({
+                    country: formatCountryName(c) || c,
+                    emoji: getCountryFlagEmoji(c)
+                }))
+                .filter(item => Boolean(item.emoji));
+
+            const uniqueFlags = [];
+            const seenEmojis = new Set();
+            for (const f of tripFlags) {
+                if (!seenEmojis.has(f.emoji)) {
+                    seenEmojis.add(f.emoji);
+                    uniqueFlags.push(f);
+                }
+            }
 
             // Duration tags aligned with nights brackets
             let durationTag = "1–2 nights";
@@ -11014,7 +11094,11 @@ Departed: ${end}</description>
             `;
 
             for (const trip of byYear[year]) {
-                const flagsHtml = trip.flags.map(f => `<span>${f}</span>`).join(' ');
+                const flagsHtml = trip.flags.map(f => {
+                    const emoji = typeof f === 'object' ? f.emoji : f;
+                    const name = typeof f === 'object' ? f.country : '';
+                    return `<span class="trip-flag-item"${name ? ` title="${escapeHtml(name)}"` : ''}>${emoji}</span>`;
+                }).join(' ');
                 const routeHtml = trip.routeCities.length > 0
                     ? `<div class="trip-card-route">${trip.routeCities.join('<span class="arrow">→</span>')}</div>`
                     : '';
