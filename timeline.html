@@ -28,6 +28,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <script src="https://unpkg.com/tz-lookup@6.1.25/tz.js"></script>
 
     <style>
         body, html {
@@ -1523,6 +1524,18 @@
                 <div id="go-container">
                     <button id="goBtn" class="control-btn" disabled>GO</button>
                 </div>
+                <div id="timezoneMismatchBanner" style="display: none; margin: 6px 12px; padding: 8px 10px; background-color: #e8f4fd; border: 1px solid #b8daff; border-radius: 6px; box-sizing: border-box; flex-shrink: 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px;">
+                        <div style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #004085; font-weight: 500; line-height: 1.3;">
+                            <span>🌐</span>
+                            <span>Visits in a different timezone</span>
+                        </div>
+                        <button id="dismissTzBannerBtn" style="background: none; border: none; color: #6c757d; cursor: pointer; font-size: 14px; padding: 0 3px; line-height: 1;" title="Dismiss">✕</button>
+                    </div>
+                    <button id="switchTimezoneBtn" class="control-btn" style="width: 100%; padding: 6px 8px; font-size: 12px; font-weight: 600; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; text-align: center;">
+                        Switch Timezone
+                    </button>
+                </div>
                 <div id="main-content-area">
                     <div id="timeline"></div>
 
@@ -2756,6 +2769,111 @@
 
 
     // --- Timezone & Distance Helpers ---
+    let dismissedTimezoneMismatchForDate = null;
+
+    /**
+     * Resolves IANA timezone from GPS coordinates using tz-lookup polygon quadtree.
+     */
+    function getTimezoneForVisit(lat, lng, placeId) {
+        if (placeId && placeDetailsCache[placeId]?.timeZoneId) {
+            return placeDetailsCache[placeId].timeZoneId;
+        }
+        try {
+            if (typeof tzlookup === 'function') {
+                return tzlookup(lat, lng);
+            }
+        } catch (e) {
+            console.warn('tzlookup failed for coords:', lat, lng, e);
+        }
+        return 'UTC';
+    }
+
+    function hideTimezoneMismatchBanner() {
+        const banner = document.getElementById('timezoneMismatchBanner');
+        if (banner) banner.style.display = 'none';
+    }
+
+    async function applySuggestedTimezone(newTz) {
+        displayTimezone = newTz;
+        const tzSelect = document.getElementById('timezone-select');
+        if (tzSelect) {
+            if (!Array.from(tzSelect.options).some(o => o.value === newTz)) {
+                const opt = document.createElement('option');
+                opt.value = newTz;
+                opt.textContent = newTz;
+                tzSelect.appendChild(opt);
+            }
+            tzSelect.value = newTz;
+        }
+        await saveSetting('displayTimezone', newTz);
+        hideTimezoneMismatchBanner();
+        if (uiEnabled) {
+            displayMinMaxDates();
+            document.getElementById('goBtn').click();
+        }
+    }
+
+    function checkTimelineTimezoneForCurrentView() {
+        const banner = document.getElementById('timezoneMismatchBanner');
+        if (!banner) return;
+
+        const dateRangeKey = document.getElementById('startDatePicker').value + '_' + document.getElementById('endDatePicker').value;
+        if (dismissedTimezoneMismatchForDate === dateRangeKey) {
+            banner.style.display = 'none';
+            return;
+        }
+
+        const items = document.querySelectorAll('#timeline .timeline-item');
+        if (!items || items.length === 0) {
+            banner.style.display = 'none';
+            return;
+        }
+
+        const tzCounts = {};
+        items.forEach(item => {
+            const rawLat = item.dataset.rawLat;
+            const rawLng = item.dataset.rawLng;
+            const placeId = item.dataset.placeId || null;
+
+            if (rawLat !== undefined && rawLng !== undefined && rawLat !== '' && rawLng !== '') {
+                const lat = parseFloat(rawLat);
+                const lng = parseFloat(rawLng);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const tz = getTimezoneForVisit(lat, lng, placeId);
+                    if (tz) tzCounts[tz] = (tzCounts[tz] || 0) + 1;
+                }
+            }
+        });
+
+        let majorityTz = null;
+        let maxCount = 0;
+        for (const [tz, count] of Object.entries(tzCounts)) {
+            if (count > maxCount) {
+                maxCount = count;
+                majorityTz = tz;
+            }
+        }
+
+        const currentTz = getSelectedTimezone();
+        if (!majorityTz || majorityTz === currentTz) {
+            banner.style.display = 'none';
+            return;
+        }
+
+        // Display banner
+        const switchBtn = document.getElementById('switchTimezoneBtn');
+        switchBtn.textContent = `Switch to ${majorityTz}`;
+        switchBtn.onclick = () => applySuggestedTimezone(majorityTz);
+
+        const dismissBtn = document.getElementById('dismissTzBannerBtn');
+        dismissBtn.onclick = () => {
+            dismissedTimezoneMismatchForDate = dateRangeKey;
+            banner.style.display = 'none';
+        };
+
+        banner.style.display = 'block';
+    }
+
     function getSelectedTimezone() {
         return displayTimezone === 'default' ? moment.tz.guess() : displayTimezone;
     }
@@ -2921,6 +3039,11 @@
                 timelineItem.dataset.placeId = placeId;
             }
             timelineItem.dataset.startTimestamp = startTimestamp;
+            const coord = getRenderableVisitCoordinate(item);
+            if (coord) {
+                timelineItem.dataset.rawLat = coord.lat;
+                timelineItem.dataset.rawLng = coord.lng;
+            }
 
             const isFetched = placeId ? !!placeDetailsCache[placeId] : false;
             const placeStyle = getPlaceStyle(placeTypesForStyle, isFetched, semanticType);
@@ -2930,7 +3053,7 @@
                 <span class="timeline-icon-container" style="border-color: ${placeStyle.color};">${placeStyle.icon}</span>
                 <div class="timeline-item-details">
                     <strong class="nametag">${locationName}</strong><br>
-                    <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
+                    <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'h:mm A')} - ${formatTimestamp(endTimestamp, 'h:mm A')}</span>
                 </div>
             `;
             timelineItem.style.setProperty('--activity-color', placeStyle.color);
@@ -2939,6 +3062,11 @@
             const activitySegment = item.activitySegment;
             startTimestamp = activitySegment.duration.startTimestamp;
             endTimestamp = activitySegment.duration.endTimestamp;
+            const actCoord = getRenderableCoordinate(activitySegment.startLocation);
+            if (actCoord) {
+                timelineItem.dataset.rawLat = actCoord.lat;
+                timelineItem.dataset.rawLng = actCoord.lng;
+            }
             const distanceMeters = activitySegment.distance || (activitySegment.simplifiedRawPath && activitySegment.simplifiedRawPath.distanceMeters) || (activitySegment.waypointPath && activitySegment.waypointPath.distanceMeters) || 0;
             const activityType = activitySegment.activityType || (activitySegment.activities && activitySegment.activities[0]?.activityType) || (activitySegment.waypointPath && activitySegment.waypointPath.travelMode) || 'UNKNOWN';
             const formattedType = formatActivityType(activityType);
@@ -2947,7 +3075,7 @@
                 <span class="timeline-icon-container" style="border-color: ${activityColor};">${getActivityIcon(activityType)}</span>
                 <div class="timeline-item-details">
                     <strong>${formattedType}</strong><br>
-                    <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}</span>
+                    <span class="timeline-item-time">${formatTimestamp(startTimestamp, 'h:mm A')} - ${formatTimestamp(endTimestamp, 'h:mm A')}</span>
                     <span class="distance">Distance: ${formatDistance(distanceMeters)}</span>
                 </div>
             `;
@@ -3024,6 +3152,7 @@
     // Clears the timeline sidebar
     function clearTimeline() {
         document.getElementById('timeline').innerHTML = '';
+        hideTimezoneMismatchBanner();
     }
 
     // --- Map Rendering ---
@@ -3462,7 +3591,7 @@
                                <div class="photo-container" data-place-id="basic-${index}">
                                      <div class="photo-placeholder">No photo available</div>
                                </div>
-                               <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY hh:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "hh:mm A")}</p>
+                               <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY h:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "h:mm A")}</p>
                          <p style="margin-top: 5px; font-size: 0.85em;"><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">View on Google Maps</a></p>
                           </div>`;
 
@@ -3796,7 +3925,7 @@
                 <div class="photo-container" data-place-id="${placeId}">
                     ${photoHtml}
                 </div>
-                <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY hh:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "hh:mm A")}</p>
+                <p style="margin: 5px 0; font-size: 0.85em;">${formatTimestamp(placeVisit.duration.startTimestamp, "MMM DD, YYYY h:mm A")} - ${formatTimestamp(placeVisit.duration.endTimestamp, "h:mm A")}</p>
                 <p style="margin-top: 5px; font-size: 0.85em;">${mapsLink}</p>
             </div>`;
 
@@ -4509,6 +4638,7 @@
                     findAndHighlightTimelineItem(lastTimelineItemToHighlight.placeId, lastTimelineItemToHighlight.startTimestamp);
                     lastTimelineItemToHighlight = null; // Clear it after use
                 }
+                checkTimelineTimezoneForCurrentView();
                 resolve(); // Resolve the main promise
             } catch (error) {
                 console.error("Error loading data for date range:", error);
@@ -4695,7 +4825,7 @@
                 <strong>${locationName}</strong>
                 <div class="timeline-item-time">${visitDate.format('dddd, MMMM DD, YYYY')}</div>
                 <div class="timeline-item-time" style="font-size: 11px;">
-                    ${formatTimestamp(visitTimestamp, 'hh:mm A')} - ${formatTimestamp(endTimestamp, 'hh:mm A')}
+                    ${formatTimestamp(visitTimestamp, 'h:mm A')} - ${formatTimestamp(endTimestamp, 'h:mm A')}
                 </div>
             </div>
         `;
@@ -5049,7 +5179,7 @@
             // Create a list of times for that day
             const timesString = visitsOnDate
                 .sort((a,b) => new Date(a.date) - new Date(b.date)) // Sort times chronologically
-                .map(v => moment(v.date).tz(tz).format('hh:mm A, dddd'))
+                .map(v => moment(v.date).tz(tz).format('h:mm A, dddd'))
                 .join(', ');
 
             resultItem.innerHTML = `
