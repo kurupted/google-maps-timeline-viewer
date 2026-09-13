@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  June 13, 2026
+        Version:  September 13, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -71,7 +71,7 @@
             display: flex; /* This will contain our single visible tab */
         }
 
-        #dateView, #searchView, #settingsView, #areaView {
+        #dateView, #searchView, #settingsView, #areaView, #tripsView, #placesLivedView {
             width: 100%;
             height: 100%;
             display: none; /* All tabs hidden by default */
@@ -1459,6 +1459,539 @@
         #apiKeyModal a {
             color: #007bff;
         }
+
+        /* --- Trips (Journeys) View Styles --- */
+        #tripsView {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f9fa;
+            color: #1e293b;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .trips-header-container {
+            padding: 16px 16px 12px 16px;
+            background-color: #ffffff;
+            flex-shrink: 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .trips-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .trips-main-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: #1e293b;
+            margin: 0;
+        }
+        .trips-search-bar {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .trips-search-bar input {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            padding: 8px 14px 8px 36px;
+            color: #1e293b;
+            font-size: 13px;
+            box-sizing: border-box;
+            outline: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .trips-search-bar input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+        .trips-search-bar .search-icon {
+            position: absolute;
+            left: 12px;
+            font-size: 13px;
+            color: #64748b;
+            pointer-events: none;
+        }
+        .trips-search-bar .clear-icon {
+            position: absolute;
+            right: 12px;
+            font-size: 14px;
+            color: #94a3b8;
+            cursor: pointer;
+            display: none;
+        }
+        .trips-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .trip-filter-select {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+            outline: none;
+            cursor: pointer;
+            flex: 1;
+            min-width: 0;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .trip-dropdown-container {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+        .trip-dropdown-btn {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+            outline: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            white-space: nowrap;
+            height: 32px;
+        }
+        .trip-dropdown-btn:focus, .trip-dropdown-btn.open {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+        }
+        #tripDurationDropdownLabel {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .trip-dropdown-btn .dropdown-chevron {
+            font-size: 10px;
+            color: #64748b;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .trip-dropdown-btn.open .dropdown-chevron {
+            transform: rotate(180deg);
+        }
+        .trip-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 165px;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            z-index: 50;
+            display: none;
+        }
+        .trip-dropdown-menu.show {
+            display: block;
+        }
+        .dropdown-menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 6px 8px 6px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .dropdown-quick-links {
+            display: flex;
+            gap: 8px;
+        }
+        .dropdown-quick-links button {
+            background: none;
+            border: none;
+            color: #007bff;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 0;
+            font-weight: 600;
+        }
+        .dropdown-quick-links button:hover {
+            text-decoration: underline;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #1e293b;
+            user-select: none;
+            transition: background-color 0.15s;
+        }
+        .dropdown-item:hover {
+            background-color: #f1f5f9;
+        }
+        .dropdown-item input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+            accent-color: #007bff;
+            width: 15px;
+            height: 15px;
+        }
+        .dropdown-item .subtext {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-left: 2px;
+        }
+        .trip-filter-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+        }
+        .trip-filter-toggle {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 14px;
+            line-height: 1;
+            color: #475569;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 32px;
+            box-sizing: border-box;
+        }
+        .trip-filter-toggle:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        .trip-filter-toggle.active {
+            background-color: #7e22ce;
+            color: #ffffff;
+            border-color: #7e22ce;
+            box-shadow: 0 1px 3px rgba(126, 34, 206, 0.3);
+        }
+        #tripsListContainer {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 12px 16px 40px 16px;
+        }
+        .trip-year-group {
+            margin-bottom: 22px;
+        }
+        .trip-year-group {
+            margin-bottom: 26px;
+        }
+        .trip-year-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f8f9fa;
+            padding: 12px 0 10px 0;
+            margin: 18px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 0 #f1f5f9;
+        }
+        .trip-year-header .year-badge {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            padding: 5px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+            flex-shrink: 0;
+        }
+        .trip-year-header .year-divider-line {
+            flex-grow: 1;
+            height: 2px;
+            background: linear-gradient(90deg, #cbd5e1, #e2e8f0);
+            border-radius: 2px;
+        }
+        .trip-year-header .year-count-badge {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            background: #e2e8f0;
+            padding: 3px 10px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        .trip-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s, background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+            position: relative;
+        }
+        .trip-card:hover {
+            border-color: #007bff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.12);
+        }
+        .trip-card.active-trip {
+            border-color: #007bff;
+            background-color: #f0f7ff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        .trip-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .trip-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.35;
+            flex-grow: 1;
+        }
+        .trip-card-flags {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .trip-chevron {
+            color: #94a3b8;
+            font-size: 16px;
+            margin-left: 2px;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .trip-card:hover .trip-chevron {
+            color: #007bff;
+            transform: translateX(2px);
+        }
+        .trip-card-dates {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+        .trip-card-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .trip-badge {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 8px;
+            letter-spacing: 0.2px;
+        }
+        .trip-badge.badge-duration {
+            background-color: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+        .trip-badge.badge-nights {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border-color: #bae6fd;
+            font-weight: 600;
+        }
+        .trip-badge.badge-flight {
+            background-color: #f3e8ff;
+            color: #7e22ce;
+            border-color: #e9d5ff;
+            font-weight: 600;
+        }
+        .trip-card-route {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 10px;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .trip-card-route .arrow {
+            color: #94a3b8;
+            margin: 0 4px;
+            font-weight: bold;
+        }
+        .trip-card-actions {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .trip-action-btn {
+            background-color: #f8f9fa;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .trip-action-btn:hover {
+            background-color: #007bff;
+            color: #ffffff;
+            border-color: #007bff;
+        }
+
+        /* --- Places Lived View Styles --- */
+        #placesLivedView {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f9fa;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .places-lived-header {
+            padding: 16px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+        .places-lived-header h4 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .places-lived-header p {
+            margin: 0;
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        #placesLivedListContainer {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .lived-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .lived-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 14px rgba(0,123,255,0.1);
+        }
+        .lived-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .lived-card-title-col {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .lived-card-city {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .lived-card-nights-badge {
+            font-size: 12px;
+            font-weight: 600;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            padding: 4px 9px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .lived-card-address {
+            font-size: 13px;
+            color: #475569;
+            margin-top: 4px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .lived-card-dates {
+            font-size: 13px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            margin-bottom: 14px;
+            font-weight: 500;
+        }
+        .lived-card-actions {
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 12px;
+        }
+        .lived-action-btn {
+            background-color: #f8f9fa;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .lived-action-btn:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        .lived-action-btn.btn-danger {
+            color: #dc2626;
+            background-color: #fef2f2;
+            border-color: #fecaca;
+        }
+        .lived-action-btn.btn-danger:hover {
+            background-color: #fee2e2;
+        }
     </style>
 </head>
 <body>
@@ -1488,6 +2021,8 @@
             </div>
             <div id="controls-right">
                 <button id="calendarBtn" class="icon-btn" title="Date View" disabled>📅</button>
+                <button id="tripsBtn" class="icon-btn" title="Trips View" disabled>🧳</button>
+                <button id="placesLivedBtn" class="icon-btn" title="Places Lived" disabled>🏠</button>
                 <button id="searchBtn" class="icon-btn" title="Search" disabled>🔍</button>
                 <button id="areaBtn" class="icon-btn" title="Area View" disabled>⬚</button>
                 <button id="settingsBtn" class="icon-btn" title="Settings" disabled>⚙️</button>
@@ -1591,6 +2126,74 @@
                                 <ul id="list-cities" class="world-list"></ul>
                             </details>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tripsView">
+                <div class="trips-header-container">
+                    <div class="trips-title-row">
+                        <h3 class="trips-main-title">Journeys</h3>
+                        <span id="tripsCountBadge" style="font-size: 12px; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 3px 9px; border-radius: 12px; border: 1px solid #bae6fd;">0 trips</span>
+                    </div>
+                    <div class="trips-search-bar">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="tripSearchInput" placeholder="Search journeys by city, country, or year..." autocomplete="off">
+                        <span id="clearTripSearchBtn" class="clear-icon">&times;</span>
+                    </div>
+                    <div class="trips-filter-row">
+                        <select id="tripYearFilter" class="trip-filter-select" title="Filter by Year">
+                            <option value="all">All Years</option>
+                        </select>
+                        <div class="trip-dropdown-container" id="tripDurationDropdownContainer">
+                            <button id="tripDurationDropdownBtn" class="trip-dropdown-btn" type="button" title="Filter by Duration">
+                                <span id="tripDurationDropdownLabel">All Durations</span>
+                                <span class="dropdown-chevron">▾</span>
+                            </button>
+                            <div id="tripDurationMenu" class="trip-dropdown-menu">
+                                <div class="dropdown-menu-header">
+                                    <span>Nights</span>
+                                    <div class="dropdown-quick-links">
+                                        <button type="button" id="durationSelectAllBtn">All</button>
+                                        <button type="button" id="durationClearAllBtn">Clear</button>
+                                    </div>
+                                </div>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="duration-checkbox" value="1-2" checked>
+                                    <span>1–2 nights</span>
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="duration-checkbox" value="3-7" checked>
+                                    <span>3–7 nights</span>
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="duration-checkbox" value="8-14" checked>
+                                    <span>8–14 nights</span>
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="duration-checkbox" value="15+" checked>
+                                    <span>15+ nights</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button id="tripFlightToggleBtn" class="trip-filter-toggle" type="button" title="Flights only">✈️</button>
+                    </div>
+                </div>
+                <div id="tripsListContainer">
+                    <div id="tripsLoadingMessage" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 13px;">
+                        Loading your journeys...
+                    </div>
+                </div>
+            </div>
+
+            <div id="placesLivedView">
+                <div class="places-lived-header">
+                    <h4><span>🏠</span> Places Lived</h4>
+                    <p>Residences identified from your overnight stays over extended periods.</p>
+                </div>
+                <div id="placesLivedListContainer">
+                    <div id="placesLivedLoadingMessage" style="text-align: center; color: #6c757d; padding: 40px 10px; font-size: 13px;">
+                        Detecting places lived from timeline data...
                     </div>
                 </div>
             </div>
@@ -2697,23 +3300,44 @@
         const areaView = document.getElementById('areaView');
         const searchView = document.getElementById('searchView');
         const settingsView = document.getElementById('settingsView');
+        const tripsView = document.getElementById('tripsView');
+        const placesLivedView = document.getElementById('placesLivedView');
+
         // Tab buttons
         const calendarBtn = document.getElementById('calendarBtn');
         const areaBtn = document.getElementById('areaBtn');
         const searchBtn = document.getElementById('searchBtn');
         const settingsBtn = document.getElementById('settingsBtn');
+        const tripsBtn = document.getElementById('tripsBtn');
+        const placesLivedBtn = document.getElementById('placesLivedBtn');
 
         // Hide all tab content
         dateView.style.display = 'none';
         areaView.style.display = 'none';
         searchView.style.display = 'none';
         settingsView.style.display = 'none';
+        if (tripsView) tripsView.style.display = 'none';
+        if (placesLivedView) placesLivedView.style.display = 'none';
 
         // Deactivate all tab buttons
         calendarBtn.classList.remove('active');
         areaBtn.classList.remove('active');
         searchBtn.classList.remove('active');
         settingsBtn.classList.remove('active');
+        if (tripsBtn) tripsBtn.classList.remove('active');
+        if (placesLivedBtn) placesLivedBtn.classList.remove('active');
+
+        // Clear any active trip map overlay if switching away from trips
+        if (tabName !== 'trips') {
+            if (typeof clearTripMap === 'function') clearTripMap();
+            else if (typeof window.clearTripMap === 'function') window.clearTripMap();
+        }
+
+        // Clear any active home map marker if switching away from placesLived
+        if (tabName !== 'placesLived') {
+            if (typeof clearHomeMarker === 'function') clearHomeMarker();
+            else if (typeof window.clearHomeMarker === 'function') window.clearHomeMarker();
+        }
 
         // Show the selected tab and activate its button
         if (tabName === 'date') {
@@ -2733,6 +3357,26 @@
 
             // When switching to date view, re-fit the map to that day's data
             fitMapToData();
+        } else if (tabName === 'trips') {
+            if (worldViewVisible) {
+                worldViewVisible = false;
+                document.getElementById('worldSidebarContent').style.display = 'none';
+                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+                updateViewToggleButtons();
+            }
+            if (tripsView) tripsView.style.display = 'flex';
+            if (tripsBtn) tripsBtn.classList.add('active');
+            if (typeof renderTripsView === 'function') renderTripsView();
+        } else if (tabName === 'placesLived') {
+            if (worldViewVisible) {
+                worldViewVisible = false;
+                document.getElementById('worldSidebarContent').style.display = 'none';
+                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+                updateViewToggleButtons();
+            }
+            if (placesLivedView) placesLivedView.style.display = 'flex';
+            if (placesLivedBtn) placesLivedBtn.classList.add('active');
+            if (typeof renderPlacesLivedView === 'function') renderPlacesLivedView();
         } else if (tabName === 'area') {
             // Cleanly exit world view if active
             if (worldViewVisible) {
@@ -3159,6 +3803,10 @@
 
     // Clears all markers, polylines, and info windows from the map
     function clearMap() {
+        if (typeof clearTripMap === 'function') clearTripMap();
+        else if (typeof window.clearTripMap === 'function') window.clearTripMap();
+        if (typeof clearHomeMarker === 'function') clearHomeMarker();
+        else if (typeof window.clearHomeMarker === 'function') window.clearHomeMarker();
         markers.forEach(marker => marker.map = null);
         markers = [];
         polylines.forEach(polyline => polyline.setMap(null));
@@ -4306,6 +4954,105 @@
         }
     }
 
+    // --- Location & City Normalization Helpers ---
+    function isAirportLocation(name = '', address = '', types = []) {
+        const text = ((name || '') + ' ' + (address || '')).toLowerCase();
+        if (Array.isArray(types) && types.includes('airport')) return true;
+        if (/\b(airport|aeroport|aeropuerto|flughafen|aeroporto|airfield|heliport)\b/i.test(text)) return true;
+        if (text.includes('international airport') || text.includes('regional airport') || text.includes('intercontinental airport')) return true;
+        if (text.includes('空港') || text.includes('機場') || text.includes('机场') || text.includes('ท่าอากาศยาน')) return true;
+        return false;
+    }
+
+    function normalizeCityName(city, state, country, rawAddress = "") {
+        if (!city || city === "Unknown City") return city;
+        let c = city.trim();
+        const addr = (rawAddress || "").toLowerCase();
+        const s = (state || "").toLowerCase();
+        const cntry = (country || "").toLowerCase();
+
+        // 1. Thailand / Bangkok
+        if (c.includes("Krung Thep") || c.includes("กรุงเทพ") || addr.includes("กรุงเทพมหานคร") || addr.includes("bangkok") || s.includes("bangkok")) {
+            return "Bangkok";
+        }
+        if (c.includes("Bang Phli") || c.includes("บางพลี")) {
+            return "Bangkok";
+        }
+        if (c.includes("Phuket") || addr.includes("ภูเก็ต")) return "Phuket";
+        if (c.includes("Chiang Mai") || addr.includes("เชียงใหม่")) return "Chiang Mai";
+
+        // 2. Tokyo & Japan Special Wards
+        const tokyoWards = [
+            "Shinjuku", "Shibuya", "Minato", "Chiyoda", "Chuo", "Taito", "Sumida", "Koto",
+            "Shinagawa", "Meguro", "Ota", "Setagaya", "Nakano", "Suginami", "Toshima", "Kita",
+            "Arakawa", "Itabashi", "Nerima", "Adachi", "Katsushika", "Edogawa", "Bunkyo"
+        ];
+        if (cntry.includes("japan") || addr.includes("日本") || addr.includes("tokyo") || s.includes("tokyo") || addr.includes("東京都")) {
+            for (const ward of tokyoWards) {
+                if (c.toLowerCase().startsWith(ward.toLowerCase())) {
+                    return "Tokyo";
+                }
+            }
+            if (c.includes("東京都") || c === "Tokyo-to") return "Tokyo";
+        }
+
+        // 3. Vietnam - Ho Chi Minh City districts
+        if (cntry.includes("vietnam") || addr.includes("việt nam") || addr.includes("hồ chí minh") || s.includes("hồ chí minh")) {
+            if (/^quận\s*\d+/i.test(c) || /^district\s*\d+/i.test(c) || c.includes("Bình Thạnh") || c.includes("Tân Bình")) {
+                return "Ho Chi Minh City";
+            }
+        }
+
+        // 4. Taiwan - Taiwanese counties and cities
+        const taiwanCities = [
+            { key: "台北", name: "Taipei" }, { key: "臺北", name: "Taipei" },
+            { key: "新北", name: "New Taipei" },
+            { key: "桃園", name: "Taoyuan" },
+            { key: "新竹", name: "Hsinchu" },
+            { key: "苗栗", name: "Miaoli" },
+            { key: "台中", name: "Taichung" }, { key: "臺中", name: "Taichung" },
+            { key: "彰化", name: "Changhua" },
+            { key: "南投", name: "Nantou" },
+            { key: "雲林", name: "Yunlin" },
+            { key: "嘉義", name: "Chiayi" },
+            { key: "台南", name: "Tainan" }, { key: "臺南", name: "Tainan" },
+            { key: "高雄", name: "Kaohsiung" },
+            { key: "屏東", name: "Pingtung" },
+            { key: "宜蘭", name: "Yilan" },
+            { key: "花蓮", name: "Hualien" },
+            { key: "台東", name: "Taitung" }, { key: "臺東", name: "Taitung" },
+            { key: "澎湖", name: "Penghu" },
+            { key: "金門", name: "Kinmen" }
+        ];
+        if (cntry.includes("taiwan") || addr.includes("台灣") || addr.includes("台湾") || addr.includes("taiwan")) {
+            for (const tw of taiwanCities) {
+                if (c.includes(tw.key) || addr.includes(tw.key)) {
+                    return tw.name;
+                }
+            }
+            const taipeiDistricts = [
+                "Zhongshan", "Daan", "Xinyi", "Songshan", "Zhongzheng", "Wanhua", "Datong",
+                "Neihu", "Nangang", "Shilin", "Beitou", "Wenshan"
+            ];
+            for (const dist of taipeiDistricts) {
+                if (c.toLowerCase().includes(dist.toLowerCase())) return "Taipei";
+            }
+        }
+
+        // 5. South Korea - Seoul districts (-gu)
+        if (cntry.includes("korea") || addr.includes("seoul") || s.includes("seoul")) {
+            if (c.endsWith("-gu") || c.endsWith(" Gu") || c.includes("Gangnam") || c.includes("Jung-gu") || c.includes("Mapo")) {
+                return "Seoul";
+            }
+        }
+
+        // 6. Strip generic administrative prefix/suffix
+        c = c.replace(/^(Amphoe|Khet|Tambon|Quận)\s+/i, '');
+        c = c.replace(/\s+(District|County|Township|Subdistrict|Ward)$/i, '');
+
+        return c.trim();
+    }
+
     // --- Location Extraction Helper ---
     function extractLocationDetails(addressComponents) {
         let locality = null;
@@ -4360,6 +5107,8 @@
         if (!city) {
             city = admin2 || admin1 || "Unknown City";
         }
+
+        city = normalizeCityName(city, state, country);
 
         return {
             city: city,
@@ -5981,6 +6730,8 @@
         uiEnabled = enabled;
         const elementsToToggle = [
             document.getElementById('calendarBtn'),
+            document.getElementById('tripsBtn'),
+            document.getElementById('placesLivedBtn'),
             document.getElementById('startDatePicker'),
             document.getElementById('endDatePicker'),
             document.getElementById('prevDayBtn'),
@@ -6055,6 +6806,8 @@
             console.log("Initial call to readFilesFromDirectory, resetting globals...");
             globalIndex = 0;
             timelineData = {};
+            cachedTrips = null;
+            cachedPlacesLived = null;
             activityTypes = new Set();
             allYearlySummaries = null;
             allMonthlySummaries = null;
@@ -9017,6 +9770,1634 @@ Departed: ${end}</description>
     });
 
 
+    // =========================================================================
+    // TRIPS VIEW (JOURNEYS) & PLACES LIVED MODULE
+    // =========================================================================
+
+    let cachedTrips = null;
+    let cachedPlacesLived = null;
+    let tripMapPolyline = null;
+    let tripMapMarkers = [];
+
+    function clearTripMap() {
+        if (tripMapPolyline) {
+            tripMapPolyline.setMap(null);
+            tripMapPolyline = null;
+        }
+        if (tripMapMarkers && tripMapMarkers.length > 0) {
+            tripMapMarkers.forEach(m => {
+                if (m && typeof m.setMap === 'function') m.setMap(null);
+                else if (m) m.map = null;
+            });
+            tripMapMarkers = [];
+        }
+    }
+    window.clearTripMap = clearTripMap;
+
+    let tripFilterState = {
+        search: '',
+        year: 'all',
+        durations: new Set(['1-2', '3-7', '8-14', '15+']),
+        flightsOnly: false
+    };
+
+    function getTripDurationBucket(totalNights) {
+        if (totalNights <= 2) return '1-2';
+        if (totalNights <= 7) return '3-7';
+        if (totalNights <= 14) return '8-14';
+        return '15+';
+    }
+
+    function updateDurationDropdownLabel() {
+        const labelEl = document.getElementById('tripDurationDropdownLabel');
+        if (!labelEl) return;
+        const count = tripFilterState.durations.size;
+        if (count === 4) {
+            labelEl.textContent = 'All Durations';
+        } else if (count === 0) {
+            labelEl.textContent = 'Duration: None';
+        } else if (count === 3 && !tripFilterState.durations.has('1-2')) {
+            labelEl.textContent = '3+ nights';
+        } else if (count === 1) {
+            const map = { '1-2': '1–2 nights', '3-7': '3–7 nights', '8-14': '8–14 nights', '15+': '15+ nights' };
+            const single = [...tripFilterState.durations][0];
+            labelEl.textContent = map[single] || single;
+        } else {
+            labelEl.textContent = `Duration (${count})`;
+        }
+    }
+
+    // Comprehensive ISO-3166-1 alpha-2 mapping including common country names and aliases
+    const countryToIso = {
+        "AF": "AF", "Afghanistan": "AF",
+        "AX": "AX", "Aland Islands": "AX", "Åland Islands": "AX",
+        "AL": "AL", "Albania": "AL",
+        "DZ": "DZ", "Algeria": "DZ",
+        "AS": "AS", "American Samoa": "AS",
+        "AD": "AD", "Andorra": "AD",
+        "AO": "AO", "Angola": "AO",
+        "AI": "AI", "Anguilla": "AI",
+        "AQ": "AQ", "Antarctica": "AQ",
+        "AG": "AG", "Antigua and Barbuda": "AG",
+        "AR": "AR", "Argentina": "AR",
+        "AM": "AM", "Armenia": "AM",
+        "AW": "AW", "Aruba": "AW",
+        "AU": "AU", "Australia": "AU",
+        "AT": "AT", "Austria": "AT",
+        "AZ": "AZ", "Azerbaijan": "AZ",
+        "BS": "BS", "Bahamas": "BS",
+        "BH": "BH", "Bahrain": "BH",
+        "BD": "BD", "Bangladesh": "BD",
+        "BB": "BB", "Barbados": "BB",
+        "BY": "BY", "Belarus": "BY",
+        "BE": "BE", "Belgium": "BE",
+        "BZ": "BZ", "Belize": "BZ",
+        "BJ": "BJ", "Benin": "BJ",
+        "BM": "BM", "Bermuda": "BM",
+        "BT": "BT", "Bhutan": "BT",
+        "BO": "BO", "Bolivia": "BO",
+        "BA": "BA", "Bosnia and Herzegovina": "BA", "Bosnia": "BA",
+        "BW": "BW", "Botswana": "BW",
+        "BR": "BR", "Brazil": "BR",
+        "IO": "IO", "British Indian Ocean Territory": "IO",
+        "BN": "BN", "Brunei": "BN",
+        "BG": "BG", "Bulgaria": "BG",
+        "BF": "BF", "Burkina Faso": "BF",
+        "BI": "BI", "Burundi": "BI",
+        "KH": "KH", "Cambodia": "KH",
+        "CM": "CM", "Cameroon": "CM",
+        "CA": "CA", "Canada": "CA",
+        "CV": "CV", "Cape Verde": "CV", "Cabo Verde": "CV",
+        "KY": "KY", "Cayman Islands": "KY",
+        "CF": "CF", "Central African Republic": "CF",
+        "TD": "TD", "Chad": "TD",
+        "CL": "CL", "Chile": "CL",
+        "CN": "CN", "China": "CN",
+        "CX": "CX", "Christmas Island": "CX",
+        "CC": "CC", "Cocos (Keeling) Islands": "CC",
+        "CO": "CO", "Colombia": "CO",
+        "KM": "KM", "Comoros": "KM",
+        "CG": "CG", "Congo": "CG", "Republic of the Congo": "CG",
+        "CD": "CD", "Democratic Republic of the Congo": "CD", "DR Congo": "CD",
+        "CK": "CK", "Cook Islands": "CK",
+        "CR": "CR", "Costa Rica": "CR",
+        "CI": "CI", "Cote d'Ivoire": "CI", "Ivory Coast": "CI",
+        "HR": "HR", "Croatia": "HR",
+        "CU": "CU", "Cuba": "CU",
+        "CW": "CW", "Curacao": "CW", "Curaçao": "CW",
+        "CY": "CY", "Cyprus": "CY",
+        "CZ": "CZ", "Czech Republic": "CZ", "Czechia": "CZ",
+        "DK": "DK", "Denmark": "DK",
+        "DJ": "DJ", "Djibouti": "DJ",
+        "DM": "DM", "Dominica": "DM",
+        "DO": "DO", "Dominican Republic": "DO",
+        "EC": "EC", "Ecuador": "EC",
+        "EG": "EG", "Egypt": "EG",
+        "SV": "SV", "El Salvador": "SV",
+        "GQ": "GQ", "Equatorial Guinea": "GQ",
+        "ER": "ER", "Eritrea": "ER",
+        "EE": "EE", "Estonia": "EE",
+        "ET": "ET", "Ethiopia": "ET",
+        "FK": "FK", "Falkland Islands": "FK",
+        "FO": "FO", "Faroe Islands": "FO",
+        "FJ": "FJ", "Fiji": "FJ",
+        "FI": "FI", "Finland": "FI",
+        "FR": "FR", "France": "FR",
+        "GF": "GF", "French Guiana": "GF",
+        "PF": "PF", "French Polynesia": "PF",
+        "GA": "GA", "Gabon": "GA",
+        "GM": "GM", "Gambia": "GM",
+        "GE": "GE", "Georgia": "GE",
+        "DE": "DE", "Germany": "DE",
+        "GH": "GH", "Ghana": "GH",
+        "GI": "GI", "Gibraltar": "GI",
+        "GR": "GR", "Greece": "GR",
+        "GL": "GL", "Greenland": "GL",
+        "GD": "GD", "Grenada": "GD",
+        "GP": "GP", "Guadeloupe": "GP",
+        "GU": "GU", "Guam": "GU",
+        "GT": "GT", "Guatemala": "GT",
+        "GG": "GG", "Guernsey": "GG",
+        "GN": "GN", "Guinea": "GN",
+        "GW": "GW", "Guinea-Bissau": "GW",
+        "GY": "GY", "Guyana": "GY",
+        "HT": "HT", "Haiti": "HT",
+        "VA": "VA", "Vatican City": "VA", "Holy See": "VA",
+        "HN": "HN", "Honduras": "HN",
+        "HK": "HK", "Hong Kong": "HK",
+        "HU": "HU", "Hungary": "HU",
+        "IS": "IS", "Iceland": "IS",
+        "IN": "IN", "India": "IN",
+        "ID": "ID", "Indonesia": "ID",
+        "IR": "IR", "Iran": "IR",
+        "IQ": "IQ", "Iraq": "IQ",
+        "IE": "IE", "Ireland": "IE",
+        "IM": "IM", "Isle of Man": "IM",
+        "IL": "IL", "Israel": "IL",
+        "IT": "IT", "Italy": "IT",
+        "JM": "JM", "Jamaica": "JM",
+        "JP": "JP", "Japan": "JP",
+        "JE": "JE", "Jersey": "JE",
+        "JO": "JO", "Jordan": "JO",
+        "KZ": "KZ", "Kazakhstan": "KZ",
+        "KE": "KE", "Kenya": "KE",
+        "KI": "KI", "Kiribati": "KI",
+        "KP": "KP", "North Korea": "KP",
+        "KR": "KR", "South Korea": "KR", "Korea": "KR", "Republic of Korea": "KR",
+        "KW": "KW", "Kuwait": "KW",
+        "KG": "KG", "Kyrgyzstan": "KG",
+        "LA": "LA", "Laos": "LA",
+        "LV": "LV", "Latvia": "LV",
+        "LB": "LB", "Lebanon": "LB",
+        "LS": "LS", "Lesotho": "LS",
+        "LR": "LR", "Liberia": "LR",
+        "LY": "LY", "Libya": "LY",
+        "LI": "LI", "Liechtenstein": "LI",
+        "LT": "LT", "Lithuania": "LT",
+        "LU": "LU", "Luxembourg": "LU",
+        "MO": "MO", "Macao": "MO", "Macau": "MO",
+        "MK": "MK", "North Macedonia": "MK", "Macedonia": "MK",
+        "MG": "MG", "Madagascar": "MG",
+        "MW": "MW", "Malawi": "MW",
+        "MY": "MY", "Malaysia": "MY",
+        "MV": "MV", "Maldives": "MV",
+        "ML": "ML", "Mali": "ML",
+        "MT": "MT", "Malta": "MT",
+        "MH": "MH", "Marshall Islands": "MH",
+        "MQ": "MQ", "Martinique": "MQ",
+        "MR": "MR", "Mauritania": "MR",
+        "MU": "MU", "Mauritius": "MU",
+        "YT": "YT", "Mayotte": "YT",
+        "MX": "MX", "Mexico": "MX",
+        "FM": "FM", "Micronesia": "FM",
+        "MD": "MD", "Moldova": "MD",
+        "MC": "MC", "Monaco": "MC",
+        "MN": "MN", "Mongolia": "MN",
+        "ME": "ME", "Montenegro": "ME",
+        "MS": "MS", "Montserrat": "MS",
+        "MA": "MA", "Morocco": "MA",
+        "MZ": "MZ", "Mozambique": "MZ",
+        "MM": "MM", "Myanmar": "MM", "Burma": "MM",
+        "NA": "NA", "Namibia": "NA",
+        "NR": "NR", "Nauru": "NR",
+        "NP": "NP", "Nepal": "NP",
+        "NL": "NL", "Netherlands": "NL", "Holland": "NL",
+        "NC": "NC", "New Caledonia": "NC",
+        "NZ": "NZ", "New Zealand": "NZ",
+        "NI": "NI", "Nicaragua": "NI",
+        "NE": "NE", "Niger": "NE",
+        "NG": "NG", "Nigeria": "NG",
+        "NU": "NU", "Niue": "NU",
+        "NF": "NF", "Norfolk Island": "NF",
+        "MP": "MP", "Northern Mariana Islands": "MP",
+        "NO": "NO", "Norway": "NO",
+        "OM": "OM", "Oman": "OM",
+        "PK": "PK", "Pakistan": "PK",
+        "PW": "PW", "Palau": "PW",
+        "PS": "PS", "Palestine": "PS", "State of Palestine": "PS",
+        "PA": "PA", "Panama": "PA",
+        "PG": "PG", "Papua New Guinea": "PG",
+        "PY": "PY", "Paraguay": "PY",
+        "PE": "PE", "Peru": "PE",
+        "PH": "PH", "Philippines": "PH",
+        "PN": "PN", "Pitcairn": "PN",
+        "PL": "PL", "Poland": "PL",
+        "PT": "PT", "Portugal": "PT",
+        "PR": "PR", "Puerto Rico": "PR",
+        "QA": "QA", "Qatar": "QA",
+        "RE": "RE", "Reunion": "RE", "Réunion": "RE",
+        "RO": "RO", "Romania": "RO",
+        "RU": "RU", "Russia": "RU", "Russian Federation": "RU",
+        "RW": "RW", "Rwanda": "RW",
+        "BL": "BL", "Saint Barthelemy": "BL", "Saint Barthélemy": "BL",
+        "SH": "SH", "Saint Helena": "SH",
+        "KN": "KN", "Saint Kitts and Nevis": "KN",
+        "LC": "LC", "Saint Lucia": "LC",
+        "MF": "MF", "Saint Martin": "MF",
+        "PM": "PM", "Saint Pierre and Miquelon": "PM",
+        "VC": "VC", "Saint Vincent and the Grenadines": "VC",
+        "WS": "WS", "Samoa": "WS",
+        "SM": "SM", "San Marino": "SM",
+        "ST": "ST", "Sao Tome and Principe": "ST",
+        "SA": "SA", "Saudi Arabia": "SA",
+        "SN": "SN", "Senegal": "SN",
+        "RS": "RS", "Serbia": "RS",
+        "SC": "SC", "Seychelles": "SC",
+        "SL": "SL", "Sierra Leone": "SL",
+        "SG": "SG", "Singapore": "SG",
+        "SX": "SX", "Sint Maarten": "SX",
+        "SK": "SK", "Slovakia": "SK",
+        "SI": "SI", "Slovenia": "SI",
+        "SB": "SB", "Solomon Islands": "SB",
+        "SO": "SO", "Somalia": "SO",
+        "ZA": "ZA", "South Africa": "ZA",
+        "SS": "SS", "South Sudan": "SS",
+        "ES": "ES", "Spain": "ES",
+        "LK": "LK", "Sri Lanka": "LK",
+        "SD": "SD", "Sudan": "SD",
+        "SR": "SR", "Suriname": "SR",
+        "SJ": "SJ", "Svalbard and Jan Mayen": "SJ",
+        "SZ": "SZ", "Eswatini": "SZ", "Swaziland": "SZ",
+        "SE": "SE", "Sweden": "SE",
+        "CH": "CH", "Switzerland": "CH",
+        "SY": "SY", "Syria": "SY",
+        "TW": "TW", "Taiwan": "TW", "Republic of China": "TW",
+        "TJ": "TJ", "Tajikistan": "TJ",
+        "TZ": "TZ", "Tanzania": "TZ",
+        "TH": "TH", "Thailand": "TH",
+        "TL": "TL", "Timor-Leste": "TL", "East Timor": "TL",
+        "TG": "TG", "Togo": "TG",
+        "TK": "TK", "Tokelau": "TK",
+        "TO": "TO", "Tonga": "TO",
+        "TT": "TT", "Trinidad and Tobago": "TT",
+        "TN": "TN", "Tunisia": "TN",
+        "TR": "TR", "Turkey": "TR", "Türkiye": "TR",
+        "TM": "TM", "Turkmenistan": "TM",
+        "TC": "TC", "Turks and Caicos Islands": "TC",
+        "TV": "TV", "Tuvalu": "TV",
+        "UG": "UG", "Uganda": "UG",
+        "UA": "UA", "Ukraine": "UA",
+        "AE": "AE", "United Arab Emirates": "AE", "UAE": "AE",
+        "GB": "GB", "United Kingdom": "GB", "UK": "GB", "Great Britain": "GB", "England": "GB", "Scotland": "GB", "Wales": "GB",
+        "US": "US", "United States": "US", "United States of America": "US", "USA": "US",
+        "UY": "UY", "Uruguay": "UY",
+        "UZ": "UZ", "Uzbekistan": "UZ",
+        "VU": "VU", "Vanuatu": "VU",
+        "VE": "VE", "Venezuela": "VE",
+        "VN": "VN", "Vietnam": "VN",
+        "VG": "VG", "Virgin Islands, British": "VG", "British Virgin Islands": "VG",
+        "VI": "VI", "Virgin Islands, U.S.": "VI", "U.S. Virgin Islands": "VI",
+        "WF": "WF", "Wallis and Futuna": "WF",
+        "EH": "EH", "Western Sahara": "EH",
+        "YE": "YE", "Yemen": "YE",
+        "ZM": "ZM", "Zambia": "ZM",
+        "ZW": "ZW", "Zimbabwe": "ZW"
+    };
+
+    const usStateToAbbr = {
+        "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
+        "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "Florida": "FL", "Georgia": "GA",
+        "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",
+        "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+        "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS", "Missouri": "MO",
+        "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+        "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH",
+        "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+        "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT",
+        "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
+        "District of Columbia": "DC"
+    };
+
+    function formatCountryName(countryName) {
+        if (!countryName || countryName === "Unknown Country") return "";
+        const c = countryName.trim();
+        if (c === "United States" || c === "United States of America" || c === "US" || c === "USA") {
+            return "USA";
+        }
+        if (c === "United Kingdom" || c === "Great Britain" || c === "GB") {
+            return "UK";
+        }
+        return c;
+    }
+
+    function formatLocationTitle(city, state, country, formattedAddress) {
+        const cleanCountry = formatCountryName(country);
+        const cleanCity = (city && city !== "Unknown City") ? city.trim() : "";
+
+        if (cleanCountry === "USA") {
+            let stateAbbr = usStateToAbbr[state] || (state && state.length === 2 ? state.toUpperCase() : "");
+            if (!stateAbbr && formattedAddress) {
+                const match = formattedAddress.match(/,\s*([A-Z]{2})\s+\d{5}/) || formattedAddress.match(/,\s*([A-Za-z\s]+),\s*(?:USA|United States)/);
+                if (match) {
+                    const found = match[1].trim();
+                    stateAbbr = usStateToAbbr[found] || (found.length === 2 ? found.toUpperCase() : "");
+                }
+            }
+            if (cleanCity && stateAbbr) {
+                return `${cleanCity}, ${stateAbbr}, USA`;
+            } else if (cleanCity) {
+                return `${cleanCity}, USA`;
+            } else if (stateAbbr) {
+                return `${stateAbbr}, USA`;
+            }
+            return "USA";
+        }
+
+        if (cleanCity && cleanCountry) {
+            return `${cleanCity}, ${cleanCountry}`;
+        }
+        return cleanCity || cleanCountry || "Residence";
+    }
+
+    function getCountryFlagEmoji(countryName) {
+        if (!countryName || countryName === "Unknown Country") return "";
+        let code = countryToIso[countryName];
+        if (!code) {
+            for (const [name, c] of Object.entries(countryToIso)) {
+                if (countryName.toLowerCase().includes(name.toLowerCase())) {
+                    code = c;
+                    break;
+                }
+            }
+        }
+        if (!code && countryName.length === 2) code = countryName.toUpperCase();
+        if (!code) return "";
+        try {
+            return code.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt(0)));
+        } catch (e) {
+            return "";
+        }
+    }
+
+    function getExcludedResidences() {
+        try {
+            return JSON.parse(localStorage.getItem('timeline_excluded_residences') || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function setExcludedResidences(list) {
+        try {
+            localStorage.setItem('timeline_excluded_residences', JSON.stringify(list));
+        } catch (e) {
+            console.warn("Failed to save excluded residences", e);
+        }
+    }
+
+    // Helper: Collect all timeline items across months sorted chronologically
+    function getAllTimelineItemsChronological() {
+        const allItems = [];
+        for (const monthKey in timelineData) {
+            const dataObj = timelineData[monthKey];
+            if (dataObj && Array.isArray(dataObj.timelineObjects)) {
+                for (const item of dataObj.timelineObjects) {
+                    let start = null, end = null;
+                    if (item.placeVisit) {
+                        start = item.placeVisit.duration?.startTimestamp;
+                        end = item.placeVisit.duration?.endTimestamp;
+                    } else if (item.activitySegment) {
+                        start = item.activitySegment.duration?.startTimestamp;
+                        end = item.activitySegment.duration?.endTimestamp;
+                    } else if (item.startTime) {
+                        start = item.startTime;
+                        end = item.endTime;
+                    }
+                    if (start && end) {
+                        const startM = moment(start);
+                        const endM = moment(end);
+                        if (startM.isValid() && endM.isValid()) {
+                            allItems.push({
+                                raw: item,
+                                startMoment: startM,
+                                endMoment: endM,
+                                startMs: startM.valueOf(),
+                                endMs: endM.valueOf()
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        allItems.sort((a, b) => a.startMs - b.startMs);
+        return allItems;
+    }
+
+    // Helper: Extract location info from a timeline object
+    function extractItemLocationInfo(item) {
+        const raw = item.raw || item;
+        let lat = null, lng = null, placeId = null, name = null, semanticType = null;
+        let isActivity = false, activityType = null, pathPoints = [];
+
+        if (raw.placeVisit) {
+            placeId = raw.placeVisit.location?.placeId;
+            name = raw.placeVisit.location?.name;
+            semanticType = raw.placeVisit.location?.semanticType;
+            if (raw.placeVisit.location?.latitudeE7) {
+                lat = raw.placeVisit.location.latitudeE7 / 1e7;
+                lng = raw.placeVisit.location.longitudeE7 / 1e7;
+            }
+        } else if (raw.visit) {
+            placeId = raw.visit.topCandidate?.placeID;
+            name = raw.visit.topCandidate?.name;
+            semanticType = raw.visit.topCandidate?.semanticType;
+            if (raw.visit.topCandidate?.placeLocation) {
+                const geo = parseGeoString(raw.visit.topCandidate.placeLocation);
+                if (geo) { lat = geo.lat; lng = geo.lng; }
+            } else if (raw.visit.location?.latitudeE7) {
+                lat = raw.visit.location.latitudeE7 / 1e7;
+                lng = raw.visit.location.longitudeE7 / 1e7;
+            }
+        } else if (raw.activitySegment) {
+            isActivity = true;
+            activityType = raw.activitySegment.activityType;
+            if (raw.activitySegment.startLocation?.latitudeE7) {
+                lat = raw.activitySegment.startLocation.latitudeE7 / 1e7;
+                lng = raw.activitySegment.startLocation.longitudeE7 / 1e7;
+            }
+            if (raw.activitySegment.simplifiedRawPath?.points) {
+                pathPoints = raw.activitySegment.simplifiedRawPath.points;
+            }
+        } else if (raw.activity) {
+            isActivity = true;
+            activityType = raw.activity.topCandidate?.type?.toUpperCase();
+            if (raw.activity.start) {
+                const geo = parseGeoString(raw.activity.start);
+                if (geo) { lat = geo.lat; lng = geo.lng; }
+            }
+        }
+
+        let city = "Unknown City", state = "Unknown State", country = "Unknown Country", formattedAddress = "";
+        if (placeId && placeDetailsCache[placeId]) {
+            const cached = placeDetailsCache[placeId];
+            if (cached.extractedCity && cached.extractedCity !== "Unknown City") city = cached.extractedCity;
+            if (cached.extractedState && cached.extractedState !== "Unknown State") state = cached.extractedState;
+            if (cached.extractedCountry && cached.extractedCountry !== "Unknown Country") country = cached.extractedCountry;
+            if (cached.formattedAddress) formattedAddress = cached.formattedAddress;
+            if (cached.displayName && (!name || name === "Unknown Location")) name = cached.displayName;
+            if (lat === null && cached.location) {
+                lat = typeof cached.location.lat === 'function' ? cached.location.lat() : cached.location.lat;
+                lng = typeof cached.location.lng === 'function' ? cached.location.lng() : cached.location.lng;
+            }
+        }
+        // Fallback parsing directly from raw address if not yet populated in placeDetailsCache
+        const rawAddr = raw.placeVisit?.location?.address || formattedAddress || "";
+        if (rawAddr) {
+            if (!formattedAddress) formattedAddress = rawAddr;
+            if (!name && raw.placeVisit?.location?.name) name = raw.placeVisit.location.name;
+
+            // East Asian special address handling
+            if (city === "Unknown City") {
+                if (rawAddr.includes('東京都') || rawAddr.includes('Tokyo')) { city = 'Tokyo'; country = 'Japan'; }
+                else if (rawAddr.includes('京都市') || rawAddr.includes('京都府') || rawAddr.includes('Kyoto')) { city = 'Kyoto'; country = 'Japan'; }
+                else if (rawAddr.includes('大阪市') || rawAddr.includes('大阪府') || rawAddr.includes('Osaka')) { city = 'Osaka'; country = 'Japan'; }
+                else if (rawAddr.includes('横浜市') || rawAddr.includes('Yokohama')) { city = 'Yokohama'; country = 'Japan'; }
+                else if (rawAddr.includes('กรุงเทพมหานคร') || rawAddr.includes('Bangkok') || rawAddr.includes('บางพลี')) { city = 'Bangkok'; country = 'Thailand'; }
+                else if (rawAddr.includes('ภูเก็ต') || rawAddr.includes('Phuket')) { city = 'Phuket'; country = 'Thailand'; }
+                else if (rawAddr.includes('เชียงใหม่') || rawAddr.includes('Chiang Mai')) { city = 'Chiang Mai'; country = 'Thailand'; }
+                else if (rawAddr.includes('张家界')) { city = 'Zhangjiajie'; country = 'China'; }
+                else if (rawAddr.includes('北京')) { city = 'Beijing'; country = 'China'; }
+                else if (rawAddr.includes('上海')) { city = 'Shanghai'; country = 'China'; }
+                else if (rawAddr.includes('Hồ Chí Minh') || rawAddr.includes('Quận ')) { city = 'Ho Chi Minh City'; country = 'Vietnam'; }
+                else {
+                    const parts = rawAddr.split(',').map(s => s.trim());
+                    if (country === "Unknown Country" && parts.length >= 1) {
+                        const last = parts[parts.length - 1].replace(/\b\d{4,6}\b/g, '').trim();
+                        if (last) country = last;
+                    }
+                    if (city === "Unknown City" && parts.length >= 3) {
+                        city = parts[parts.length - 3].trim();
+                    }
+                }
+            }
+            if (country === "Unknown Country") {
+                if (rawAddr.includes('日本') || rawAddr.includes('Japan')) country = 'Japan';
+                else if (rawAddr.includes('中国') || rawAddr.includes('China')) country = 'China';
+                else if (rawAddr.includes('United States') || rawAddr.includes('USA')) country = 'United States';
+                else if (rawAddr.includes('ไทย') || rawAddr.includes('Thailand')) country = 'Thailand';
+                else if (rawAddr.includes('Việt Nam') || rawAddr.includes('Vietnam')) country = 'Vietnam';
+                else if (rawAddr.includes('台灣') || rawAddr.includes('Taiwan')) country = 'Taiwan';
+            }
+        }
+
+        city = normalizeCityName(city, state, country, rawAddr);
+
+        const customSemantic = (typeof getCustomSemanticType === 'function') ? getCustomSemanticType(placeId, semanticType) : semanticType;
+        const upperSemantic = customSemantic?.toUpperCase() || "";
+        const isExplicitHome = upperSemantic === "TYPE_HOME" || upperSemantic === "HOME" || name?.toLowerCase() === "home";
+        const isAirport = isAirportLocation(name, formattedAddress, placeDetailsCache[placeId]?.types || []);
+
+        return {
+            placeId, name, lat, lng, city, state, country, formattedAddress,
+            isActivity, activityType, pathPoints, isExplicitHome, isAirport
+        };
+    }
+
+    // Step 1: Detect Places Lived (Sorted Newest -> Oldest)
+    function detectPlacesLived() {
+        if (cachedPlacesLived) return cachedPlacesLived;
+
+        const allItems = getAllTimelineItemsChronological();
+        const excludedList = getExcludedResidences();
+
+        // 1. Identify all overnight stays
+        const overnightStays = [];
+        for (const item of allItems) {
+            const loc = extractItemLocationInfo(item);
+            if (loc.isActivity || loc.lat === null || loc.lng === null) continue;
+
+            const durationMinutes = item.endMoment.diff(item.startMoment, 'minutes');
+            const startHour = item.startMoment.hour();
+            const endHour = item.endMoment.hour();
+
+            // Overnight condition:
+            // Explicit home, or visit spans nighttime (e.g. past 2am and duration >= 3.5 hrs), or long evening-to-morning stay
+            const spansNight = (durationMinutes >= 200 && (item.startMoment.isBefore(item.endMoment.clone().startOf('day').add(5, 'hours')) || startHour >= 22 || endHour <= 6));
+            const isOvernight = loc.isExplicitHome || spansNight;
+
+            if (isOvernight) {
+                const nightDate = (startHour < 6) ? item.startMoment.clone().subtract(1, 'day').format('YYYY-MM-DD') : item.startMoment.format('YYYY-MM-DD');
+                overnightStays.push({
+                    nightDate,
+                    startMs: item.startMs,
+                    endMs: item.endMs,
+                    loc
+                });
+            }
+        }
+
+        // 2. Cluster overnight stays by location (~180m or same placeId)
+        const clusters = [];
+        for (const stay of overnightStays) {
+            let matchedCluster = null;
+            for (const cl of clusters) {
+                if (stay.loc.placeId && cl.placeId && stay.loc.placeId === cl.placeId) {
+                    matchedCluster = cl;
+                    break;
+                }
+                const dist = computeHaversineDistance([
+                    { lat: stay.loc.lat, lng: stay.loc.lng },
+                    { lat: cl.lat, lng: cl.lng }
+                ]);
+                if (dist <= 180) {
+                    matchedCluster = cl;
+                    break;
+                }
+            }
+
+            if (matchedCluster) {
+                matchedCluster.stays.push(stay);
+                if (stay.loc.isExplicitHome) matchedCluster.hasExplicitHome = true;
+                if (stay.loc.formattedAddress && !matchedCluster.formattedAddress) matchedCluster.formattedAddress = stay.loc.formattedAddress;
+                if (stay.loc.city !== "Unknown City" && matchedCluster.city === "Unknown City") matchedCluster.city = stay.loc.city;
+                if (stay.loc.state !== "Unknown State" && matchedCluster.state === "Unknown State") matchedCluster.state = stay.loc.state;
+                if (stay.loc.country !== "Unknown Country" && matchedCluster.country === "Unknown Country") matchedCluster.country = stay.loc.country;
+            } else {
+                clusters.push({
+                    placeId: stay.loc.placeId,
+                    name: stay.loc.name,
+                    lat: stay.loc.lat,
+                    lng: stay.loc.lng,
+                    city: stay.loc.city,
+                    state: stay.loc.state,
+                    country: stay.loc.country,
+                    formattedAddress: stay.loc.formattedAddress,
+                    hasExplicitHome: stay.loc.isExplicitHome,
+                    stays: [stay]
+                });
+            }
+        }
+
+        // 3. Segment each cluster into continuous residence eras and filter out short return visits
+        const residences = [];
+        const MAX_ABSENCE_GAP_DAYS = 65; // Absence > 65 days breaks a continuous era; short visits years later are excluded
+
+        for (const cl of clusters) {
+            const clusterBaseKey = cl.placeId || `${cl.lat.toFixed(4)},${cl.lng.toFixed(4)}`;
+            if (excludedList.includes(clusterBaseKey)) continue;
+
+            // Sort all stays in cluster chronologically
+            cl.stays.sort((a, b) => a.startMs - b.startMs);
+
+            // Group into continuous stay episodes
+            const episodes = [];
+            let currentEpisode = [];
+
+            for (const s of cl.stays) {
+                if (currentEpisode.length === 0) {
+                    currentEpisode.push(s);
+                } else {
+                    const prevStay = currentEpisode[currentEpisode.length - 1];
+                    const gapDays = (s.startMs - prevStay.endMs) / (1000 * 60 * 60 * 24);
+                    if (gapDays > MAX_ABSENCE_GAP_DAYS) {
+                        episodes.push(currentEpisode);
+                        currentEpisode = [s];
+                    } else {
+                        currentEpisode.push(s);
+                    }
+                }
+            }
+            if (currentEpisode.length > 0) episodes.push(currentEpisode);
+
+            // Find qualifying residence eras among the episodes
+            let eraIndex = 0;
+            let hasPriorResidency = false;
+            for (let epIdx = 0; epIdx < episodes.length; epIdx++) {
+                const ep = episodes[epIdx];
+                const nightsSet = new Set(ep.map(s => s.nightDate));
+                const nightsCount = nightsSet.size;
+                const firstStayMs = ep[0].startMs;
+                const lastStayMs = ep[ep.length - 1].endMs;
+                const spanDays = moment(lastStayMs).diff(moment(firstStayMs), 'days') + 1;
+
+                // Residence criteria:
+                // Primary residency era: at least 14 nights and span at least 25 days (or 10 nights/20 days for explicit home).
+                // Return visit to a former residence after an extended absence (hasPriorResidency):
+                // A vacation / visit back to a former residence (e.g. staying for 3-5 weeks at an old house)
+                // is a TRIP away from your new home base, NOT moving back!
+                // To qualify as moving back, a return stay must be a genuine extended relocation (>= 60 days span and >= 45 nights).
+                const isReturnVisit = hasPriorResidency;
+                const isQualifyingEra = isReturnVisit
+                    ? (spanDays >= 60 && nightsCount >= 45)
+                    : (cl.hasExplicitHome
+                        ? (nightsCount >= 10 && spanDays >= 20) || (episodes.length === 1 && nightsCount >= 7)
+                        : (nightsCount >= 14 && spanDays >= 25));
+
+                if (isQualifyingEra) {
+                    hasPriorResidency = true;
+                    eraIndex++;
+                    const eraKey = episodes.length > 1 ? `${clusterBaseKey}_era${eraIndex}` : clusterBaseKey;
+                    if (excludedList.includes(eraKey)) continue;
+
+                    let streetText = cl.name || "";
+                    if (cl.formattedAddress) {
+                        const parts = cl.formattedAddress.split(',');
+                        streetText = parts.length > 1 ? parts.slice(0, 2).join(', ').trim() : parts[0].trim();
+                    }
+
+                    residences.push({
+                        key: eraKey,
+                        baseKey: clusterBaseKey,
+                        placeId: cl.placeId,
+                        name: cl.name,
+                        city: cl.city,
+                        state: cl.state,
+                        country: cl.country,
+                        street: streetText,
+                        formattedAddress: cl.formattedAddress,
+                        lat: cl.lat,
+                        lng: cl.lng,
+                        nightsCount: nightsCount,
+                        firstStayMs: firstStayMs,
+                        lastStayMs: lastStayMs,
+                        firstDateStr: moment(firstStayMs).format("MMM YYYY"),
+                        lastDateStr: moment(lastStayMs).isAfter(moment().subtract(60, 'days')) ? "Present" : moment(lastStayMs).format("MMM YYYY"),
+                        hasExplicitHome: cl.hasExplicitHome
+                    });
+                }
+            }
+        }
+
+        // Sort residences in order of NEWEST > OLDEST
+        residences.sort((a, b) => (b.lastStayMs !== a.lastStayMs ? b.lastStayMs - a.lastStayMs : b.firstStayMs - a.firstStayMs));
+        cachedPlacesLived = residences;
+        return residences;
+    }
+
+    // Helper: Determine active residence or home base for a given timestamp
+    function getActiveResidenceForTime(timeMs, residences) {
+        if (!residences || residences.length === 0) return null;
+        
+        // Direct match: within the residency era (plus 14-day margin)
+        const active = residences.find(r => timeMs >= (r.firstStayMs - 14 * 86400000) && timeMs <= (r.lastStayMs + 14 * 86400000));
+        if (active) return active;
+
+        const chronological = [...residences].sort((a, b) => a.firstStayMs - b.firstStayMs);
+        const earliest = chronological[0];
+        const latest = chronological[chronological.length - 1];
+
+        // If time is > 45 days before the first detected residence:
+        // Do NOT assume they lived in that future residence years prior!
+        if (timeMs < earliest.firstStayMs - 45 * 86400000) {
+            return null; // Signals pre-residence era; will fall back to pre-residence local base
+        }
+
+        // If time is > 45 days after the latest residence:
+        if (timeMs > latest.lastStayMs + 45 * 86400000) {
+            return latest;
+        }
+
+        // Between residences: find closest
+        let closest = chronological[0];
+        let minDiff = Math.abs(timeMs - closest.firstStayMs);
+        for (const r of chronological) {
+            const diff1 = Math.abs(timeMs - r.firstStayMs);
+            const diff2 = Math.abs(timeMs - r.lastStayMs);
+            const diff = Math.min(diff1, diff2);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = r;
+            }
+        }
+        return closest;
+    }
+
+    // Step 2: Detect Trips (Journeys)
+    function detectTrips() {
+        if (cachedTrips) return cachedTrips;
+
+        const residences = detectPlacesLived();
+        const allItems = getAllTimelineItemsChronological();
+        if (allItems.length === 0) {
+            cachedTrips = [];
+            return [];
+        }
+
+        // Identify pre-residence base for items before the first detected residence
+        const earliestResidence = residences.length > 0
+            ? [...residences].sort((a, b) => a.firstStayMs - b.firstStayMs)[0]
+            : null;
+
+        let preEraBase = null;
+        if (earliestResidence) {
+            // Count cluster frequency before first residence
+            const preClusters = {};
+            for (const item of allItems) {
+                if (item.startMs < earliestResidence.firstStayMs - 30 * 86400000) {
+                    const loc = extractItemLocationInfo(item);
+                    if (loc.lat !== null && loc.lng !== null && !loc.isActivity) {
+                        const key = `${loc.lat.toFixed(2)},${loc.lng.toFixed(2)}`;
+                        if (!preClusters[key]) {
+                            preClusters[key] = { count: 0, lat: loc.lat, lng: loc.lng, city: loc.city, country: loc.country };
+                        }
+                        preClusters[key].count++;
+                    }
+                }
+            }
+            let maxCount = 0;
+            for (const key in preClusters) {
+                if (preClusters[key].count > maxCount) {
+                    maxCount = preClusters[key].count;
+                    preEraBase = preClusters[key];
+                }
+            }
+        }
+
+        const fallbackHome = residences.length > 0 ? residences[residences.length - 1] : null;
+
+        const processedItems = [];
+        for (const item of allItems) {
+            const loc = extractItemLocationInfo(item);
+            let home = getActiveResidenceForTime(item.startMs, residences);
+            if (!home) {
+                home = preEraBase || fallbackHome;
+            }
+
+            let isAway = false;
+            let distFromHome = 0;
+
+            if (home && loc.lat !== null && loc.lng !== null) {
+                distFromHome = computeHaversineDistance([
+                    { lat: home.lat, lng: home.lng },
+                    { lat: loc.lat, lng: loc.lng }
+                ]);
+            }
+
+            // Flight segment check: only true flight if covers significant distance (>= 120km)
+            let isSignificantFlight = false;
+            if (loc.isActivity && loc.activityType === "FLYING") {
+                if (loc.pathPoints && loc.pathPoints.length >= 2) {
+                    const p1 = loc.pathPoints[0];
+                    const p2 = loc.pathPoints[loc.pathPoints.length - 1];
+                    const lat1 = p1.lat ?? (p1.latE7 ? p1.latE7 / 1e7 : null);
+                    const lng1 = p1.lng ?? (p1.lngE7 ? p1.lngE7 / 1e7 : null);
+                    const lat2 = p2.lat ?? (p2.latE7 ? p2.latE7 / 1e7 : null);
+                    const lng2 = p2.lng ?? (p2.lngE7 ? p2.lngE7 / 1e7 : null);
+                    if (lat1 !== null && lat2 !== null) {
+                        const fDist = computeHaversineDistance([{ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 }]);
+                        if (fDist >= 120000) isSignificantFlight = true;
+                    } else {
+                        isSignificantFlight = true;
+                    }
+                } else if (distFromHome >= 100000) {
+                    isSignificantFlight = true;
+                }
+            }
+
+            if (isSignificantFlight) {
+                isAway = true;
+            } else if (home && distFromHome > 60000) { // Away if > 60 km from home
+                isAway = true;
+            } else if (home && loc.country !== "Unknown Country" && home.country !== "Unknown Country" && loc.country !== home.country && distFromHome > 35000) {
+                isAway = true;
+            }
+
+            processedItems.push({
+                item,
+                loc,
+                home,
+                isAway,
+                distFromHome,
+                isSignificantFlight
+            });
+        }
+
+        const tripChunks = [];
+        let currentChunk = null;
+
+        for (let i = 0; i < processedItems.length; i++) {
+            const p = processedItems[i];
+            if (p.isAway) {
+                if (!currentChunk) {
+                    currentChunk = [p];
+                } else {
+                    const prevP = currentChunk[currentChunk.length - 1];
+                    const gapHours = (p.item.startMs - prevP.item.endMs) / 3600000;
+                    // If gap between consecutive away items is > 168 hours (7 days) without returning home, split.
+                    // This prevents data dark zones (e.g. traveling in China or offline roaming) from prematurely splitting a trip!
+                    if (gapHours > 168) {
+                        tripChunks.push(currentChunk);
+                        currentChunk = [p];
+                    } else {
+                        currentChunk.push(p);
+                    }
+                }
+            } else {
+                if (currentChunk) {
+                    const nextAway = processedItems.slice(i, i + 10).find(x => x.isAway);
+                    const hoursAtHome = nextAway ? (nextAway.item.startMs - p.item.endMs) / 3600000 : 999;
+                    if (nextAway && hoursAtHome < 18) {
+                        currentChunk.push(p);
+                    } else {
+                        tripChunks.push(currentChunk);
+                        currentChunk = null;
+                    }
+                }
+            }
+        }
+        if (currentChunk) tripChunks.push(currentChunk);
+
+        const trips = [];
+        for (const chunk of tripChunks) {
+            const firstItem = chunk[0].item;
+            const lastItem = chunk[chunk.length - 1].item;
+
+            const startMoment = firstItem.startMoment;
+            const endMoment = lastItem.endMoment;
+
+            const nightsSet = new Set();
+            let hasFlight = false;
+            let maxDist = 0;
+            const routeCities = [];
+            const routeCountries = [];
+            const mapPoints = [];
+
+            const cityNights = {};
+            const cityDurationMs = {};
+            const cityVisitCounts = {};
+            const cityAirportVisitCounts = {};
+            const firstSeenInTrip = {};
+
+            const countryNights = {};
+            const countryDurationMs = {};
+            const countryVisitCounts = {};
+            const countryAirportVisitCounts = {};
+            const firstSeenCountry = {};
+
+            for (const p of chunk) {
+                if (p.distFromHome > maxDist) maxDist = p.distFromHome;
+                if (p.isSignificantFlight) hasFlight = true;
+
+                if (p.loc.lat !== null && p.loc.lng !== null) {
+                    mapPoints.push({ lat: p.loc.lat, lng: p.loc.lng });
+                }
+                if (p.loc.pathPoints && p.loc.pathPoints.length > 0) {
+                    for (const pt of p.loc.pathPoints) {
+                        const ptLat = pt.lat !== undefined ? pt.lat : (pt.latE7 ? pt.latE7 / 1e7 : null);
+                        const ptLng = pt.lng !== undefined ? pt.lng : (pt.lngE7 ? pt.lngE7 / 1e7 : null);
+                        if (ptLat !== null && ptLng !== null) mapPoints.push({ lat: ptLat, lng: ptLng });
+                    }
+                }
+
+                const dur = p.item.endMoment.diff(p.item.startMoment, 'minutes');
+                const startHour = p.item.startMoment.hour();
+                const endHour = p.item.endMoment.hour();
+                const spansNight = (dur >= 180 && (
+                    p.item.startMoment.clone().startOf('day').isBefore(p.item.endMoment.clone().startOf('day')) ||
+                    startHour >= 22 || endHour <= 6 ||
+                    (startHour <= 4 && endHour >= 6) ||
+                    (dur >= 360 && (startHour <= 7 || endHour >= 21 || startHour >= 20 || endHour <= 8)) ||
+                    dur >= 480
+                ));
+
+                // Real overnight stay: must span nighttime hours, and must NOT be an airport terminal layover
+                if (!p.loc.isActivity && p.loc.lat !== null && spansNight && !p.loc.isAirport) {
+                    const nightDate = (startHour < 6) ? p.item.startMoment.clone().subtract(1, 'day').format('YYYY-MM-DD') : p.item.startMoment.format('YYYY-MM-DD');
+                    nightsSet.add(nightDate);
+                    if (p.loc.city && p.loc.city !== "Unknown City") {
+                        cityNights[p.loc.city] = (cityNights[p.loc.city] || 0) + 1;
+                    }
+                    if (p.loc.country && p.loc.country !== "Unknown Country") {
+                        let cntry = p.loc.country;
+                        if (cntry === "Türkiye") cntry = "Turkey";
+                        countryNights[cntry] = (countryNights[cntry] || 0) + 1;
+                    }
+                }
+
+                if (p.loc.city && p.loc.city !== "Unknown City") {
+                    cityDurationMs[p.loc.city] = (cityDurationMs[p.loc.city] || 0) + dur;
+                    cityVisitCounts[p.loc.city] = (cityVisitCounts[p.loc.city] || 0) + 1;
+                    if (p.loc.isAirport) {
+                        cityAirportVisitCounts[p.loc.city] = (cityAirportVisitCounts[p.loc.city] || 0) + 1;
+                    }
+                    if (!firstSeenInTrip[p.loc.city]) firstSeenInTrip[p.loc.city] = p.item.startMs;
+
+                    // Route breadcrumbs: only include actual stops (overnight stay, or visit >= 60 mins)
+                    if (!p.loc.isActivity && (dur >= 60 || (cityNights[p.loc.city] || 0) >= 1 || p.loc.isExplicitHome)) {
+                        const lastRouteCity = routeCities.length > 0 ? routeCities[routeCities.length - 1] : null;
+                        if (lastRouteCity !== p.loc.city) {
+                            // Filter out immediate bouncing between adjacent suburbs
+                            if (routeCities.length >= 2 && routeCities[routeCities.length - 2] === p.loc.city) {
+                                // Suburb bounce, ignore
+                            } else {
+                                routeCities.push(p.loc.city);
+                            }
+                        }
+                    }
+                }
+
+                if (p.loc.country && p.loc.country !== "Unknown Country") {
+                    let cntry = p.loc.country;
+                    if (cntry === "Türkiye") cntry = "Turkey";
+                    countryDurationMs[cntry] = (countryDurationMs[cntry] || 0) + dur;
+                    countryVisitCounts[cntry] = (countryVisitCounts[cntry] || 0) + 1;
+                    if (p.loc.isAirport) {
+                        countryAirportVisitCounts[cntry] = (countryAirportVisitCounts[cntry] || 0) + 1;
+                    }
+                    if (!firstSeenCountry[cntry]) firstSeenCountry[cntry] = p.item.startMs;
+                    if (!routeCountries.includes(cntry)) {
+                        routeCountries.push(cntry);
+                    }
+                }
+            }
+
+            // Calculation of nights: must have at least 1 night stay
+            const spanDays = Math.max(1, Math.round(endMoment.diff(startMoment, 'days')));
+            const totalNights = Math.max(nightsSet.size, spanDays);
+
+            // Eliminate 0-day / 0-night trips (e.g. false-positive 1-segment activities or day commutes)
+            if (totalNights < 1) {
+                continue;
+            }
+
+            const home = chunk[0].home;
+            const homeCountry = home?.country || "Taiwan";
+            const homeCity = home?.city;
+
+            // Destination countries (exclude home, and exclude airport-only transit layovers)
+            const nonAirportCountries = routeCountries.filter(cntry => {
+                if (cntry === homeCountry) return false;
+                const total = countryVisitCounts[cntry] || 0;
+                const air = countryAirportVisitCounts[cntry] || 0;
+                return air < total; // has at least one visit outside the airport
+            });
+
+            // Clean route countries for flags: filter out airport-only layovers if real destinations exist
+            const cleanRouteCountries = routeCountries.filter(cntry => {
+                if (nonAirportCountries.length > 0 && (countryAirportVisitCounts[cntry] || 0) === (countryVisitCounts[cntry] || 0)) {
+                    return false;
+                }
+                return true;
+            });
+
+            // Multi-country qualification:
+            // A country qualifies as a major destination if traveler stayed >= 2 nights, OR >= 24h duration, OR (>= 1 night and >= 12h duration)
+            const qualifyingCountries = nonAirportCountries.filter(cntry => {
+                const n = countryNights[cntry] || 0;
+                const hrs = (countryDurationMs[cntry] || 0) / 60;
+                return n >= 2 || hrs >= 24 || (n >= 1 && hrs >= 12);
+            });
+
+            // Filter out home city
+            const candidateCities = Object.keys(cityDurationMs).filter(c => !homeCity || c !== homeCity);
+
+            // Filter out airport layover cities where every single visit in that city was at the airport
+            const nonAirportCities = candidateCities.filter(c => {
+                const total = cityVisitCounts[c] || 0;
+                const air = cityAirportVisitCounts[c] || 0;
+                return air < total; // has at least one visit outside the airport
+            });
+
+            const eligibleCities = nonAirportCities.length > 0 ? nonAirportCities : candidateCities;
+
+            // Filter route breadcrumbs to remove airport layover cities if real destinations exist
+            const cleanRouteCities = routeCities.filter(c => {
+                if (nonAirportCities.length > 0 && (cityAirportVisitCounts[c] || 0) === (cityVisitCounts[c] || 0)) return false;
+                return true;
+            });
+
+            let title = "";
+            const isDomestic = routeCountries.length === 0 || (routeCountries.length === 1 && routeCountries[0] === homeCountry);
+
+            if (qualifyingCountries.length >= 2) {
+                // Multi-country international journey: Title with the top countries!
+                const rankedCountries = [...qualifyingCountries].sort((a, b) => {
+                    const nA = countryNights[a] || 0;
+                    const nB = countryNights[b] || 0;
+                    if (nB !== nA) return nB - nA;
+                    return (countryDurationMs[b] || 0) - (countryDurationMs[a] || 0);
+                });
+
+                // Pick top 2 (or top 3 if 3rd country also had >= 3 nights)
+                const numToPick = (rankedCountries.length >= 3 && (countryNights[rankedCountries[2]] || 0) >= 3) ? 3 : 2;
+                const chosen = rankedCountries.slice(0, numToPick);
+
+                // Order chosen countries chronologically by first visit in trip
+                chosen.sort((a, b) => (firstSeenCountry[a] || 0) - (firstSeenCountry[b] || 0));
+                title = chosen.map(c => formatCountryName(c)).join(' · ');
+            } else {
+                // Single-country or domestic journey: Title with the top cities!
+                const rankedCities = [...eligibleCities].sort((a, b) => {
+                    const nA = cityNights[a] || 0;
+                    const nB = cityNights[b] || 0;
+                    if (nB !== nA) return nB - nA;
+                    return (cityDurationMs[b] || 0) - (cityDurationMs[a] || 0);
+                });
+
+                let titleCandidates = [];
+                if (rankedCities.length > 0) {
+                    titleCandidates.push(rankedCities[0]);
+                    if (rankedCities.length >= 2) {
+                        const topCityHasNights = (cityNights[rankedCities[0]] || 0) >= 1;
+                        let secondCity = null;
+                        for (let ci = 1; ci < rankedCities.length; ci++) {
+                            const c2 = rankedCities[ci];
+                            const c2HasNights = (cityNights[c2] || 0) >= 1;
+                            const c2Hours = (cityDurationMs[c2] || 0) / 3600000;
+                            if (topCityHasNights && !c2HasNights && c2Hours < 6) continue;
+                            secondCity = c2;
+                            break;
+                        }
+                        if (secondCity) {
+                            titleCandidates.push(secondCity);
+                        }
+                    }
+                }
+
+                if (titleCandidates.length === 1) {
+                    title = titleCandidates[0];
+                } else if (titleCandidates.length >= 2) {
+                    titleCandidates.sort((a, b) => (firstSeenInTrip[a] || 0) - (firstSeenInTrip[b] || 0));
+                    title = titleCandidates.join(' · ');
+                } else if (!isDomestic) {
+                    const destCountries = nonAirportCountries.length > 0 ? nonAirportCountries : routeCountries.filter(c => c !== homeCountry);
+                    if (destCountries.length > 0) {
+                        title = destCountries.map(c => formatCountryName(c)).slice(0, 2).join(' · ');
+                    } else {
+                        title = "International Journey";
+                    }
+                } else {
+                    title = "Journey";
+                }
+            }
+
+            const flags = (cleanRouteCountries.length > 0 ? cleanRouteCountries : (routeCountries.length > 0 ? routeCountries : [homeCountry]))
+                .map(c => getCountryFlagEmoji(c))
+                .filter(Boolean);
+            const uniqueFlags = [...new Set(flags)];
+
+            // Duration tags aligned with nights brackets
+            let durationTag = "1–2 nights";
+            if (totalNights >= 15) durationTag = "15+ nights";
+            else if (totalNights >= 8) durationTag = "8–14 nights";
+            else if (totalNights >= 3) durationTag = "3–7 nights";
+            else durationTag = "1–2 nights";
+
+            const nightLabel = totalNights === 1 ? "1 night" : `${totalNights} nights`;
+
+            trips.push({
+                id: `trip_${startMoment.valueOf()}`,
+                startDate: startMoment.format("YYYY-MM-DD"),
+                endDate: endMoment.format("YYYY-MM-DD"),
+                dateDisplay: `${startMoment.format("MMM D, YYYY")} – ${endMoment.format("MMM D, YYYY")}`,
+                year: startMoment.year(),
+                title,
+                flags: uniqueFlags,
+                totalNights,
+                nightLabel,
+                durationTag,
+                hasFlight,
+                routeCities: (typeof cleanRouteCities !== 'undefined' && cleanRouteCities.length > 0 ? cleanRouteCities : routeCities).slice(0, 7),
+                mapPoints
+            });
+        }
+
+        trips.sort((a, b) => moment(b.startDate).valueOf() - moment(a.startDate).valueOf());
+        cachedTrips = trips;
+        return trips;
+    }
+
+    // Step 3: Render Trips View (with Year, Duration, Flight & Search Filters)
+    function renderTripsView() {
+        const container = document.getElementById('tripsListContainer');
+        const badge = document.getElementById('tripsCountBadge');
+        if (!container) return;
+
+        const trips = detectTrips();
+        if (trips.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #94a3b8; padding: 40px 15px; font-size: 13px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🧳</div>
+                    <strong>No trips detected yet.</strong>
+                    <p style="margin-top: 6px; font-size: 12px; color: #64748b;">
+                        Load your timeline data or ensure your places cache is loaded to identify your journeys.
+                    </p>
+                </div>
+            `;
+            if (badge) badge.textContent = "0 trips";
+            return;
+        }
+
+        // Dynamically populate Year Dropdown
+        const yearSelect = document.getElementById('tripYearFilter');
+        if (yearSelect) {
+            const availableYears = [...new Set(trips.map(t => t.year))].sort((a, b) => b - a);
+            const signature = availableYears.join(',');
+            if (yearSelect.dataset.signature !== signature) {
+                let opts = '<option value="all">All Years</option>';
+                for (const y of availableYears) {
+                    opts += `<option value="${y}" ${String(y) === String(tripFilterState.year) ? 'selected' : ''}>${y}</option>`;
+                }
+                yearSelect.innerHTML = opts;
+                yearSelect.dataset.signature = signature;
+                yearSelect.value = tripFilterState.year;
+            }
+        }
+
+        const query = tripFilterState.search.trim().toLowerCase();
+
+        const filteredTrips = trips.filter(t => {
+            // Search filter
+            if (query) {
+                const matches = t.title.toLowerCase().includes(query) ||
+                                t.year.toString().includes(query) ||
+                                t.dateDisplay.toLowerCase().includes(query) ||
+                                t.routeCities.some(c => c.toLowerCase().includes(query));
+                if (!matches) return false;
+            }
+
+            // Year filter
+            if (tripFilterState.year !== 'all') {
+                if (t.year.toString() !== tripFilterState.year) return false;
+            }
+
+            // Duration checkboxes filter
+            const bucket = getTripDurationBucket(t.totalNights);
+            if (!tripFilterState.durations.has(bucket)) return false;
+
+            // Flights only filter
+            if (tripFilterState.flightsOnly) {
+                if (!t.hasFlight) return false;
+            }
+
+            return true;
+        });
+
+        if (badge) badge.textContent = `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'}`;
+
+        if (filteredTrips.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #94a3b8; padding: 35px 10px; font-size: 13px;">
+                    No journeys match the selected filters.
+                </div>
+            `;
+            return;
+        }
+
+        const byYear = {};
+        for (const trip of filteredTrips) {
+            if (!byYear[trip.year]) byYear[trip.year] = [];
+            byYear[trip.year].push(trip);
+        }
+
+        const sortedYears = Object.keys(byYear).sort((a, b) => b - a);
+        let html = '';
+
+        for (const year of sortedYears) {
+            html += `<div class="trip-year-group">`;
+            html += `
+                <div class="trip-year-header">
+                    <span class="year-badge">${year}</span>
+                    <div class="year-divider-line"></div>
+                    <span class="year-count-badge">${byYear[year].length} trip${byYear[year].length === 1 ? '' : 's'}</span>
+                </div>
+            `;
+
+            for (const trip of byYear[year]) {
+                const flagsHtml = trip.flags.map(f => `<span>${f}</span>`).join(' ');
+                const routeHtml = trip.routeCities.length > 0
+                    ? `<div class="trip-card-route">${trip.routeCities.join('<span class="arrow">→</span>')}</div>`
+                    : '';
+
+                html += `
+                    <div class="trip-card" data-trip-id="${trip.id}">
+                        <div class="trip-card-header">
+                            <div class="trip-card-title">${escapeHtml(trip.title)}</div>
+                            <div class="trip-card-flags">
+                                ${flagsHtml}
+                                <span class="trip-chevron">›</span>
+                            </div>
+                        </div>
+                        <div class="trip-card-dates">${trip.dateDisplay}</div>
+                        <div class="trip-card-badges">
+                            <span class="trip-badge badge-duration">${trip.durationTag}</span>
+                            <span class="trip-badge badge-nights">${trip.nightLabel}</span>
+                            ${trip.hasFlight ? '<span class="trip-badge badge-flight">✈️ Flight</span>' : ''}
+                        </div>
+                        ${routeHtml}
+                        <div class="trip-card-actions">
+                            <button class="trip-action-btn btn-view-map" data-trip-id="${trip.id}">🗺️ Preview Map</button>
+                            <button class="trip-action-btn btn-open-timeline" data-start="${trip.startDate}" data-end="${trip.endDate}">📅 Open in Timeline ↗</button>
+                        </div>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+
+        container.querySelectorAll('.trip-card').forEach(card => {
+            const tripId = card.dataset.tripId;
+            const trip = trips.find(t => t.id === tripId);
+
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-open-timeline')) return;
+                container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
+                card.classList.add('active-trip');
+                if (trip) showTripOnMap(trip);
+            });
+        });
+
+        container.querySelectorAll('.btn-open-timeline').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const start = btn.dataset.start;
+                const end = btn.dataset.end;
+                if (typeof clearTripMap === 'function') clearTripMap();
+                showSidebarTab('date');
+                document.getElementById('startDatePicker').value = start;
+                document.getElementById('endDatePicker').value = end;
+                loadTimelineDataInDateRange(start, end);
+            });
+        });
+    }
+
+    // Step 4: Show Trip on Map
+    function showTripOnMap(trip) {
+        if (!map) return;
+        clearMap();
+        if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+
+        if (tripMapPolyline) {
+            tripMapPolyline.setMap(null);
+            tripMapPolyline = null;
+        }
+        tripMapMarkers.forEach(m => m.setMap ? m.setMap(null) : (m.map = null));
+        tripMapMarkers = [];
+
+        if (!trip.mapPoints || trip.mapPoints.length === 0) return;
+
+        const bounds = new google.maps.LatLngBounds();
+        const validPath = [];
+
+        for (const pt of trip.mapPoints) {
+            if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                const pos = new google.maps.LatLng(pt.lat, pt.lng);
+                validPath.push(pos);
+                bounds.extend(pos);
+            }
+        }
+
+        if (validPath.length === 0) return;
+
+        tripMapPolyline = new google.maps.Polyline({
+            path: validPath,
+            geodesic: true,
+            strokeColor: '#3b82f6',
+            strokeOpacity: 0.85,
+            strokeWeight: 4,
+            map: map
+        });
+
+        const startPos = validPath[0];
+        const endPos = validPath[validPath.length - 1];
+
+        const startMarker = new google.maps.Marker({
+            position: startPos,
+            map: map,
+            title: `${trip.title} (Start)`,
+            label: "A"
+        });
+        tripMapMarkers.push(startMarker);
+
+        if (validPath.length > 1) {
+            const endMarker = new google.maps.Marker({
+                position: endPos,
+                map: map,
+                title: `${trip.title} (End)`,
+                label: "B"
+            });
+            tripMapMarkers.push(endMarker);
+        }
+
+        map.fitBounds(bounds, 50);
+    }
+
+    // Home Map Marker & InfoWindow management
+    let homeMapMarker = null;
+    let homeMapInfoWindow = null;
+
+    function clearHomeMarker() {
+        if (homeMapMarker) {
+            if (typeof homeMapMarker.setMap === 'function') {
+                homeMapMarker.setMap(null);
+            } else {
+                homeMapMarker.map = null;
+            }
+            homeMapMarker = null;
+        }
+        if (homeMapInfoWindow) {
+            homeMapInfoWindow.close();
+            homeMapInfoWindow = null;
+        }
+    }
+    window.clearHomeMarker = clearHomeMarker;
+
+    function showHomeOnMap(homeInfo) {
+        if (!map || !homeInfo || isNaN(homeInfo.lat) || isNaN(homeInfo.lng)) return;
+        clearHomeMarker();
+
+        const position = { lat: homeInfo.lat, lng: homeInfo.lng };
+        let marker = null;
+
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement && google.maps.marker.PinElement) {
+            try {
+                const pin = new google.maps.marker.PinElement({
+                    background: '#6366f1',
+                    borderColor: '#4338ca',
+                    glyph: '🏠',
+                    scale: 1.2
+                });
+                marker = new google.maps.marker.AdvancedMarkerElement({
+                    position: position,
+                    map: map,
+                    title: homeInfo.title || 'Home',
+                    content: pin.element
+                });
+            } catch (e) {
+                console.warn("Could not create AdvancedMarkerElement for home, using default Marker:", e);
+            }
+        }
+
+        if (!marker) {
+            marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: homeInfo.title || 'Home',
+                animation: google.maps.Animation.DROP
+            });
+        }
+
+        homeMapMarker = marker;
+
+        const infoContent = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 4px 2px; max-width: 250px;">
+                <div style="font-weight: 700; font-size: 14px; color: #1e293b; margin-bottom: 3px;">🏠 ${escapeHtml(homeInfo.title || 'Home')}</div>
+                ${homeInfo.address ? `<div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">${escapeHtml(homeInfo.address)}</div>` : ''}
+                ${homeInfo.dates ? `<div style="font-size: 11px; color: #94a3b8;">🗓️ ${escapeHtml(homeInfo.dates)}</div>` : ''}
+            </div>
+        `;
+
+        homeMapInfoWindow = new google.maps.InfoWindow({ content: infoContent });
+        homeMapInfoWindow.open(map, marker);
+
+        if (typeof marker.addListener === 'function') {
+            marker.addListener('click', () => {
+                homeMapInfoWindow.open(map, marker);
+            });
+        }
+    }
+
+    // Step 5: Render Places Lived View (with Confirmation Dialog & Sorted Newest First)
+    function renderPlacesLivedView() {
+        const container = document.getElementById('placesLivedListContainer');
+        if (!container) return;
+
+        const residences = detectPlacesLived();
+        if (residences.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; color: #6c757d; padding: 40px 15px; font-size: 13px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🏠</div>
+                    <strong>No places lived detected yet.</strong>
+                    <p style="margin-top: 6px; font-size: 12px; color: #adb5bd;">
+                        Places lived are detected when you stay overnight at a location for at least 14 nights spanning a month or more.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        for (const res of residences) {
+            const locationTitle = formatLocationTitle(res.city, res.state, res.country, res.formattedAddress);
+            const streetDisplay = res.street && res.street !== "Unknown Location" ? res.street : (res.formattedAddress || 'Primary Residence');
+
+            html += `
+                <div class="lived-card" data-key="${res.key}">
+                    <div class="lived-card-top">
+                        <div class="lived-card-title-col">
+                            <div class="lived-card-city">${escapeHtml(locationTitle)}</div>
+                            <div class="lived-card-address">${escapeHtml(streetDisplay)}</div>
+                        </div>
+                        <span class="lived-card-nights-badge">${res.nightsCount} nights</span>
+                    </div>
+                    <div class="lived-card-dates">
+                        <span style="font-size: 14px;">🗓️</span>
+                        <span>${res.firstDateStr} – ${res.lastDateStr}</span>
+                    </div>
+                    <div class="lived-card-actions">
+                        <button class="lived-action-btn btn-center-home" data-lat="${res.lat}" data-lng="${res.lng}" data-title="${escapeHtml(locationTitle)}" data-address="${escapeHtml(streetDisplay)}" data-dates="${escapeHtml(res.firstDateStr + ' – ' + res.lastDateStr)}">📍 Center on Map</button>
+                        <button class="lived-action-btn btn-danger btn-exclude-home" data-key="${res.key}">✕ Not a Home</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+        container.querySelectorAll('.btn-center-home').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lat = parseFloat(btn.dataset.lat);
+                const lng = parseFloat(btn.dataset.lng);
+                const title = btn.dataset.title || 'Home';
+                const address = btn.dataset.address || '';
+                const dates = btn.dataset.dates || '';
+                if (!isNaN(lat) && !isNaN(lng) && map) {
+                    showHomeOnMap({ lat, lng, title, address, dates });
+                    map.setCenter({ lat, lng });
+                    map.setZoom(16);
+                }
+            });
+        });
+
+        // "Not a Home" with Confirmation Dialog
+        container.querySelectorAll('.btn-exclude-home').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const key = btn.dataset.key;
+                const card = btn.closest('.lived-card');
+                const placeTitle = card ? (card.querySelector('.lived-card-city')?.textContent || 'this location') : 'this location';
+
+                const confirmed = window.confirm(`Remove "${placeTitle}" from Places Lived?\n\nThis location will no longer be considered a home, and overnight stays here will be treated as travel.`);
+                if (!confirmed) return;
+
+                const list = getExcludedResidences();
+                if (!list.includes(key)) {
+                    list.push(key);
+                    setExcludedResidences(list);
+                }
+                cachedPlacesLived = null;
+                cachedTrips = null;
+                renderPlacesLivedView();
+                renderTripsView();
+            });
+        });
+    }
+
+    // Step 6: Initialize Trips & Places Lived (Search, Year, Duration, Flights filters)
+    function initTripsAndPlacesLived() {
+        const searchInput = document.getElementById('tripSearchInput');
+        const clearBtn = document.getElementById('clearTripSearchBtn');
+        const yearSelect = document.getElementById('tripYearFilter');
+        const durationSelect = document.getElementById('tripDurationFilter');
+        const flightToggle = document.getElementById('tripFlightToggleBtn');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                tripFilterState.search = e.target.value;
+                if (clearBtn) clearBtn.style.display = tripFilterState.search ? 'block' : 'none';
+                renderTripsView();
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (searchInput) {
+                    searchInput.value = '';
+                    tripFilterState.search = '';
+                    clearBtn.style.display = 'none';
+                    renderTripsView();
+                }
+            });
+        }
+
+        if (yearSelect) {
+            yearSelect.addEventListener('change', (e) => {
+                tripFilterState.year = e.target.value;
+                renderTripsView();
+            });
+        }
+
+        // Duration Dropdown Toggle & Checkbox Listeners
+        const durationBtn = document.getElementById('tripDurationDropdownBtn');
+        const durationMenu = document.getElementById('tripDurationMenu');
+        const selectAllBtn = document.getElementById('durationSelectAllBtn');
+        const clearAllBtn = document.getElementById('durationClearAllBtn');
+
+        if (durationBtn && durationMenu) {
+            durationBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isShowing = durationMenu.classList.contains('show');
+                durationMenu.classList.toggle('show', !isShowing);
+                durationBtn.classList.toggle('open', !isShowing);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#tripDurationDropdownContainer')) {
+                    durationMenu.classList.remove('show');
+                    durationBtn.classList.remove('open');
+                }
+            });
+        }
+
+        const durationCheckboxes = document.querySelectorAll('.duration-checkbox');
+        durationCheckboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (cb.checked) {
+                    tripFilterState.durations.add(cb.value);
+                } else {
+                    tripFilterState.durations.delete(cb.value);
+                }
+                updateDurationDropdownLabel();
+                renderTripsView();
+            });
+        });
+
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                durationCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                    tripFilterState.durations.add(cb.value);
+                });
+                updateDurationDropdownLabel();
+                renderTripsView();
+            });
+        }
+
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                durationCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                    tripFilterState.durations.delete(cb.value);
+                });
+                updateDurationDropdownLabel();
+                renderTripsView();
+            });
+        }
+
+        if (flightToggle) {
+            flightToggle.addEventListener('click', () => {
+                tripFilterState.flightsOnly = !tripFilterState.flightsOnly;
+                flightToggle.classList.toggle('active', tripFilterState.flightsOnly);
+                renderTripsView();
+            });
+        }
+    }
+
+
+
     async function initializeApp() {
         try {
             const resolvedApiKey = await resolveGoogleMapsApiKey();
@@ -9090,11 +11471,15 @@ Departed: ${end}</description>
             initSearch();
             initCurrentLocationButton();
             initEditModal();
+            initTripsAndPlacesLived();
             showSidebarTab('date');
             updateApiCallDisplay();
 
             // --- Attach event listeners ---
             document.getElementById('calendarBtn').addEventListener('click', () => showSidebarTab('date'));
+            document.getElementById('tripsBtn').addEventListener('click', () => showSidebarTab('trips'));
+            document.getElementById('placesLivedBtn').addEventListener('click', () => showSidebarTab('placesLived'));
+            document.getElementById('searchBtn').addEventListener('click', () => showSidebarTab('search'));
             document.getElementById('areaBtn').addEventListener('click', () => showSidebarTab('area'));
             document.getElementById('findInAreaBtn').addEventListener('click', findPlacesInMapArea);
             document.getElementById('newAreaSearchBtn').addEventListener('click', () => {
