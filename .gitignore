@@ -5,3 +5,5 @@
 /*.txt
 /*.zip
 timeline.local.js
+node_modules/
+scratch/

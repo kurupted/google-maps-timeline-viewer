@@ -2041,6 +2041,36 @@
             margin: 0 4px;
             font-weight: bold;
         }
+        .trip-card-flight-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #0284c7;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 5px 9px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .trip-card-flight-row .flight-icon {
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .trip-card-flight-row .flight-route {
+            word-break: break-word;
+            line-height: 1.35;
+        }
+        .trip-card-flight-row .flight-leg-arrow {
+            color: #0284c7;
+            margin: 0 3px;
+            font-weight: bold;
+        }
+        .trip-card-flight-row .flight-sep {
+            color: #94a3b8;
+            margin: 0 5px;
+        }
         .trip-card-actions {
             margin-top: 12px;
             padding-top: 10px;
@@ -2342,7 +2372,7 @@
                             <div class="trips-search-row">
                                 <div class="trips-search-bar">
                                     <span class="search-icon">🔍</span>
-                                    <input type="text" id="tripSearchInput" placeholder="Search trips by city, country, or year..." autocomplete="off">
+                                    <input type="text" id="tripSearchInput" placeholder="Search by city, country, or year..." autocomplete="off">
                                     <span id="clearTripSearchBtn" class="clear-icon">&times;</span>
                                 </div>
                                 <span id="tripsCountBadge" class="trips-count-badge">0 trips</span>
@@ -5356,6 +5386,20 @@
         return c.trim();
     }
 
+    function resolveAirportInfo(lat, lng, hintName = '', hintCity = '') {
+        if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) return null;
+        let cleanCity = hintCity && hintCity !== 'Unknown City' ? hintCity : '';
+        if (!cleanCity && hintName) {
+            cleanCity = hintName.replace(/\b(airport|international|regional|airfield|intercontinental|terminal|station)\b/gi, '').trim();
+        }
+        return {
+            city: cleanCity || 'Airport',
+            name: hintName || (cleanCity ? `${cleanCity} Airport` : 'Airport'),
+            lat,
+            lng
+        };
+    }
+
     // --- Location Extraction Helper ---
     function extractLocationDetails(addressComponents) {
         let locality = null;
@@ -7487,7 +7531,7 @@
                             globalMaxDate = endDate;
                             // Capture location from the latest item
                             if (segment.visit?.topCandidate?.placeLocation?.latLng) {
-                                const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
                                 if (latLngMatch) {
                                     const lat = parseFloat(latLngMatch[1]);
                                     const lng = parseFloat(latLngMatch[2]);
@@ -7496,7 +7540,7 @@
                                     }
                                 }
                             } else if (segment.activity?.end?.latLng) {
-                                const latLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                const latLngMatch = segment.activity.end.latLng.match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
                                 if (latLngMatch) {
                                     const lat = parseFloat(latLngMatch[1]);
                                     const lng = parseFloat(latLngMatch[2]);
@@ -7510,7 +7554,7 @@
                         if (segment.timelinePath) {
                             segment.timelinePath.forEach(point => {
                                 try {
-                                    const latLngMatch = point.point?.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                    const latLngMatch = point.point?.match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
                                     const time = point.time;
                                     if (latLngMatch && time) {
                                         const lat = parseFloat(latLngMatch[1]);
@@ -7540,7 +7584,7 @@
 
                         // Process Place Visit Segment
                         if (segment.visit?.topCandidate?.placeLocation?.latLng && segment.visit?.topCandidate?.placeId) {
-                            const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                            const latLngMatch = segment.visit.topCandidate.placeLocation.latLng.match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
                             if (!latLngMatch) return null;
                             const lat = parseFloat(latLngMatch[1]);
                             const lng = parseFloat(latLngMatch[2]);
@@ -7562,14 +7606,14 @@
                         } else if (segment.activity) {
                             let startLat, startLng, endLat, endLng;
                             if (segment.activity.start?.latLng) {
-                                const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                const startLatLngMatch = segment.activity.start.latLng.match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
                                 if (startLatLngMatch) {
                                     startLat = parseFloat(startLatLngMatch[1]);
                                     startLng = parseFloat(startLatLngMatch[2]);
                                 }
                             }
                             if (segment.activity.end?.latLng) {
-                                const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+\.\d+)\s*°,\s*(-?\d+\.\d+)/);
+                                const endLatLngMatch = segment.activity.end.latLng.match(/(-?\d+(?:\.\d+)?)[^\d-]+(-?\d+(?:\.\d+)?)/);
                                 if (endLatLngMatch) {
                                     endLat = parseFloat(endLatLngMatch[1]);
                                     endLng = parseFloat(endLatLngMatch[2]);
@@ -10301,8 +10345,13 @@ Departed: ${end}</description>
     let tripMapPolyline = null;
     let tripMapPolylines = [];
     let tripMapMarkers = [];
+    let tripMapInfoWindow = null;
 
     function clearTripMap() {
+        if (tripMapInfoWindow) {
+            tripMapInfoWindow.close();
+            tripMapInfoWindow = null;
+        }
         if (tripMapPolyline) {
             tripMapPolyline.setMap(null);
             tripMapPolyline = null;
@@ -11142,9 +11191,13 @@ Departed: ${end}</description>
                 ]);
             }
 
-            // Flight segment check: only true flight if covers significant distance (>= 120km)
+            // Flight segment check: covers significant distance (>= 120km)
             let isSignificantFlight = false;
             if (loc.isActivity && loc.activityType === "FLYING") {
+                let maxSpanDist = 0;
+                if (loc.lat !== null && loc.endLat !== null) {
+                    maxSpanDist = Math.max(maxSpanDist, computeHaversineDistance([{ lat: loc.lat, lng: loc.lng }, { lat: loc.endLat, lng: loc.endLng }]));
+                }
                 if (loc.pathPoints && loc.pathPoints.length >= 2) {
                     const p1 = loc.pathPoints[0];
                     const p2 = loc.pathPoints[loc.pathPoints.length - 1];
@@ -11153,15 +11206,13 @@ Departed: ${end}</description>
                     const lat2 = p2.lat ?? (p2.latE7 ? p2.latE7 / 1e7 : null);
                     const lng2 = p2.lng ?? (p2.lngE7 ? p2.lngE7 / 1e7 : null);
                     if (lat1 !== null && lat2 !== null) {
-                        const fDist = computeHaversineDistance([{ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 }]);
-                        if (fDist >= 120000) isSignificantFlight = true;
-                    } else {
-                        isSignificantFlight = true;
+                        maxSpanDist = Math.max(maxSpanDist, computeHaversineDistance([{ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 }]));
                     }
-                } else if (loc.lat !== null && loc.endLat !== null) {
-                    const fDist = computeHaversineDistance([{ lat: loc.lat, lng: loc.lng }, { lat: loc.endLat, lng: loc.endLng }]);
-                    if (fDist >= 120000) isSignificantFlight = true;
-                } else if (distFromHome >= 100000 || endDistFromHome >= 100000) {
+                    if (loc.lat !== null && lat2 !== null) {
+                        maxSpanDist = Math.max(maxSpanDist, computeHaversineDistance([{ lat: loc.lat, lng: loc.lng }, { lat: lat2, lng: lng2 }]));
+                    }
+                }
+                if (maxSpanDist >= 120000 || distFromHome >= 100000 || endDistFromHome >= 100000) {
                     isSignificantFlight = true;
                 }
             }
@@ -11213,9 +11264,11 @@ Departed: ${end}</description>
                 }
             } else {
                 if (currentChunk) {
+                    const prevP = currentChunk[currentChunk.length - 1];
+                    const gapFromPrevHours = (p.item.startMs - prevP.item.endMs) / 3600000;
                     const nextAway = processedItems.slice(i, i + 10).find(x => x.isAway);
                     const hoursAtHome = nextAway ? (nextAway.item.startMs - p.item.endMs) / 3600000 : 999;
-                    if (nextAway && hoursAtHome < 18) {
+                    if (gapFromPrevHours < 36 && nextAway && hoursAtHome < 18) {
                         currentChunk.push(p);
                     } else {
                         tripChunks.push(currentChunk);
@@ -11240,6 +11293,14 @@ Departed: ${end}</description>
             const routeCities = [];
             const routeCountries = [];
             const mapPoints = [];
+            const flights = [];
+            const airportStops = [];
+            const groundPaths = [];
+            let currentGroundPath = [];
+
+            const home = chunk[0].home;
+            const homeCountry = home?.country || "Taiwan";
+            const homeCity = home?.city;
 
             const cityNights = {};
             const cityDurationMs = {};
@@ -11253,17 +11314,122 @@ Departed: ${end}</description>
             const countryAirportVisitCounts = {};
             const firstSeenCountry = {};
 
-            for (const p of chunk) {
+            for (let i = 0; i < chunk.length; i++) {
+                const p = chunk[i];
                 if (p.distFromHome > maxDist) maxDist = p.distFromHome;
-                if (p.isSignificantFlight) hasFlight = true;
+
+                // Flight segment detection
+                if (p.isSignificantFlight || (p.loc.isActivity && p.loc.activityType === "FLYING")) {
+                    hasFlight = true;
+                    let startLat = p.loc.lat;
+                    let startLng = p.loc.lng;
+                    let endLat = p.loc.endLat;
+                    let endLng = p.loc.endLng;
+
+                    if (p.loc.pathPoints && p.loc.pathPoints.length >= 2) {
+                        const pt0 = p.loc.pathPoints[0];
+                        const ptLast = p.loc.pathPoints[p.loc.pathPoints.length - 1];
+                        const p0Lat = pt0.lat !== undefined ? pt0.lat : (pt0.latE7 ? pt0.latE7 / 1e7 : null);
+                        const p0Lng = pt0.lng !== undefined ? pt0.lng : (pt0.lngE7 ? pt0.lngE7 / 1e7 : null);
+                        const pLLat = ptLast.lat !== undefined ? ptLast.lat : (ptLast.latE7 ? ptLast.latE7 / 1e7 : null);
+                        const pLLng = ptLast.lng !== undefined ? ptLast.lng : (ptLast.lngE7 ? ptLast.lngE7 / 1e7 : null);
+                        if (startLat === null && p0Lat !== null) { startLat = p0Lat; startLng = p0Lng; }
+                        if (endLat === null && pLLat !== null) { endLat = pLLat; endLng = pLLng; }
+                    }
+
+                    if (startLat !== null && startLng !== null && endLat !== null && endLng !== null) {
+                        let fromAptName = '';
+                        let fromCity = p.loc.city && p.loc.city !== 'Unknown City' ? p.loc.city : '';
+                        let toAptName = '';
+                        let toCity = '';
+                        if (i > 0) {
+                            if (chunk[i - 1].loc.isAirport) fromAptName = chunk[i - 1].loc.name;
+                            if (!fromCity && chunk[i - 1].loc.city && chunk[i - 1].loc.city !== 'Unknown City') {
+                                fromCity = chunk[i - 1].loc.city;
+                            }
+                        } else if (homeCity && home) {
+                            if (computeHaversineDistance([{ lat: home.lat, lng: home.lng }, { lat: startLat, lng: startLng }]) < 60000) {
+                                fromCity = homeCity;
+                            }
+                        }
+                        if (i < chunk.length - 1) {
+                            if (chunk[i + 1].loc.isAirport) toAptName = chunk[i + 1].loc.name;
+                            if (chunk[i + 1].loc.city && chunk[i + 1].loc.city !== 'Unknown City') {
+                                toCity = chunk[i + 1].loc.city;
+                            }
+                        } else if (homeCity && home) {
+                            if (computeHaversineDistance([{ lat: home.lat, lng: home.lng }, { lat: endLat, lng: endLng }]) < 60000) {
+                                toCity = homeCity;
+                            }
+                        }
+
+                        const fromAirport = resolveAirportInfo(startLat, startLng, fromAptName, fromCity);
+                        const toAirport = resolveAirportInfo(endLat, endLng, toAptName, toCity);
+                        const distMeters = p.item.raw.activitySegment?.distance || computeHaversineDistance([{ lat: startLat, lng: startLng }, { lat: endLat, lng: endLng }]);
+
+                        flights.push({
+                            from: fromAirport,
+                            to: toAirport,
+                            fromCoord: { lat: startLat, lng: startLng },
+                            toCoord: { lat: endLat, lng: endLng },
+                            distanceKm: Math.round(distMeters / 1000),
+                            departureDate: p.item.startMoment.format("YYYY-MM-DD"),
+                            departureTime: p.item.startMoment.format("MMM D, h:mm A"),
+                            arrivalTime: p.item.endMoment.format("MMM D, h:mm A"),
+                            pathPoints: p.loc.pathPoints || []
+                        });
+                    }
+
+                    // Break ground path at flight
+                    if (currentGroundPath.length > 0) {
+                        groundPaths.push(currentGroundPath);
+                        currentGroundPath = [];
+                    }
+                    continue;
+                }
+
+                // Airport visit stop
+                if (p.loc.isAirport && !p.loc.isActivity && p.loc.lat !== null && p.loc.lng !== null) {
+                    const apt = resolveAirportInfo(p.loc.lat, p.loc.lng, p.loc.name, p.loc.city);
+                    if (apt && !airportStops.some(a => (Math.abs(a.lat - apt.lat) < 0.01 && Math.abs(a.lng - apt.lng) < 0.01) || (a.name && a.name === apt.name))) {
+                        airportStops.push(apt);
+                    }
+                }
+
+                // Filter out spurious GPS jumps to home while traveling away
+                let isSpuriousHome = false;
+                if (home && p.distFromHome < 25000) {
+                    let hasEarlierAway = false;
+                    for (let k = i - 1; k >= 0; k--) {
+                        if (chunk[k].distFromHome > 150000) { hasEarlierAway = true; break; }
+                    }
+                    let hasLaterAway = false;
+                    for (let k = i + 1; k < chunk.length; k++) {
+                        if (chunk[k].distFromHome > 150000) { hasLaterAway = true; break; }
+                    }
+                    if (hasEarlierAway && hasLaterAway) isSpuriousHome = true;
+                }
+
+                if (isSpuriousHome) {
+                    continue;
+                }
 
                 const pushMapPt = (pt) => {
                     if (!pt || isNaN(pt.lat) || isNaN(pt.lng)) return;
+                    if (home && p.distFromHome > 150000) {
+                        const dHome = computeHaversineDistance([{ lat: home.lat, lng: home.lng }, pt]);
+                        if (dHome < 50000) return;
+                    }
                     if (mapPoints.length > 0) {
                         const last = mapPoints[mapPoints.length - 1];
                         if (Math.abs(last.lat - pt.lat) < 1e-5 && Math.abs(last.lng - pt.lng) < 1e-5) return;
                     }
                     mapPoints.push(pt);
+                    if (currentGroundPath.length > 0) {
+                        const lastG = currentGroundPath[currentGroundPath.length - 1];
+                        if (Math.abs(lastG.lat - pt.lat) < 1e-5 && Math.abs(lastG.lng - pt.lng) < 1e-5) return;
+                    }
+                    currentGroundPath.push(pt);
                 };
 
                 if (p.loc.lat !== null && p.loc.lng !== null) {
@@ -11313,14 +11479,11 @@ Departed: ${end}</description>
                     }
                     if (!firstSeenInTrip[p.loc.city]) firstSeenInTrip[p.loc.city] = p.item.startMs;
 
-                    // Route breadcrumbs: only include actual stops (overnight stay, or visit >= 60 mins)
-                    if (!p.loc.isActivity && (dur >= 60 || (cityNights[p.loc.city] || 0) >= 1 || p.loc.isExplicitHome)) {
+                    // Route breadcrumbs: only include actual visited cities (exclude home city!)
+                    if (!p.loc.isActivity && p.loc.city !== homeCity && (dur >= 45 || (cityNights[p.loc.city] || 0) >= 1 || p.loc.isAirport)) {
                         const lastRouteCity = routeCities.length > 0 ? routeCities[routeCities.length - 1] : null;
                         if (lastRouteCity !== p.loc.city) {
-                            // Filter out immediate bouncing between adjacent suburbs
-                            if (routeCities.length >= 2 && routeCities[routeCities.length - 2] === p.loc.city) {
-                                // Suburb bounce, ignore
-                            } else {
+                            if (!(routeCities.length >= 2 && routeCities[routeCities.length - 2] === p.loc.city)) {
                                 routeCities.push(p.loc.city);
                             }
                         }
@@ -11342,18 +11505,22 @@ Departed: ${end}</description>
                 }
             }
 
-            // Calculation of nights: must have at least 1 night stay
-            const spanDays = Math.max(1, Math.round(endMoment.diff(startMoment, 'days')));
-            const totalNights = Math.max(nightsSet.size, spanDays);
-
-            // Eliminate 0-day / 0-night trips (e.g. false-positive 1-segment activities or day commutes)
-            if (totalNights < 1) {
-                continue;
+            if (currentGroundPath.length > 0) {
+                groundPaths.push(currentGroundPath);
             }
 
-            const home = chunk[0].home;
-            const homeCountry = home?.country || "Taiwan";
-            const homeCity = home?.city;
+            // Calculation of nights:
+            const spanDays = Math.max(0, Math.round(endMoment.diff(startMoment, 'days')));
+            let totalNights = Math.max(nightsSet.size, spanDays);
+            if (nightsSet.size === 0 && !hasFlight && endMoment.diff(startMoment, 'hours') < 30) {
+                totalNights = 0;
+            }
+
+            // Eliminate trips with 0 nights and no flights (e.g. isolated photo GPS points, day errands)
+            if (totalNights < 1 && !hasFlight) {
+                continue;
+            }
+            if (totalNights === 0) totalNights = 1;
 
             // Destination countries (exclude home, and exclude airport-only transit layovers)
             const nonAirportCountries = routeCountries.filter(cntry => {
@@ -11391,11 +11558,23 @@ Departed: ${end}</description>
 
             const eligibleCities = nonAirportCities.length > 0 ? nonAirportCities : candidateCities;
 
-            // Filter route breadcrumbs to remove airport layover cities if real destinations exist
+            // Route breadcrumbs: exclude homeCity, and exclude airport-only layover cities
             const cleanRouteCities = routeCities.filter(c => {
-                if (nonAirportCities.length > 0 && (cityAirportVisitCounts[c] || 0) === (cityVisitCounts[c] || 0)) return false;
+                if (c === homeCity) return false;
+                if (nonAirportCities.length > 0 && (cityAirportVisitCounts[c] || 0) === (cityVisitCounts[c] || 0)) {
+                    return false;
+                }
                 return true;
             });
+
+            let flightRouteStr = '';
+            if (flights.length > 0) {
+                flightRouteStr = flights.map(fl => {
+                    const fromStr = fl.from?.city || fl.from?.name || 'Origin';
+                    const toStr = fl.to?.city || fl.to?.name || 'Dest';
+                    return `${fromStr} ➔ ${toStr}`;
+                }).join(' · ');
+            }
 
             let title = "";
             const isDomestic = routeCountries.length === 0 || (routeCountries.length === 1 && routeCountries[0] === homeCountry);
@@ -11499,6 +11678,10 @@ Departed: ${end}</description>
                 nightLabel,
                 durationTag,
                 hasFlight,
+                flights,
+                flightRouteStr,
+                airportStops,
+                groundPaths,
                 routeCities: (typeof cleanRouteCities !== 'undefined' && cleanRouteCities.length > 0 ? cleanRouteCities : routeCities).slice(0, 7),
                 mapPoints
             });
@@ -11623,6 +11806,21 @@ Departed: ${end}</description>
                 const durationBadge = `<span class="trip-badge badge-duration">${trip.nightLabel}</span>`;
                 const flightBadge = trip.hasFlight ? `<span class="trip-badge badge-flight">✈️ Flight</span>` : '';
 
+                let flightRowHtml = '';
+                if (trip.flights && trip.flights.length > 0) {
+                    const legsText = trip.flights.map(fl => {
+                        const fromLabel = fl.from?.city || fl.from?.name || 'Origin';
+                        const toLabel = fl.to?.city || fl.to?.name || 'Dest';
+                        return `${escapeHtml(fromLabel)}<span class="flight-leg-arrow">➔</span>${escapeHtml(toLabel)}`;
+                    }).join('<span class="flight-sep">·</span>');
+                    flightRowHtml = `
+                        <div class="trip-card-flight-row" title="Flights detected on this trip">
+                            <span class="flight-icon">✈️</span>
+                            <span class="flight-route">${legsText}</span>
+                        </div>
+                    `;
+                }
+
                 const routeHtml = (trip.routeCities && trip.routeCities.length > 1)
                     ? `<div class="trip-card-route">${trip.routeCities.join('<span class="arrow">→</span>')}</div>`
                     : '';
@@ -11638,6 +11836,7 @@ Departed: ${end}</description>
                             ${durationBadge}
                             ${flightBadge}
                         </div>
+                        ${flightRowHtml}
                         ${routeHtml}
                         <div class="trip-card-actions">
                             <button class="trip-action-btn btn-view-map" data-trip-id="${trip.id}">🗺️ Preview Map</button>
@@ -11684,59 +11883,235 @@ Departed: ${end}</description>
         });
     }
 
-    // Step 4: Show Trip on Map (single trip with A/B markers)
+    // Step 4: Show Trip on Map (single trip with flights & ground paths)
     function showTripOnMap(trip) {
         if (!map) return;
         clearMap();
         if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
         clearTripMap();
 
-        if (!trip.mapPoints || trip.mapPoints.length === 0) return;
+        if ((!trip.mapPoints || trip.mapPoints.length === 0) && (!trip.flights || trip.flights.length === 0)) return;
 
         const bounds = new google.maps.LatLngBounds();
-        const validPath = [];
+        let anyPoints = false;
 
-        for (const pt of trip.mapPoints) {
-            if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
-                const pos = new google.maps.LatLng(pt.lat, pt.lng);
-                validPath.push(pos);
-                bounds.extend(pos);
+        // Ground paths (driving, transit, walking, etc.)
+        if (trip.groundPaths && trip.groundPaths.length > 0) {
+            for (const gp of trip.groundPaths) {
+                if (!gp || gp.length < 2) continue;
+                const path = [];
+                for (const pt of gp) {
+                    if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                        const pos = new google.maps.LatLng(pt.lat, pt.lng);
+                        path.push(pos);
+                        bounds.extend(pos);
+                        anyPoints = true;
+                    }
+                }
+                if (path.length > 1) {
+                    const poly = new google.maps.Polyline({
+                        path: path,
+                        geodesic: false,
+                        strokeColor: '#0284c7',
+                        strokeOpacity: 0.85,
+                        strokeWeight: 4,
+                        map: map
+                    });
+                    tripMapPolylines.push(poly);
+                }
+            }
+        } else if (trip.mapPoints && trip.mapPoints.length > 0) {
+            const validPath = [];
+            for (const pt of trip.mapPoints) {
+                if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                    const pos = new google.maps.LatLng(pt.lat, pt.lng);
+                    validPath.push(pos);
+                    bounds.extend(pos);
+                    anyPoints = true;
+                }
+            }
+            if (validPath.length > 0) {
+                const poly = new google.maps.Polyline({
+                    path: validPath,
+                    geodesic: true,
+                    strokeColor: '#0284c7',
+                    strokeOpacity: 0.85,
+                    strokeWeight: 4,
+                    map: map
+                });
+                tripMapPolylines.push(poly);
             }
         }
 
-        if (validPath.length === 0) return;
+        // Render flight polylines (cyan geodesic curves matching Timeline View)
+        if (trip.flights && trip.flights.length > 0) {
+            for (const fl of trip.flights) {
+                let flightCoords = [];
+                if (fl.fromCoord && fl.toCoord && !isNaN(fl.fromCoord.lat) && !isNaN(fl.fromCoord.lng) && !isNaN(fl.toCoord.lat) && !isNaN(fl.toCoord.lng)) {
+                    flightCoords = [
+                        new google.maps.LatLng(fl.fromCoord.lat, fl.fromCoord.lng),
+                        new google.maps.LatLng(fl.toCoord.lat, fl.toCoord.lng)
+                    ];
+                }
+                if (flightCoords.length >= 2) {
+                    flightCoords.forEach(pos => {
+                        bounds.extend(pos);
+                        anyPoints = true;
+                    });
+                    const flightPoly = new google.maps.Polyline({
+                        path: flightCoords,
+                        geodesic: true,
+                        strokeColor: '#03C9FF',
+                        strokeOpacity: 0.9,
+                        strokeWeight: 4,
+                        zIndex: 10,
+                        map: map
+                    });
+                    tripMapPolylines.push(flightPoly);
 
-        tripMapPolyline = new google.maps.Polyline({
-            path: validPath,
-            geodesic: true,
-            strokeColor: '#0284c7',
-            strokeOpacity: 0.85,
-            strokeWeight: 4,
-            map: map
-        });
-
-        const startPos = validPath[0];
-        const endPos = validPath[validPath.length - 1];
-
-        const startMarker = new google.maps.Marker({
-            position: startPos,
-            map: map,
-            title: `${trip.title} (Start)`,
-            label: "A"
-        });
-        tripMapMarkers.push(startMarker);
-
-        if (validPath.length > 1) {
-            const endMarker = new google.maps.Marker({
-                position: endPos,
-                map: map,
-                title: `${trip.title} (End)`,
-                label: "B"
-            });
-            tripMapMarkers.push(endMarker);
+                    flightPoly.addListener('click', (e) => {
+                        if (!tripMapInfoWindow) tripMapInfoWindow = new google.maps.InfoWindow();
+                        const fromLabel = fl.from?.name || fl.from?.city || 'Origin';
+                        const toLabel = fl.to?.name || fl.to?.city || 'Destination';
+                        const content = `
+                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 4px 6px; color: #1e293b;">
+                                <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                                    <span>✈️ Flight</span>
+                                    <span style="color: #0284c7; font-size: 12px;">${fl.distanceKm ? fl.distanceKm.toLocaleString() + ' km' : ''}</span>
+                                </div>
+                                <div style="font-size: 12px; margin-bottom: 2px;"><strong>From:</strong> ${escapeHtml(fromLabel)}</div>
+                                <div style="font-size: 12px; margin-bottom: 4px;"><strong>To:</strong> ${escapeHtml(toLabel)}</div>
+                                ${fl.departureTime ? `<div style="font-size: 11px; color: #64748b;"><strong>Dep:</strong> ${fl.departureTime}</div>` : ''}
+                                ${fl.arrivalTime ? `<div style="font-size: 11px; color: #64748b;"><strong>Arr:</strong> ${fl.arrivalTime}</div>` : ''}
+                            </div>
+                        `;
+                        tripMapInfoWindow.setContent(content);
+                        tripMapInfoWindow.setPosition(e.latLng);
+                        tripMapInfoWindow.open(map);
+                    });
+                }
+            }
         }
 
-        map.fitBounds(bounds, 50);
+        // Airport pins
+        const airportsToShow = [];
+        const seenAirports = new Set();
+        if (trip.flights && trip.flights.length > 0) {
+            for (const fl of trip.flights) {
+                if (fl.from && fl.from.lat && fl.from.lng) {
+                    const k = `${fl.from.lat.toFixed(3)},${fl.from.lng.toFixed(3)}`;
+                    if (!seenAirports.has(k)) {
+                        seenAirports.add(k);
+                        airportsToShow.push(fl.from);
+                    }
+                }
+                if (fl.to && fl.to.lat && fl.to.lng) {
+                    const k = `${fl.to.lat.toFixed(3)},${fl.to.lng.toFixed(3)}`;
+                    if (!seenAirports.has(k)) {
+                        seenAirports.add(k);
+                        airportsToShow.push(fl.to);
+                    }
+                }
+            }
+        }
+        if (trip.airportStops && trip.airportStops.length > 0) {
+            for (const apt of trip.airportStops) {
+                if (apt && apt.lat && apt.lng) {
+                    const k = `${apt.lat.toFixed(3)},${apt.lng.toFixed(3)}`;
+                    if (!seenAirports.has(k)) {
+                        seenAirports.add(k);
+                        airportsToShow.push(apt);
+                    }
+                }
+            }
+        }
+
+        airportsToShow.forEach(apt => {
+            const pos = new google.maps.LatLng(apt.lat, apt.lng);
+            bounds.extend(pos);
+            anyPoints = true;
+
+            const aptTitle = apt.name || (apt.city ? apt.city + ' Airport' : 'Airport');
+            let aptMarker = null;
+            if (google.maps.marker && google.maps.marker.AdvancedMarkerElement && google.maps.marker.PinElement) {
+                try {
+                    const pin = new google.maps.marker.PinElement({
+                        background: '#03C9FF',
+                        borderColor: '#0284c7',
+                        glyph: '✈️',
+                        scale: 1.1
+                    });
+                    aptMarker = new google.maps.marker.AdvancedMarkerElement({
+                        position: pos,
+                        map: map,
+                        title: aptTitle,
+                        content: pin.element
+                    });
+                } catch (e) {}
+            }
+            if (!aptMarker) {
+                aptMarker = new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    title: aptTitle,
+                    label: {
+                        text: "✈️",
+                        fontSize: "14px"
+                    }
+                });
+            }
+
+            const clickHandler = () => {
+                if (!tripMapInfoWindow) tripMapInfoWindow = new google.maps.InfoWindow();
+                const content = `
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 4px 6px; color: #1e293b;">
+                        <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">✈️ ${escapeHtml(aptTitle)}</div>
+                        <div style="font-size: 12px; color: #64748b;">${escapeHtml(apt.city || '')}${apt.country ? ', ' + escapeHtml(apt.country) : ''}</div>
+                    </div>
+                `;
+                tripMapInfoWindow.setContent(content);
+                tripMapInfoWindow.setPosition(pos);
+                tripMapInfoWindow.open(map);
+            };
+
+            if (aptMarker.addListener) {
+                aptMarker.addListener('click', clickHandler);
+            } else if (aptMarker.addEventListener) {
+                aptMarker.addEventListener('gmp-click', clickHandler);
+            }
+            tripMapMarkers.push(aptMarker);
+        });
+
+        // Add Start (A) and End (B) pins for trips without flights
+        if (!trip.flights || trip.flights.length === 0) {
+            const validPts = (trip.mapPoints || []).filter(pt => !isNaN(pt.lat) && !isNaN(pt.lng));
+            if (validPts.length > 0) {
+                const startPos = new google.maps.LatLng(validPts[0].lat, validPts[0].lng);
+                const endPos = new google.maps.LatLng(validPts[validPts.length - 1].lat, validPts[validPts.length - 1].lng);
+
+                const startMarker = new google.maps.Marker({
+                    position: startPos,
+                    map: map,
+                    title: `${trip.title} (Start)`,
+                    label: "A"
+                });
+                tripMapMarkers.push(startMarker);
+
+                if (validPts.length > 1) {
+                    const endMarker = new google.maps.Marker({
+                        position: endPos,
+                        map: map,
+                        title: `${trip.title} (End)`,
+                        label: "B"
+                    });
+                    tripMapMarkers.push(endMarker);
+                }
+            }
+        }
+
+        if (anyPoints && !bounds.isEmpty()) {
+            map.fitBounds(bounds, 50);
+        }
     }
 
     // Step 4b: Show All Filtered Trips on Map (no A/B pins)
@@ -11753,26 +12128,83 @@ Departed: ${end}</description>
         const tripColors = ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#06b6d4', '#f97316'];
 
         tripsToShow.forEach((t, idx) => {
-            if (!t.mapPoints || t.mapPoints.length === 0) return;
-            const validPath = [];
-            for (const pt of t.mapPoints) {
-                if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
-                    const pos = new google.maps.LatLng(pt.lat, pt.lng);
-                    validPath.push(pos);
-                    bounds.extend(pos);
-                    anyPoints = true;
+            const tripColor = tripColors[idx % tripColors.length];
+
+            // Ground paths
+            if (t.groundPaths && t.groundPaths.length > 0) {
+                for (const gp of t.groundPaths) {
+                    if (!gp || gp.length < 2) continue;
+                    const path = [];
+                    for (const pt of gp) {
+                        if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                            const pos = new google.maps.LatLng(pt.lat, pt.lng);
+                            path.push(pos);
+                            bounds.extend(pos);
+                            anyPoints = true;
+                        }
+                    }
+                    if (path.length > 1) {
+                        const poly = new google.maps.Polyline({
+                            path: path,
+                            geodesic: false,
+                            strokeColor: tripColor,
+                            strokeOpacity: 0.75,
+                            strokeWeight: 3.5,
+                            map: map
+                        });
+                        tripMapPolylines.push(poly);
+                    }
+                }
+            } else if (t.mapPoints && t.mapPoints.length > 0) {
+                const validPath = [];
+                for (const pt of t.mapPoints) {
+                    if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                        const pos = new google.maps.LatLng(pt.lat, pt.lng);
+                        validPath.push(pos);
+                        bounds.extend(pos);
+                        anyPoints = true;
+                    }
+                }
+                if (validPath.length > 0) {
+                    const poly = new google.maps.Polyline({
+                        path: validPath,
+                        geodesic: true,
+                        strokeColor: tripColor,
+                        strokeOpacity: 0.8,
+                        strokeWeight: 3.5,
+                        map: map
+                    });
+                    tripMapPolylines.push(poly);
                 }
             }
-            if (validPath.length > 0) {
-                const poly = new google.maps.Polyline({
-                    path: validPath,
-                    geodesic: true,
-                    strokeColor: tripColors[idx % tripColors.length],
-                    strokeOpacity: 0.8,
-                    strokeWeight: 3.5,
-                    map: map
-                });
-                tripMapPolylines.push(poly);
+
+            // Flights in cyan geodesic
+            if (t.flights && t.flights.length > 0) {
+                for (const fl of t.flights) {
+                    let flightCoords = [];
+                    if (fl.fromCoord && fl.toCoord && !isNaN(fl.fromCoord.lat) && !isNaN(fl.fromCoord.lng) && !isNaN(fl.toCoord.lat) && !isNaN(fl.toCoord.lng)) {
+                        flightCoords = [
+                            new google.maps.LatLng(fl.fromCoord.lat, fl.fromCoord.lng),
+                            new google.maps.LatLng(fl.toCoord.lat, fl.toCoord.lng)
+                        ];
+                    }
+                    if (flightCoords.length >= 2) {
+                        flightCoords.forEach(pos => {
+                            bounds.extend(pos);
+                            anyPoints = true;
+                        });
+                        const flightPoly = new google.maps.Polyline({
+                            path: flightCoords,
+                            geodesic: true,
+                            strokeColor: '#03C9FF',
+                            strokeOpacity: 0.85,
+                            strokeWeight: 3,
+                            zIndex: 10,
+                            map: map
+                        });
+                        tripMapPolylines.push(flightPoly);
+                    }
+                }
             }
         });
 
