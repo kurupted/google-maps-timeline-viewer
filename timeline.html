@@ -375,6 +375,36 @@
             background-color: #dde4ed; /* A slightly different background */
             color: #0056b3; /* A distinct color */
         }
+        #icon-buttons-left .icon-btn {
+            font-size: 13px;
+            padding: 5px 6px;
+            gap: 4px;
+        }
+        #controls-right .icon-btn {
+            font-size: 15px;
+            padding: 4px 6px;
+        }
+
+        #summarySidebarContent {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 15px;
+            box-sizing: border-box;
+            background: #f8f9fa;
+        }
+        #summarySidebarContent #summary-selected-dates {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        #summarySidebarContent .summary-selected-item {
+            width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
 
         /* --- Go Button --- */
         #go-container {
@@ -929,24 +959,57 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
         #summary-controls {
-            text-align: right;
-            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #dee2e6;
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        #closeSummaryBtn {
-            background: none;
-            border: 1px solid #ccc;
-            border-radius: 50%;
+        .category-filter-btn {
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            background-color: #f1f5f9;
+            color: #475569;
             cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
-            width: 24px;
-            height: 24px;
-            color: #666;
-            padding: 0;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
         }
-        #closeSummaryBtn:hover {
-            background-color: #eee;
-            border-color: #aaa;
+        .category-filter-btn.active {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #1d4ed8 !important;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+        }
+        .category-filter-btn:hover {
+            filter: brightness(0.95);
+        }
+        .summary-places-lived-btn {
+            background-color: #6366f1 !important;
+            color: white !important;
+            border: none !important;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(99, 102, 241, 0.25);
+            transition: background-color 0.2s, transform 0.15s;
+        }
+        .summary-places-lived-btn:hover {
+            background-color: #4f46e5 !important;
+            transform: translateY(-1px);
         }
         #summaryView h4 {
             margin-top: 15px;
@@ -1012,11 +1075,12 @@
             border-color: #007bff;
             background-color: #e7f1ff;
             font-weight: bold;
-            width: 100%; /* Expand to full width */
-            cursor: default; /* No pointer cursor when expanded */
-            opacity: 1; /* Ensure selected year is fully visible */
+            width: 100%;
+            cursor: default;
+            opacity: 1;
+            box-sizing: border-box;
         }
-        .summary-year-item.is-selected-year:hover { /* Override hover when expanded */
+        .summary-year-item.is-selected-year:hover {
             border-color: #007bff;
             background-color: #e7f1ff;
         }
@@ -1024,66 +1088,82 @@
         /* Hide non-selected years when one is expanded */
         #summaryView.expanded-year-active #summary-years .summary-year-item:not(.is-selected-year) {
             opacity: 0;
-            pointer-events: none; /* Prevent interaction with hidden items */
-            height: 0; /* Collapse height */
-            padding: 0; /* Remove padding */
-            margin: 0; /* Remove margin */
-            border: none; /* Remove border */
-            overflow: hidden; /* Hide content */
+            pointer-events: none;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+            overflow: hidden;
+            display: none;
         }
-        /* Show months and back button when a year is expanded */
-        #summaryView.expanded-year-active #summary-months,
+        /* Layout when a year is expanded: months on left, selected year column on right */
+        #summaryView.expanded-year-active #summary-year-month-layout {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        #summaryView.expanded-year-active #summary-years-container {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 10px;
+        }
+        #summaryView.expanded-year-active #summary-monthly-container {
+            flex: 1;
+            min-width: 0;
+            margin-top: 0 !important;
+        }
+        #summaryView.expanded-year-active #summary-monthly-container h4 {
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+        #summaryView.expanded-year-active #yearly-summary-title {
+            display: none;
+        }
         #summaryView.expanded-year-active #backToYearsBtn {
-            display: flex; /* Or block, depending on desired layout */
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        #summaryView.expanded-year-active #summary-years {
+            display: block;
+        }
+        #summaryView.expanded-year-active #summary-months {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #summaryView.expanded-year-active .summary-month-item {
+            flex: 1 1 180px;
+            min-width: 160px;
+            max-width: 260px;
+        }
+        #summaryView.expanded-year-active .summary-year-item.is-selected-year ul {
+            column-count: 1;
+        }
+        #summaryView.expanded-year-active .summary-year-item.is-selected-year ul li,
+        #summaryView.expanded-year-active .summary-year-item.is-selected-year .summary-details {
+            max-width: 100%;
         }
 
-        .summary-selected-item strong,
-        .summary-year-item strong,
-        .summary-month-item strong {
-            display: block;
-            font-size: 16px;
-            margin-bottom: 5px;
-            color: #0056b3;
-        }
-        .summary-month-item strong {
-            color: #1a73e8;
-        }
-        .summary-selected-item strong { /* Specific style for selected date title */
-            color: #28a745; /* Green */
-        }
-        .summary-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: #495057;
-            margin-top: 3px;
-        }
-        .summary-details span {
-            text-align: right;
-        }
-        /* Common style for activity lists */
-        .summary-selected-item ul,
-        .summary-year-item ul,
-        .summary-month-item ul {
-            list-style: none;
-            padding: 0;
-            margin: 8px 0 0 0;
-            font-size: 11px;
-            color: #6c757d;
-        }
-        /* Style for multi-column activity list in expanded year */
-        .summary-year-item.is-selected-year ul {
-            column-count: 3;
-            column-gap: 20px;
-        }
-        .summary-year-item.is-selected-year ul li,
-        .summary-year-item.is-selected-year .summary-details {
-            max-width: 170px;
-        }
-        @media (max-width: 600px) { /* Use 1 column on smaller screens */
-            .summary-year-item.is-selected-year ul {
-                column-count: 1;
+        /* Mobile view: stack year on top, then months below */
+        @media (max-width: 768px) {
+            #summaryView.expanded-year-active #summary-year-month-layout {
+                flex-direction: column;
+            }
+            #summaryView.expanded-year-active #summary-years-container {
+                width: 100%;
+                position: static;
+            }
+            #summaryView.expanded-year-active #summary-monthly-container {
+                width: 100%;
+                margin-top: 15px !important;
+            }
+            #summaryView.expanded-year-active .summary-month-item {
+                max-width: 100%;
             }
         }
 
@@ -1478,7 +1558,7 @@
             color: #007bff;
         }
 
-        /* --- Trips (Journeys) View Styles --- */
+        /* --- Trips View Styles --- */
         #tripsView {
             display: none;
             width: 100%;
@@ -2053,11 +2133,10 @@
             </div>
             <div id="controls-right">
                 <button id="calendarBtn" class="icon-btn" title="Date View" disabled>📅</button>
-                <button id="tripsBtn" class="icon-btn" title="Trips View" disabled>🧳</button>
-                <button id="placesLivedBtn" class="icon-btn" title="Places Lived" disabled>🏠</button>
                 <button id="searchBtn" class="icon-btn" title="Search" disabled>🔍</button>
                 <button id="areaBtn" class="icon-btn" title="Area View" disabled>⬚</button>
                 <button id="settingsBtn" class="icon-btn" title="Settings" disabled>⚙️</button>
+                <button id="kmlBtn" class="icon-btn" title="Export currently selected date range as KML" disabled>📤</button>
             </div>
         </div>
 
@@ -2073,8 +2152,8 @@
                 <div id="date-range-info"></div>
                 <div id="icon-buttons-container">
                     <div id="icon-buttons-left">
-                        <button id="mapBtn" class="icon-btn active" title="Show Map" disabled>
-                            <span role="img" aria-label="Map">🗺️</span> Map
+                        <button id="mapBtn" class="icon-btn active" title="Show Timeline" disabled>
+                            <span role="img" aria-label="Timeline">🗺️</span> Timeline
                         </button>
                         <button id="summaryBtn" class="icon-btn" title="Show Summary" disabled>
                             <span role="img" aria-label="Summary">📊</span> Summary
@@ -2082,8 +2161,8 @@
                         <button id="worldBtn" class="icon-btn" title="Show World Map" disabled>
                             <span role="img" aria-label="World">🌎</span> World
                         </button>
-                        <button id="kmlBtn" class="icon-btn" title="Export as KML" disabled>
-                            <span role="img" aria-label="Export">📤</span> Export
+                        <button id="tripsBtn" class="icon-btn" title="Show Trips" disabled>
+                            <span role="img" aria-label="Trips">🧳</span> Trips
                         </button>
                     </div>
                     <div id="icon-buttons-right"></div>
@@ -2105,6 +2184,13 @@
                 </div>
                 <div id="main-content-area">
                     <div id="timeline"></div>
+
+                    <div id="summarySidebarContent">
+                        <h4 style="margin-top: 0; margin-bottom: 12px; font-weight: 600; color: #1e293b; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Selected Date(s) Summary</h4>
+                        <div id="summary-selected-dates">
+                            <p>Calculating...</p>
+                        </div>
+                    </div>
 
                     <div id="worldSidebarContent" style="display: none; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; padding: 15px; box-sizing: border-box; background: #f8f9fa;">
 
@@ -2159,61 +2245,61 @@
                             </details>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div id="tripsView">
-                <div class="trips-header-container">
-                    <div class="trips-title-row">
-                        <h3 class="trips-main-title">Journeys</h3>
-                        <span id="tripsCountBadge" style="font-size: 12px; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 3px 9px; border-radius: 12px; border: 1px solid #bae6fd;">0 trips</span>
-                    </div>
-                    <div class="trips-search-bar">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="tripSearchInput" placeholder="Search journeys by city, country, or year..." autocomplete="off">
-                        <span id="clearTripSearchBtn" class="clear-icon">&times;</span>
-                    </div>
-                    <div class="trips-filter-row">
-                        <select id="tripYearFilter" class="trip-filter-select" title="Filter by Year">
-                            <option value="all">All Years</option>
-                        </select>
-                        <div class="trip-dropdown-container" id="tripDurationDropdownContainer">
-                            <button id="tripDurationDropdownBtn" class="trip-dropdown-btn" type="button" title="Filter by Duration">
-                                <span id="tripDurationDropdownLabel">All Durations</span>
-                                <span class="dropdown-chevron">▾</span>
-                            </button>
-                            <div id="tripDurationMenu" class="trip-dropdown-menu">
-                                <div class="dropdown-menu-header">
-                                    <span>Nights</span>
-                                    <div class="dropdown-quick-links">
-                                        <button type="button" id="durationSelectAllBtn">All</button>
-                                        <button type="button" id="durationClearAllBtn">Clear</button>
+                    <div id="tripsView">
+                        <div class="trips-header-container">
+                            <div class="trips-title-row">
+                                <h3 class="trips-main-title">Trips</h3>
+                                <span id="tripsCountBadge" style="font-size: 12px; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 3px 9px; border-radius: 12px; border: 1px solid #bae6fd;">0 trips</span>
+                            </div>
+                            <div class="trips-search-bar">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="tripSearchInput" placeholder="Search trips by city, country, or year..." autocomplete="off">
+                                <span id="clearTripSearchBtn" class="clear-icon">&times;</span>
+                            </div>
+                            <div class="trips-filter-row">
+                                <select id="tripYearFilter" class="trip-filter-select" title="Filter by Year">
+                                    <option value="all">All Years</option>
+                                </select>
+                                <div class="trip-dropdown-container" id="tripDurationDropdownContainer">
+                                    <button id="tripDurationDropdownBtn" class="trip-dropdown-btn" type="button" title="Filter by Duration">
+                                        <span id="tripDurationDropdownLabel">All Durations</span>
+                                        <span class="dropdown-chevron">▾</span>
+                                    </button>
+                                    <div id="tripDurationMenu" class="trip-dropdown-menu">
+                                        <div class="dropdown-menu-header">
+                                            <span>Nights</span>
+                                            <div class="dropdown-quick-links">
+                                                <button type="button" id="durationSelectAllBtn">All</button>
+                                                <button type="button" id="durationClearAllBtn">Clear</button>
+                                            </div>
+                                        </div>
+                                        <label class="dropdown-item">
+                                            <input type="checkbox" class="duration-checkbox" value="1-2" checked>
+                                            <span>1–2 nights</span>
+                                        </label>
+                                        <label class="dropdown-item">
+                                            <input type="checkbox" class="duration-checkbox" value="3-7" checked>
+                                            <span>3–7 nights</span>
+                                        </label>
+                                        <label class="dropdown-item">
+                                            <input type="checkbox" class="duration-checkbox" value="8-14" checked>
+                                            <span>8–14 nights</span>
+                                        </label>
+                                        <label class="dropdown-item">
+                                            <input type="checkbox" class="duration-checkbox" value="15+" checked>
+                                            <span>15+ nights</span>
+                                        </label>
                                     </div>
                                 </div>
-                                <label class="dropdown-item">
-                                    <input type="checkbox" class="duration-checkbox" value="1-2" checked>
-                                    <span>1–2 nights</span>
-                                </label>
-                                <label class="dropdown-item">
-                                    <input type="checkbox" class="duration-checkbox" value="3-7" checked>
-                                    <span>3–7 nights</span>
-                                </label>
-                                <label class="dropdown-item">
-                                    <input type="checkbox" class="duration-checkbox" value="8-14" checked>
-                                    <span>8–14 nights</span>
-                                </label>
-                                <label class="dropdown-item">
-                                    <input type="checkbox" class="duration-checkbox" value="15+" checked>
-                                    <span>15+ nights</span>
-                                </label>
+                                <button id="tripFlightToggleBtn" class="trip-filter-toggle" type="button" title="Flights only">✈️</button>
                             </div>
                         </div>
-                        <button id="tripFlightToggleBtn" class="trip-filter-toggle" type="button" title="Flights only">✈️</button>
-                    </div>
-                </div>
-                <div id="tripsListContainer">
-                    <div id="tripsLoadingMessage" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 13px;">
-                        Loading your journeys...
+                        <div id="tripsListContainer">
+                            <div id="tripsLoadingMessage" style="text-align: center; color: #94a3b8; padding: 40px 10px; font-size: 13px;">
+                                Loading your trips...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2222,6 +2308,9 @@
                 <div class="places-lived-header">
                     <h4><span>🏠</span> Places Lived</h4>
                     <p>Residences identified from your overnight stays over extended periods.</p>
+                    <button id="backToSummaryBtn" class="control-btn" style="width: 100%; margin-top: 10px; padding: 7px 12px; font-size: 12px; font-weight: 600; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        ← Back to Summary View
+                    </button>
                 </div>
                 <div id="placesLivedListContainer">
                     <div id="placesLivedLoadingMessage" style="text-align: center; color: #6c757d; padding: 40px 10px; font-size: 13px;">
@@ -2384,37 +2473,54 @@
 
     <div id="summaryView" style="display: none;">
         <div id="summary-controls">
-            <button id="closeSummaryBtn" title="Close Summary">&times;</button>
+            <button id="summaryPlacesLivedBtn" class="control-btn summary-places-lived-btn">
+                <span>🏠</span> Places Lived
+            </button>
         </div>
-        <h4>Selected Date(s) Summary</h4>
-        <div id="summary-selected-dates">
-            <p>Calculating...</p>
-        </div><br>
-        <h4>Yearly Summary</h4>
-        <div id="summary-years-container">
-            <div id="summary-years">
-                <p>Calculating...</p>
-            </div>
-            <button id="backToYearsBtn">← Back to Years</button>
-        </div><br>
-        <h4>Monthly Summary <span id="summary-selected-year"></span></h4>
-        <div id="summary-months">
-            <p>Select a year above.</p>
-        </div><br>
-        <div id="summary-charts-container" style="display: none;">
-            <h4 id="chart-section-title">Activity Charts</h4>
-            <div id="chart-filters" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+
+        <div id="summary-charts-container">
+            <h4 id="chart-section-title">Activity Chart</h4>
+            <div id="activity-filter-controls" style="margin-bottom: 15px;">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                    <span style="font-size: 13px; font-weight: 600; color: #475569; margin-right: 2px;">Filter:</span>
+                    <button type="button" id="catFilterDriving" class="category-filter-btn active">🚗 Driving</button>
+                    <button type="button" id="catFilterTransit" class="category-filter-btn active">🚆 Transit</button>
+                    <button type="button" id="catFilterSelfPowered" class="category-filter-btn active">🚶 Self-Powered</button>
+                    <button type="button" id="toggleSpecificTypesBtn" class="control-btn" style="margin-left: auto; font-size: 12px; padding: 5px 10px; display: flex; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; color: #475569;">
+                        <span>⚙️ Specific Types</span> <span id="toggleSpecificTypesArrow">▾</span>
+                    </button>
+                </div>
+                <div id="chart-filters" style="display: none; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
             </div>
             <div class="chart-wrapper">
                 <canvas id="distanceChart"></canvas>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; margin-top: 15px;">
-                <label style="font-size: 12px; cursor: pointer; color: #495057;">
+            <div class="chart-wrapper" style="margin-top: 20px;">
+                <canvas id="visitsChart"></canvas>
+            </div>
+            <div style="display: flex; justify-content: flex-start; align-items: center; margin-top: 6px; margin-bottom: 25px;">
+                <label style="font-size: 12px; cursor: pointer; color: #495057; display: inline-flex; align-items: center; gap: 6px;">
                     <input type="checkbox" id="uniqueVisitsToggle"> Show Unique Places Only (First Visit)
                 </label>
             </div>
-            <div class="chart-wrapper">
-                <canvas id="visitsChart"></canvas>
+        </div>
+
+        <div id="summary-cards-section" style="margin-top: 20px;">
+            <div id="summary-year-month-layout">
+                <div id="summary-years-container">
+                    <h4 id="yearly-summary-title">Yearly Summary</h4>
+                    <button id="backToYearsBtn">← Back to Years</button>
+                    <div id="summary-years">
+                        <p>Calculating...</p>
+                    </div>
+                </div>
+                <div id="summary-monthly-container" style="display: none; margin-top: 20px;">
+                    <h4>Monthly Summary <span id="summary-selected-year"></span></h4>
+                    <div id="summary-months">
+                        <p>Select a year above.</p>
+                    </div>
+                </div>
             </div>
         </div><br>
     </div>
@@ -3359,8 +3465,8 @@
         if (tripsBtn) tripsBtn.classList.remove('active');
         if (placesLivedBtn) placesLivedBtn.classList.remove('active');
 
-        // Clear any active trip map overlay if switching away from trips
-        if (tabName !== 'trips') {
+        // Clear any active trip map overlay if switching away from date
+        if (tabName !== 'date') {
             if (typeof clearTripMap === 'function') clearTripMap();
             else if (typeof window.clearTripMap === 'function') window.clearTripMap();
         }
@@ -3371,6 +3477,15 @@
             else if (typeof window.clearHomeMarker === 'function') window.clearHomeMarker();
         }
 
+        // Clean up summary view if leaving date
+        if (tabName !== 'date' && summaryViewVisible) {
+            const summaryView = document.getElementById('summaryView');
+            if (summaryView) summaryView.style.display = 'none';
+            const mapElement = document.getElementById('map');
+            if (mapElement) mapElement.classList.remove('hidden');
+            summaryViewVisible = false;
+        }
+
         // Show the selected tab and activate its button
         if (tabName === 'date') {
             dateView.style.display = 'flex';
@@ -3379,7 +3494,14 @@
             document.getElementById('timeline').style.display = 'block';
             const worldSidebar = document.getElementById('worldSidebarContent');
             if (worldSidebar) worldSidebar.style.display = 'none';
+            const summarySidebar = document.getElementById('summarySidebarContent');
+            if (summarySidebar) summarySidebar.style.display = 'none';
+            const tripsView = document.getElementById('tripsView');
+            if (tripsView) tripsView.style.display = 'none';
+
+            summaryViewVisible = false;
             worldViewVisible = false;
+            tripsViewVisible = false;
             updateViewToggleButtons();
 
             // RESTORE DATE PICKERS
@@ -3390,15 +3512,10 @@
             // When switching to date view, re-fit the map to that day's data
             fitMapToData();
         } else if (tabName === 'trips') {
-            if (worldViewVisible) {
-                worldViewVisible = false;
-                document.getElementById('worldSidebarContent').style.display = 'none';
-                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
-                updateViewToggleButtons();
-            }
-            if (tripsView) tripsView.style.display = 'flex';
-            if (tripsBtn) tripsBtn.classList.add('active');
-            if (typeof renderTripsView === 'function') renderTripsView();
+            // Forward to Trips sub-tab in date view
+            showSidebarTab('date');
+            const tripsBtn = document.getElementById('tripsBtn');
+            if (tripsBtn) tripsBtn.click();
         } else if (tabName === 'placesLived') {
             if (worldViewVisible) {
                 worldViewVisible = false;
@@ -3428,10 +3545,6 @@
             if (lastAreaSearchResults.length > 0) {
                 const isConsolidated = lastAreaSearchMode === 'consolidated';
                 displayAreaResults(lastAreaSearchResults, isConsolidated);
-                // Also restore the UI state (hide options, show "New Search" button)
-                document.getElementById('area-options-container').style.display = 'none';
-                document.getElementById('findInAreaBtn').style.display = 'none';
-                document.getElementById('newAreaSearchBtn').style.display = 'flex';
             }
         } else if (tabName === 'search') {
             searchView.style.display = 'flex';
@@ -3492,6 +3605,20 @@
     function checkTimelineTimezoneForCurrentView() {
         const banner = document.getElementById('timezoneMismatchBanner');
         if (!banner) return;
+
+        // Banner should not appear on World, Trips, or Summary views
+        if (typeof worldViewVisible !== 'undefined' && worldViewVisible) {
+            banner.style.display = 'none';
+            return;
+        }
+        if (typeof tripsViewVisible !== 'undefined' && tripsViewVisible) {
+            banner.style.display = 'none';
+            return;
+        }
+        if (typeof summaryViewVisible !== 'undefined' && summaryViewVisible) {
+            banner.style.display = 'none';
+            return;
+        }
 
         const dateRangeKey = document.getElementById('startDatePicker').value + '_' + document.getElementById('endDatePicker').value;
         if (dismissedTimezoneMismatchForDate === dateRangeKey) {
@@ -3563,13 +3690,20 @@
         return moment(timestamp).tz(tz).format(formatString);
     }
 
-    function formatDistance(meters) {
+    function formatDistance(meters, roundUp = false) {
+        if (!meters || isNaN(meters)) meters = 0;
         const M_TO_MI = 0.000621371;
         if (distanceUnit === 'mi') {
             const miles = meters * M_TO_MI;
+            if (roundUp) {
+                return `${Math.ceil(miles).toLocaleString()} mi`;
+            }
             return `${miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi`;
         } else { // Default to km
             const kilometers = meters / 1000;
+            if (roundUp) {
+                return `${Math.ceil(kilometers).toLocaleString()} km`;
+            }
             return `${kilometers.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
         }
     }
@@ -6215,11 +6349,14 @@
         // BUG FIX: Ensure monthly view and selected year label are fully reset
         document.getElementById('summary-selected-year').textContent = '';
         document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
+        const monthlyContainer = document.getElementById('summary-monthly-container');
+        if (monthlyContainer) monthlyContainer.style.display = 'none';
         selectedSummaryYear = null;
 
         if (!allYearlySummaries || Object.keys(allYearlySummaries).length === 0) {
             yearContainer.innerHTML = '<p>No summary data available.</p>';
             document.getElementById('summary-months').style.display = 'none';
+            if (monthlyContainer) monthlyContainer.style.display = 'none';
             document.getElementById('backToYearsBtn').style.display = 'none';
             summaryView.classList.remove('expanded-year-active');
             return;
@@ -6240,7 +6377,7 @@
                 sortedActivities.forEach(activityGroup => {
                     const formattedName = activityGroup.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     const icon = getActivityIcon(activityGroup);
-                    activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup])}</span></li>`;
+                    activityHtml += `<li>${icon} ${formattedName}: <span>${formatDistance(data.distanceByActivity[activityGroup], true)}</span></li>`;
                 });
             } else if (data.distanceMeters > 0) {
                 activityHtml += '<li>No distance breakdown available</li>';
@@ -6254,7 +6391,7 @@
 					<div class="summary-details">Visits: <span>${data.visits.toLocaleString()}</span></div>
 					<div class="summary-details">Cities: <span>${data.cities.size.toLocaleString()}</span></div>
 					<div class="summary-details">Countries: <span>${data.countries.size.toLocaleString()}</span></div>
-					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
+					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters, true)}</span></div>
 					${activityHtml}
 					<div class="summary-details" style="margin-top: 8px; border-top: 1px dashed #ced4da; padding-top: 6px; color: #989898;">
 						Cached Places: <span>${data.cachedVisits.toLocaleString()} / ${data.visits.toLocaleString()}</span>
@@ -6269,6 +6406,9 @@
 
                 // Add class to parent to control visibility via CSS
                 summaryView.classList.add('expanded-year-active');
+
+                // Reset activity filters for the selected year
+                resetActivityFilters();
 
                 // Show months for this year
                 displayMonthSummary(year);
@@ -6288,14 +6428,18 @@
 
         summaryView.classList.remove('expanded-year-active');
         document.getElementById('summary-months').style.display = 'none';
+        if (monthlyContainer) monthlyContainer.style.display = 'none';
         document.getElementById('backToYearsBtn').style.display = 'none';
     }
 
     // Displays the monthly summary items for a given year
     function displayMonthSummary(year) {
         selectedSummaryYear = year;
+        const monthlyContainer = document.getElementById('summary-monthly-container');
+        if (monthlyContainer) monthlyContainer.style.display = 'block';
         document.getElementById('summary-selected-year').textContent = '('+year+')';
         const container = document.getElementById('summary-months');
+        container.style.display = 'grid';
         container.innerHTML = '';
 
         if (!allMonthlySummaries || !allMonthlySummaries[year] || Object.keys(allMonthlySummaries[year]).length === 0) {
@@ -6349,6 +6493,9 @@
                     navigateToMonth(year, monthIndex);
                     return;
                 }
+
+                // Reset activity filters so buttons and graph start fresh and matched
+                resetActivityFilters();
 
                 // Otherwise, update charts for this month
                 const tz = getSelectedTimezone();
@@ -6470,6 +6617,11 @@
                 document.getElementById('summary-selected-dates').innerHTML = '';
                 document.getElementById('summary-years').innerHTML = '';
                 document.getElementById('summary-months').innerHTML = '';
+                return;
+            }
+
+            if (summaryViewVisible) {
+                displaySelectedDatesSummary(startDatePicker.value, endDatePicker.value);
                 return;
             }
 
@@ -6603,18 +6755,42 @@
     // Initializes the Summary View buttons and interactions
     function initSummaryView() {
         const summaryBtn = document.getElementById('summaryBtn');
-        const closeSummaryBtn = document.getElementById('closeSummaryBtn');
         const summaryView = document.getElementById('summaryView');
         const mapElement = document.getElementById('map');
         const mapBtn = document.getElementById('mapBtn');
         const backBtn = document.getElementById('backToYearsBtn');
         const uniqueVisitsToggle = document.getElementById('uniqueVisitsToggle');
+        const summaryPlacesLivedBtn = document.getElementById('summaryPlacesLivedBtn');
+
+        const drivingBtn = document.getElementById('catFilterDriving');
+        const transitBtn = document.getElementById('catFilterTransit');
+        const selfPoweredBtn = document.getElementById('catFilterSelfPowered');
+        const toggleSpecificBtn = document.getElementById('toggleSpecificTypesBtn');
+        const specificContainer = document.getElementById('chart-filters');
+        const toggleArrow = document.getElementById('toggleSpecificTypesArrow');
+
+        if (drivingBtn) drivingBtn.addEventListener('click', () => toggleCategoryFilter('driving'));
+        if (transitBtn) transitBtn.addEventListener('click', () => toggleCategoryFilter('transit'));
+        if (selfPoweredBtn) selfPoweredBtn.addEventListener('click', () => toggleCategoryFilter('selfPowered'));
+
+        if (toggleSpecificBtn && specificContainer) {
+            toggleSpecificBtn.addEventListener('click', () => {
+                const isHidden = window.getComputedStyle(specificContainer).display === 'none';
+                specificContainer.style.display = isHidden ? 'flex' : 'none';
+                if (toggleArrow) toggleArrow.textContent = isHidden ? '▴' : '▾';
+            });
+        }
+
+        if (summaryPlacesLivedBtn) {
+            summaryPlacesLivedBtn.addEventListener('click', () => {
+                showSidebarTab('placesLived');
+            });
+        }
 
         // Toggle Unique Visits Chart Update
         uniqueVisitsToggle.addEventListener('change', () => {
             if (currentChartStartDate && currentChartEndDate) {
-                // Pass false to prevent resetting the activity checkboxes
-                updateCharts(currentChartStartDate, currentChartEndDate, false);
+                updateCharts(currentChartStartDate, currentChartEndDate);
             }
         });
 
@@ -6648,6 +6824,25 @@
                 summaryView.style.display = 'block';
                 mapElement.classList.add('hidden');
                 summaryViewVisible = true;
+                worldViewVisible = false;
+                tripsViewVisible = false;
+
+                // Sidebar area: Show summarySidebarContent in place of timeline!
+                document.getElementById('timeline').style.display = 'none';
+                const summarySidebar = document.getElementById('summarySidebarContent');
+                if (summarySidebar) summarySidebar.style.display = 'flex';
+                const worldSidebar = document.getElementById('worldSidebarContent');
+                if (worldSidebar) worldSidebar.style.display = 'none';
+                const tripsView = document.getElementById('tripsView');
+                if (tripsView) tripsView.style.display = 'none';
+
+                // Restore Date controls so user can see and change selected dates
+                document.getElementById('datePickerContainer').style.display = 'flex';
+                document.getElementById('date-range-info').style.display = 'block';
+                document.getElementById('go-container').style.display = 'flex';
+
+                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+                if (typeof clearTripMap === 'function') clearTripMap();
             }
             updateViewToggleButtons();
 
@@ -6657,14 +6852,6 @@
             }
         });
 
-        // Close Summary View
-        closeSummaryBtn.addEventListener('click', () => {
-            summaryView.style.display = 'none';
-            mapElement.classList.remove('hidden');
-            summaryViewVisible = false;
-            updateViewToggleButtons();
-        });
-
         // Switch to Map View using Map button
         mapBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
@@ -6672,6 +6859,11 @@
                 summaryView.style.display = 'none';
                 mapElement.classList.remove('hidden');
                 summaryViewVisible = false;
+
+                const summarySidebar = document.getElementById('summarySidebarContent');
+                if (summarySidebar) summarySidebar.style.display = 'none';
+                document.getElementById('timeline').style.display = 'block';
+
                 updateViewToggleButtons();
             }
         });
@@ -6684,9 +6876,13 @@
                 selectedYearItem.classList.remove('is-selected-year');
             }
 
+            const monthlyContainer = document.getElementById('summary-monthly-container');
+            if (monthlyContainer) monthlyContainer.style.display = 'none';
             document.getElementById('summary-months').innerHTML = '<p>Select a year above.</p>';
             document.getElementById('summary-selected-year').textContent = '';
             document.getElementById('backToYearsBtn').style.display = 'none';
+
+            resetActivityFilters();
 
             // Revert chart to ALL TIME
             if (globalMinDate && globalMaxDate) {
@@ -6698,22 +6894,28 @@
         });
     }
 
-    // Updates the active state of the Map/Summary/World toggle buttons
+    let tripsViewVisible = false;
+
+    // Updates the active state of the Timeline/Summary/World/Trips toggle buttons
     function updateViewToggleButtons() {
         const summaryBtn = document.getElementById('summaryBtn');
         const mapBtn = document.getElementById('mapBtn');
         const worldBtn = document.getElementById('worldBtn');
+        const tripsBtn = document.getElementById('tripsBtn');
 
-        summaryBtn.classList.remove('active');
-        mapBtn.classList.remove('active');
+        if (summaryBtn) summaryBtn.classList.remove('active');
+        if (mapBtn) mapBtn.classList.remove('active');
         if (worldBtn) worldBtn.classList.remove('active');
+        if (tripsBtn) tripsBtn.classList.remove('active');
 
         if (summaryViewVisible) {
-            summaryBtn.classList.add('active');
+            if (summaryBtn) summaryBtn.classList.add('active');
         } else if (worldViewVisible) {
             if (worldBtn) worldBtn.classList.add('active');
+        } else if (tripsViewVisible) {
+            if (tripsBtn) tripsBtn.classList.add('active');
         } else {
-            mapBtn.classList.add('active');
+            if (mapBtn) mapBtn.classList.add('active');
         }
     }
 
@@ -8651,6 +8853,71 @@ Departed: ${end}</description>
     }
 
 
+    const MACRO_ACTIVITY_CATEGORIES = {
+        driving: ['DRIVING', 'TAXI', 'MOTORCYCLING', 'SNOWMOBILE'],
+        transit: ['FLYING', 'TRAIN', 'SUBWAY', 'BUS', 'TRAM', 'FERRY', 'CABLECAR', 'FUNICULAR', 'GONDOLA_LIFT', 'BOATING', 'SAILING'],
+        selfPowered: ['WALKING', 'HIKING', 'RUNNING', 'CYCLING', 'WHEELCHAIR', 'SKATEBOARDING', 'SKATING', 'SKIING', 'SNOWBOARDING', 'SLEDDING', 'SNOWSHOEING', 'KAYAKING', 'ROWING', 'SURFING', 'SWIMMING', 'HORSEBACK_RIDING', 'CATCHING_POKEMON', 'PARAGLIDING', 'KITESURFING']
+    };
+
+    function updateCategoryFilterButtons() {
+        const drivingBtn = document.getElementById('catFilterDriving');
+        const transitBtn = document.getElementById('catFilterTransit');
+        const selfPoweredBtn = document.getElementById('catFilterSelfPowered');
+
+        function isCategoryActive(types) {
+            const cbs = types.map(t => document.querySelector(`.chart-filter-checkbox[value="${t}"]`)).filter(Boolean);
+            if (cbs.length === 0) return false;
+            return cbs.some(cb => cb.checked);
+        }
+
+        if (drivingBtn) drivingBtn.classList.toggle('active', isCategoryActive(MACRO_ACTIVITY_CATEGORIES.driving));
+        if (transitBtn) transitBtn.classList.toggle('active', isCategoryActive(MACRO_ACTIVITY_CATEGORIES.transit));
+        if (selfPoweredBtn) selfPoweredBtn.classList.toggle('active', isCategoryActive(MACRO_ACTIVITY_CATEGORIES.selfPowered));
+    }
+
+    function resetActivityFilters() {
+        const cbs = document.querySelectorAll('.chart-filter-checkbox');
+        cbs.forEach(cb => {
+            cb.checked = true;
+            const label = cb.closest('.chart-filter-label');
+            if (label) {
+                label.style.backgroundColor = label.dataset.color || '#e2e8f0';
+                label.style.borderColor = label.dataset.color || '#cbd5e1';
+            }
+        });
+        updateCategoryFilterButtons();
+    }
+
+    function toggleCategoryFilter(catKey) {
+        const types = MACRO_ACTIVITY_CATEGORIES[catKey];
+        if (!types) return;
+        const cbs = types.map(t => document.querySelector(`.chart-filter-checkbox[value="${t}"]`)).filter(Boolean);
+        if (cbs.length === 0) return;
+
+        const anyChecked = cbs.some(cb => cb.checked);
+        const newCheckedState = !anyChecked;
+
+        cbs.forEach(cb => {
+            cb.checked = newCheckedState;
+            const label = cb.closest('.chart-filter-label');
+            if (label) {
+                if (newCheckedState) {
+                    label.style.backgroundColor = label.dataset.color;
+                    label.style.borderColor = label.dataset.color;
+                } else {
+                    label.style.backgroundColor = '#f1f3f4';
+                    label.style.borderColor = '#ced4da';
+                }
+            }
+        });
+
+        updateCategoryFilterButtons();
+
+        if (currentChartStartDate && currentChartEndDate) {
+            updateCharts(currentChartStartDate, currentChartEndDate);
+        }
+    }
+
     // Generates the toggle checkboxes for the charts
     function renderChartFilters() {
         const container = document.getElementById('chart-filters');
@@ -8692,18 +8959,21 @@ Departed: ${end}</description>
                     label.style.borderColor = '#ced4da';
                 }
 
+                updateCategoryFilterButtons();
+
                 if (currentChartStartDate && currentChartEndDate) {
-                    // Pass false so it doesn't auto-uncheck other boxes when user manually clicks
-                    updateCharts(currentChartStartDate, currentChartEndDate, false);
+                    updateCharts(currentChartStartDate, currentChartEndDate);
                 }
             });
 
             container.appendChild(label);
         });
+
+        updateCategoryFilterButtons();
     }
 
     // Gathers data and draws the charts
-    function updateCharts(startDateStr, endDateStr, autoUncheck = true) {
+    function updateCharts(startDateStr, endDateStr) {
         currentChartStartDate = startDateStr;
         currentChartEndDate = endDateStr;
 
@@ -8717,7 +8987,7 @@ Departed: ${end}</description>
 
         const titleEl = document.getElementById('chart-section-title');
         if (titleEl) {
-            titleEl.textContent = `Activity Charts (${startMoment.format('MMM DD, YYYY')} - ${endMoment.format('MMM DD, YYYY')})`;
+            titleEl.textContent = `Activity Chart (${startMoment.format('MMM DD, YYYY')} - ${endMoment.format('MMM DD, YYYY')})`;
         }
 
         let groupBy = 'day';
@@ -8818,9 +9088,9 @@ Departed: ${end}</description>
         // 3. Apply Distance chart UI filters
         allPossibleGroups.forEach(g => {
             const cb = document.querySelector(`.chart-filter-checkbox[value="${g}"]`);
+            if (!cb) return;
             const label = cb.closest('.chart-filter-label');
-
-            if (autoUncheck) cb.checked = activityTotals[g] > 0;
+            if (!label) return;
 
             if (cb.checked) {
                 label.style.backgroundColor = label.dataset.color;
@@ -8831,8 +9101,14 @@ Departed: ${end}</description>
             }
         });
 
+        updateCategoryFilterButtons();
+
         // 4. Map Dataset format arrays
-        const activeFilters = allPossibleGroups.filter(g => document.querySelector(`.chart-filter-checkbox[value="${g}"]`).checked);
+        // Only include activities that are checked AND have distance > 0 so the chart and legend stay clean and accurate
+        const activeFilters = allPossibleGroups.filter(g => {
+            const cb = document.querySelector(`.chart-filter-checkbox[value="${g}"]`);
+            return cb && cb.checked && activityTotals[g] > 0;
+        });
         const distanceDatasets = activeFilters.map(act => ({
             label: act.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
             backgroundColor: getActivityColor(act),
@@ -8859,7 +9135,7 @@ Departed: ${end}</description>
                 responsive: true, maintainAspectRatio: false,
                 scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Distance (' + distanceUnit + ')' } } },
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
                     title: { display: true, text: 'Distance by Activity' },
                     tooltip: {
                         callbacks: {
@@ -8924,6 +9200,7 @@ Departed: ${end}</description>
             // State
             summaryViewVisible = false;
             worldViewVisible = true;
+            tripsViewVisible = false;
 
             // Map area
             document.getElementById('summaryView').style.display = 'none';
@@ -8931,7 +9208,11 @@ Departed: ${end}</description>
 
             // Sidebar area
             document.getElementById('timeline').style.display = 'none';
-            if(document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
+            const summarySidebar = document.getElementById('summarySidebarContent');
+            if (summarySidebar) summarySidebar.style.display = 'none';
+            const tripsView = document.getElementById('tripsView');
+            if (tripsView) tripsView.style.display = 'none';
+            if (document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
 
             // Hide Date controls
             document.getElementById('datePickerContainer').style.display = 'none';
@@ -8941,7 +9222,10 @@ Departed: ${end}</description>
             // Show World
             worldSidebar.style.display = 'flex';
 
+            if (typeof clearTripMap === 'function') clearTripMap();
+
             updateViewToggleButtons();
+            hideTimezoneMismatchBanner();
             checkAndRenderWorldData();
         });
 
@@ -8953,6 +9237,21 @@ Departed: ${end}</description>
                 document.getElementById('map').classList.remove('hidden');
                 summaryViewVisible = false;
                 updateViewToggleButtons();
+            }
+
+            if (tripsViewVisible) {
+                tripsViewVisible = false;
+                const tripsView = document.getElementById('tripsView');
+                if (tripsView) tripsView.style.display = 'none';
+                document.getElementById('timeline').style.display = 'block';
+
+                document.getElementById('datePickerContainer').style.display = 'flex';
+                document.getElementById('date-range-info').style.display = 'block';
+                document.getElementById('go-container').style.display = 'flex';
+
+                updateViewToggleButtons();
+                if (typeof clearTripMap === 'function') clearTripMap();
+                document.getElementById('goBtn').click();
             }
 
             if (worldViewVisible) {
@@ -8981,16 +9280,10 @@ Departed: ${end}</description>
 
         summaryBtn.addEventListener('click', () => {
             worldSidebar.style.display = 'none';
-            timelineEl.style.display = 'block';
             worldBtn.classList.remove('active');
 
             worldViewVisible = false;
             if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
-
-            // Restore Date controls
-            document.getElementById('datePickerContainer').style.display = 'flex';
-            document.getElementById('date-range-info').style.display = 'block';
-            document.getElementById('go-container').style.display = 'flex';
 
             document.getElementById('heatmap-tuner').style.display = 'none';
             isTunerVisible = false;
@@ -9840,7 +10133,7 @@ Departed: ${end}</description>
 
 
     // =========================================================================
-    // TRIPS VIEW (JOURNEYS) & PLACES LIVED MODULE
+    // TRIPS VIEW & PLACES LIVED MODULE
     // =========================================================================
 
     let cachedTrips = null;
@@ -10591,7 +10884,7 @@ Departed: ${end}</description>
         return closest;
     }
 
-    // Step 2: Detect Trips (Journeys)
+    // Step 2: Detect Trips
     function detectTrips() {
         if (cachedTrips) return cachedTrips;
 
@@ -10889,7 +11182,7 @@ Departed: ${end}</description>
             const isDomestic = routeCountries.length === 0 || (routeCountries.length === 1 && routeCountries[0] === homeCountry);
 
             if (qualifyingCountries.length >= 2) {
-                // Multi-country international journey: Title with the top countries!
+                // Multi-country international trip: Title with the top countries!
                 const rankedCountries = [...qualifyingCountries].sort((a, b) => {
                     const nA = countryNights[a] || 0;
                     const nB = countryNights[b] || 0;
@@ -10905,7 +11198,7 @@ Departed: ${end}</description>
                 chosen.sort((a, b) => (firstSeenCountry[a] || 0) - (firstSeenCountry[b] || 0));
                 title = chosen.map(c => formatCountryName(c)).join(' · ');
             } else {
-                // Single-country or domestic journey: Title with the top cities!
+                // Single-country or domestic trip: Title with the top cities!
                 const rankedCities = [...eligibleCities].sort((a, b) => {
                     const nA = cityNights[a] || 0;
                     const nB = cityNights[b] || 0;
@@ -10943,10 +11236,10 @@ Departed: ${end}</description>
                     if (destCountries.length > 0) {
                         title = destCountries.map(c => formatCountryName(c)).slice(0, 2).join(' · ');
                     } else {
-                        title = "International Journey";
+                        title = "International Trip";
                     }
                 } else {
-                    title = "Journey";
+                    title = "Trip";
                 }
             }
 
@@ -11010,7 +11303,7 @@ Departed: ${end}</description>
                     <div style="font-size: 32px; margin-bottom: 12px;">🧳</div>
                     <strong>No trips detected yet.</strong>
                     <p style="margin-top: 6px; font-size: 12px; color: #64748b;">
-                        Load your timeline data or ensure your places cache is loaded to identify your journeys.
+                        Load your timeline data or ensure your places cache is loaded to identify your trips.
                     </p>
                 </div>
             `;
@@ -11068,7 +11361,7 @@ Departed: ${end}</description>
         if (filteredTrips.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; color: #94a3b8; padding: 35px 10px; font-size: 13px;">
-                    No journeys match the selected filters.
+                    No trips match the selected filters.
                 </div>
             `;
             return;
@@ -11284,7 +11577,6 @@ Departed: ${end}</description>
         `;
 
         homeMapInfoWindow = new google.maps.InfoWindow({ content: infoContent });
-        homeMapInfoWindow.open(map, marker);
 
         if (typeof marker.addListener === 'function') {
             marker.addListener('click', () => {
@@ -11350,7 +11642,7 @@ Departed: ${end}</description>
                 if (!isNaN(lat) && !isNaN(lng) && map) {
                     showHomeOnMap({ lat, lng, title, address, dates });
                     map.setCenter({ lat, lng });
-                    map.setZoom(16);
+                    map.setZoom(13);
                 }
             });
         });
@@ -11478,6 +11770,54 @@ Departed: ${end}</description>
                 renderTripsView();
             });
         }
+
+        const tripsBtn = document.getElementById('tripsBtn');
+        if (tripsBtn) {
+            tripsBtn.addEventListener('click', () => {
+                if (!uiEnabled) return;
+
+                summaryViewVisible = false;
+                worldViewVisible = false;
+                tripsViewVisible = true;
+
+                // Map area
+                document.getElementById('summaryView').style.display = 'none';
+                document.getElementById('map').classList.remove('hidden');
+
+                // Sidebar area
+                document.getElementById('timeline').style.display = 'none';
+                const summarySidebar = document.getElementById('summarySidebarContent');
+                if (summarySidebar) summarySidebar.style.display = 'none';
+                const worldSidebar = document.getElementById('worldSidebarContent');
+                if (worldSidebar) worldSidebar.style.display = 'none';
+                if (document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
+
+                // Hide Date controls
+                document.getElementById('datePickerContainer').style.display = 'none';
+                document.getElementById('date-range-info').style.display = 'none';
+                document.getElementById('go-container').style.display = 'none';
+
+                // Show Trips
+                const tripsView = document.getElementById('tripsView');
+                if (tripsView) tripsView.style.display = 'flex';
+
+                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+
+                updateViewToggleButtons();
+                hideTimezoneMismatchBanner();
+                renderTripsView();
+            });
+        }
+
+        const backToSummaryBtn = document.getElementById('backToSummaryBtn');
+        if (backToSummaryBtn) {
+            backToSummaryBtn.addEventListener('click', () => {
+                if (typeof clearHomeMarker === 'function') clearHomeMarker();
+                showSidebarTab('date');
+                const summaryBtn = document.getElementById('summaryBtn');
+                if (summaryBtn) summaryBtn.click();
+            });
+        }
     }
 
 
@@ -11561,8 +11901,10 @@ Departed: ${end}</description>
 
             // --- Attach event listeners ---
             document.getElementById('calendarBtn').addEventListener('click', () => showSidebarTab('date'));
-            document.getElementById('tripsBtn').addEventListener('click', () => showSidebarTab('trips'));
-            document.getElementById('placesLivedBtn').addEventListener('click', () => showSidebarTab('placesLived'));
+            const placesLivedBtnEl = document.getElementById('placesLivedBtn');
+            if (placesLivedBtnEl) {
+                placesLivedBtnEl.addEventListener('click', () => showSidebarTab('placesLived'));
+            }
             document.getElementById('searchBtn').addEventListener('click', () => showSidebarTab('search'));
             document.getElementById('areaBtn').addEventListener('click', () => showSidebarTab('area'));
             document.getElementById('findInAreaBtn').addEventListener('click', findPlacesInMapArea);
