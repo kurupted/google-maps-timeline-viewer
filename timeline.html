@@ -384,6 +384,44 @@
             font-size: 15px;
             padding: 4px 6px;
         }
+        .timeline-more-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 150px;
+            padding: 4px 0;
+            white-space: nowrap;
+        }
+        .timeline-more-dropdown .more-dropdown-item {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #1e293b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-sizing: border-box;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .timeline-more-dropdown .more-dropdown-item:hover:not(:disabled) {
+            background-color: #f1f5f9 !important;
+            color: #0284c7 !important;
+        }
+        .timeline-more-dropdown .more-dropdown-item:disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
 
         #summarySidebarContent {
             display: none;
@@ -1052,6 +1090,8 @@
         .summary-selected-item,
         .summary-year-item,
         .summary-month-item {
+            display: flex;
+            flex-direction: column;
             border: 1px solid #ced4da;
             padding: 10px;
             border-radius: 5px;
@@ -1062,6 +1102,19 @@
             font-size: 13px;
             box-sizing: border-box; /* Include padding/border in width */
             opacity: 1; /* Ensure visible by default */
+        }
+        .summary-tile-footer {
+            margin-top: auto;
+            width: 100%;
+        }
+        .summary-tile-footer .summary-cached-places {
+            margin-top: 8px;
+            border-top: 1px dashed #ced4da;
+            padding-top: 6px;
+            color: #989898;
+        }
+        .summary-month-item .summary-tile-footer .summary-cached-places {
+            margin-bottom: 8px;
         }
         /* Allow click cursor only for year/month items */
         .summary-year-item, .summary-month-item {
@@ -1167,12 +1220,23 @@
             }
         }
 
+        .summary-selected-item ul,
+        .summary-year-item ul,
+        .summary-month-item ul {
+            list-style: none;
+            padding: 0;
+            margin: 8px auto;
+            width: fit-content;
+            min-width: 170px;
+            max-width: 100%;
+        }
         .summary-selected-item ul li,
         .summary-year-item ul li,
         .summary-month-item ul li {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
             margin-bottom: 2px; /* Consistent spacing */
             break-inside: avoid-column; /* Prevent list items from breaking across columns */
         }
@@ -1182,6 +1246,8 @@
         .summary-month-item li span {
             color: #343a40;
             font-weight: 500;
+            text-align: right;
+            margin-left: auto;
         }
 
         /* Style to hide map when summary is shown */
@@ -1370,7 +1436,7 @@
 
             .map-custom-controls {
                 bottom: calc(55px + env(safe-area-inset-bottom, 0) + 15px);
-                right: 15px;
+                right: 65px;
             }
 
             #summaryView, #howToMessage {
@@ -1574,18 +1640,36 @@
             flex-shrink: 0;
             border-bottom: 1px solid #e9ecef;
         }
-        .trips-title-row {
+        .trips-search-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 10px;
             margin-bottom: 12px;
         }
-        .trips-main-title {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            color: #1e293b;
-            margin: 0;
+        .trips-search-row .trips-search-bar {
+            flex: 1;
+            min-width: 0;
+        }
+        .trips-count-badge {
+            font-size: 12px;
+            font-weight: 600;
+            color: #0284c7;
+            background: #e0f2fe;
+            padding: 6px 10px;
+            border-radius: 12px;
+            border: 1px solid #bae6fd;
+            white-space: nowrap;
+            flex-shrink: 0;
+            line-height: 1.2;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .trips-count-badge:hover {
+            background-color: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+            box-shadow: 0 2px 5px rgba(2, 132, 199, 0.25);
         }
         .trips-search-bar {
             position: relative;
@@ -2136,18 +2220,17 @@
                 <button id="searchBtn" class="icon-btn" title="Search" disabled>🔍</button>
                 <button id="areaBtn" class="icon-btn" title="Area View" disabled>⬚</button>
                 <button id="settingsBtn" class="icon-btn" title="Settings" disabled>⚙️</button>
-                <button id="kmlBtn" class="icon-btn" title="Export currently selected date range as KML" disabled>📤</button>
             </div>
         </div>
 
         <div id="sidebar-main">
             <div id="dateView">
                 <div id="datePickerContainer">
-                    <button id="prevDayBtn" disabled>&lt;</button>
+                    <button id="prevDayBtn" disabled title="Previous day (Hold Ctrl to adjust Start Date only)">&lt;</button>
                     <input type="date" id="startDatePicker" disabled>
                     <span id="dateToSpan">to</span>
                     <input type="date" id="endDatePicker" disabled>
-                    <button id="nextDayBtn" disabled>&gt;</button>
+                    <button id="nextDayBtn" disabled title="Next day (Hold Ctrl to adjust End Date only)">&gt;</button>
                 </div>
                 <div id="date-range-info"></div>
                 <div id="icon-buttons-container">
@@ -2164,6 +2247,14 @@
                         <button id="tripsBtn" class="icon-btn" title="Show Trips" disabled>
                             <span role="img" aria-label="Trips">🧳</span> Trips
                         </button>
+                        <div class="more-menu-container" style="position: relative; display: inline-flex;">
+                            <button id="timelineMoreBtn" class="icon-btn" title="More options" disabled style="padding: 5px 7px; font-size: 16px; line-height: 1;">&#8942;</button>
+                            <div id="timelineMoreDropdown" class="timeline-more-dropdown">
+                                <button id="kmlBtn" class="more-dropdown-item" title="Export currently selected date range as KML" disabled>
+                                    <span>📤</span> Export to KML
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div id="icon-buttons-right"></div>
                 </div>
@@ -2248,14 +2339,13 @@
 
                     <div id="tripsView">
                         <div class="trips-header-container">
-                            <div class="trips-title-row">
-                                <h3 class="trips-main-title">Trips</h3>
-                                <span id="tripsCountBadge" style="font-size: 12px; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 3px 9px; border-radius: 12px; border: 1px solid #bae6fd;">0 trips</span>
-                            </div>
-                            <div class="trips-search-bar">
-                                <span class="search-icon">🔍</span>
-                                <input type="text" id="tripSearchInput" placeholder="Search trips by city, country, or year..." autocomplete="off">
-                                <span id="clearTripSearchBtn" class="clear-icon">&times;</span>
+                            <div class="trips-search-row">
+                                <div class="trips-search-bar">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" id="tripSearchInput" placeholder="Search trips by city, country, or year..." autocomplete="off">
+                                    <span id="clearTripSearchBtn" class="clear-icon">&times;</span>
+                                </div>
+                                <span id="tripsCountBadge" class="trips-count-badge">0 trips</span>
                             </div>
                             <div class="trips-filter-row">
                                 <select id="tripYearFilter" class="trip-filter-select" title="Filter by Year">
@@ -2484,6 +2574,7 @@
                 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
                     <span style="font-size: 13px; font-weight: 600; color: #475569; margin-right: 2px;">Filter:</span>
                     <button type="button" id="catFilterDriving" class="category-filter-btn active">🚗 Driving</button>
+                    <button type="button" id="catFilterFlying" class="category-filter-btn active">✈️ Flying</button>
                     <button type="button" id="catFilterTransit" class="category-filter-btn active">🚆 Transit</button>
                     <button type="button" id="catFilterSelfPowered" class="category-filter-btn active">🚶 Self-Powered</button>
                     <button type="button" id="toggleSpecificTypesBtn" class="control-btn" style="margin-left: auto; font-size: 12px; padding: 5px 10px; display: flex; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; color: #475569;">
@@ -2663,6 +2754,14 @@
                 </div>
 
                 <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 24px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef;">🧳</div>
+                    <div>
+                        <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">Trips View</strong>
+                        <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.4;">Automatically detects your vacations and travels away from home. Browse trips by year, filter by duration or flights, and click any trip to inspect its dates and destinations.</p>
+                    </div>
+                </div>
+
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="font-size: 20px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef;">🔍 ⬚</div>
                     <div>
                         <strong style="font-size: 15px; color: #333; display: block; margin-bottom: 4px;">Search & Area View</strong>
@@ -2701,7 +2800,6 @@
             <h3 style="color: #0056b3; margin-top: 30px; display: flex; align-items: center; gap: 8px;">💡 Pro Tips</h3>
             <ul style="line-height: 1.6; background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px 20px 20px 40px; margin-bottom: 20px; font-size: 14.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); color: #333;">
                 <li style="margin-bottom: 12px;"><strong>Smart Date Navigation:</strong> Hold down the <code>Ctrl</code> key while clicking the <strong>&lt;</strong> or <strong>&gt;</strong> buttons (or using <code>Ctrl + Left/Right Arrow</code> keys) to stretch your date range. This modifies only the Start Date or End Date individually, rather than shifting the entire viewing window.</li>
-                <li style="margin-bottom: 12px;"><strong>Traveling Across Timezones?</strong> If you are looking at a past trip, go to Settings and change the "Display times in" dropdown to the local timezone of your destination. This forces the timeline to align perfectly with the local days as you experienced them, ignoring your computer's current clock.</li>
                 <li style="margin-bottom: 12px;"><strong>Local Edits:</strong> Any edits or additions you make to your timeline are saved to a <code>TimelineEdits.json</code> file. Just like the cache, make sure this file lives inside your data folder so the app applies your corrections automatically on the next load.</li>
                 <li style="margin-bottom: 12px;"><strong>Using This on Your Phone:</strong> Running a local HTML file directly on an Android or iOS device can be difficult. If you want to use this on your phone, you can use the <a href="https://kurupted.github.io/google-maps-timeline-viewer/timeline.html" target="_blank">hosted version</a> and select your local data folder from there. Because the app runs locally, even when it's hosted remotely, your private location data never leaves your device!</li>
                 <li style="margin-bottom: 12px;"><strong>Generate Visits from Photos:</strong> You can use GPS-tagged photos to fill in missing timeline gaps. Go to Settings and use the "Import Photo GPS Data" tool. Note, however, that the results may be a little messy, as Google will assign the nearest places based on the GPS coordinates, and there won't be any activity tracks (eg Walking) between photos.</li>
@@ -3491,6 +3589,11 @@
             dateView.style.display = 'flex';
             calendarBtn.classList.add('active');
 
+            const summaryView = document.getElementById('summaryView');
+            if (summaryView) summaryView.style.display = 'none';
+            const mapElement = document.getElementById('map');
+            if (mapElement) mapElement.classList.remove('hidden');
+
             document.getElementById('timeline').style.display = 'block';
             const worldSidebar = document.getElementById('worldSidebarContent');
             if (worldSidebar) worldSidebar.style.display = 'none';
@@ -3504,13 +3607,24 @@
             tripsViewVisible = false;
             updateViewToggleButtons();
 
+            // Clear trip / world / home markers if any
+            if (typeof clearTripMap === 'function') clearTripMap();
+            if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+            if (typeof clearHomeMarker === 'function') clearHomeMarker();
+
             // RESTORE DATE PICKERS
             document.getElementById('datePickerContainer').style.display = 'flex';
             document.getElementById('date-range-info').style.display = 'block';
             document.getElementById('go-container').style.display = 'flex';
 
-            // When switching to date view, re-fit the map to that day's data
-            fitMapToData();
+            // If map markers/polylines were cleared (e.g. by Trips or World view), reload current date range
+            const startDatePicker = document.getElementById('startDatePicker');
+            const endDatePicker = document.getElementById('endDatePicker');
+            if (markers.length === 0 && polylines.length === 0 && startDatePicker && startDatePicker.value && endDatePicker && endDatePicker.value) {
+                loadTimelineDataInDateRange(startDatePicker.value, endDatePicker.value, false);
+            } else {
+                fitMapToData();
+            }
         } else if (tabName === 'trips') {
             // Forward to Trips sub-tab in date view
             showSidebarTab('date');
@@ -4966,31 +5080,54 @@
         sidebarItem.addEventListener('click', async () => {
             highlightSidebarItem(index); // Highlight this item
 
-            if (marker && infoWindow && marker.map) {
-                // --- Place Visit Click ---
-                map.setCenter(marker.position);
-                map.setZoom(Math.max(map.getZoom(), 15)); // Zoom in if necessary
+            if (marker) {
+                // If marker was detached from map (e.g. after trips view or world view), re-attach it
+                if ((!marker.map || !marker.getMap?.() || marker.getMap() === null) && map) {
+                    marker.setMap(map);
+                }
+                if (infoWindow && (marker.map || marker.getMap?.())) {
+                    // --- Place Visit Click ---
+                    map.setCenter(marker.position);
+                    map.setZoom(Math.max(map.getZoom(), 15)); // Zoom in if necessary
 
-                // Close other info windows
-                infoWindows.forEach(iw => { if (iw !== infoWindow) iw.close(); });
+                    // Close other info windows
+                    infoWindows.forEach(iw => { if (iw !== infoWindow) iw.close(); });
 
-                // Fetch photo only if it hasn't been fetched yet
-                await fetchPhotoForInfoWindow(infoWindow); // Wait for photo fetch/update
+                    // Fetch photo only if it hasn't been fetched yet
+                    await fetchPhotoForInfoWindow(infoWindow); // Wait for photo fetch/update
 
-                // Open this info window
-                infoWindow.open({ map: map, anchor: marker });
+                    // Open this info window
+                    infoWindow.open({ map: map, anchor: marker });
 
-                deselectPolyline(); // Deselect any polyline
+                    deselectPolyline(); // Deselect any polyline
+                    return;
+                }
+            }
 
-            } else if (polyline && path?.length > 0 && polyline.getMap()) {
-                // --- Activity Segment Click ---
-                const bounds = new google.maps.LatLngBounds();
-                path.forEach(point => bounds.extend(point));
-                map.fitBounds(bounds, 30); // Fit map to polyline bounds with padding
+            if (polyline) {
+                // If polyline was detached from map, re-attach it
+                if ((!polyline.getMap || !polyline.getMap()) && map) {
+                    polyline.setMap(map);
+                }
+                if (path?.length > 0 && polyline.getMap?.()) {
+                    // --- Activity Segment Click ---
+                    const bounds = new google.maps.LatLngBounds();
+                    path.forEach(point => bounds.extend(point));
+                    map.fitBounds(bounds, 30); // Fit map to polyline bounds with padding
 
-                selectPolyline(polyline); // Select this polyline
+                    selectPolyline(polyline); // Select this polyline
 
-                infoWindows.forEach(iw => iw.close()); // Close info windows
+                    infoWindows.forEach(iw => iw.close()); // Close info windows
+                    return;
+                }
+            }
+
+            // Fallback: If neither marker nor polyline is active on map, center map on item's coordinates
+            const rawLat = parseFloat(sidebarItem.dataset.rawLat);
+            const rawLng = parseFloat(sidebarItem.dataset.rawLng);
+            if (!isNaN(rawLat) && !isNaN(rawLng) && map) {
+                map.setCenter({ lat: rawLat, lng: rawLng });
+                map.setZoom(Math.max(map.getZoom(), 15));
             }
         });
     }
@@ -5515,6 +5652,11 @@
             summaryViewVisible = false;
             updateViewToggleButtons();
         }
+
+        const summarySidebar = document.getElementById('summarySidebarContent');
+        if (summarySidebar) summarySidebar.style.display = 'none';
+        const timelineEl = document.getElementById('timeline');
+        if (timelineEl) timelineEl.style.display = 'block';
 
         if (!uiEnabled) return;
 
@@ -6393,8 +6535,10 @@
 					<div class="summary-details">Countries: <span>${data.countries.size.toLocaleString()}</span></div>
 					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters, true)}</span></div>
 					${activityHtml}
-					<div class="summary-details" style="margin-top: 8px; border-top: 1px dashed #ced4da; padding-top: 6px; color: #989898;">
-						Cached Places: <span>${data.cachedVisits.toLocaleString()} / ${data.visits.toLocaleString()}</span>
+					<div class="summary-tile-footer">
+						<div class="summary-details summary-cached-places">
+							Cached Places: <span>${data.cachedVisits.toLocaleString()} / ${data.visits.toLocaleString()}</span>
+						</div>
 					</div>
             `;
 
@@ -6480,10 +6624,12 @@
 					<div class="summary-details">Countries: <span>${data.countries.size.toLocaleString()}</span></div>
 					<div class="summary-details">Total Dist: <span>${formatDistance(data.distanceMeters)}</span></div>
 					${activityHtml}
-					<div class="summary-details" style="margin-top: 8px; margin-bottom: 8px; border-top: 1px dashed #ced4da; padding-top: 6px; color: #989898;">
-						Cached Places: <span>${data.cachedVisits.toLocaleString()} / ${data.visits.toLocaleString()}</span>
+					<div class="summary-tile-footer">
+						<div class="summary-details summary-cached-places">
+							Cached Places: <span>${data.cachedVisits.toLocaleString()} / ${data.visits.toLocaleString()}</span>
+						</div>
+						<button class="view-map-btn" data-year="${year}" data-month="${monthIndex}">View on Map</button>
 					</div>
-					<button class="view-map-btn" data-year="${year}" data-month="${monthIndex}">View on Map</button>
 				`;
 
             // Click listener for the whole month card (Updates Chart or goes to map)
@@ -6588,6 +6734,12 @@
 
             startDatePicker.value = newStart.format('YYYY-MM-DD');
             endDatePicker.value = newEnd.format('YYYY-MM-DD');
+
+            if (summaryViewVisible) {
+                displaySelectedDatesSummary(newStart.format('YYYY-MM-DD'), newEnd.format('YYYY-MM-DD'));
+                updateCharts(newStart.format('YYYY-MM-DD'), newEnd.format('YYYY-MM-DD'));
+                return;
+            }
 
             // Load data for the new range (without the 62-day warning for arrow navigation)
             loadTimelineDataInDateRange(newStart.format('YYYY-MM-DD'), newEnd.format('YYYY-MM-DD'), false); // Pass false to skip warning
@@ -6763,6 +6915,7 @@
         const summaryPlacesLivedBtn = document.getElementById('summaryPlacesLivedBtn');
 
         const drivingBtn = document.getElementById('catFilterDriving');
+        const flyingBtn = document.getElementById('catFilterFlying');
         const transitBtn = document.getElementById('catFilterTransit');
         const selfPoweredBtn = document.getElementById('catFilterSelfPowered');
         const toggleSpecificBtn = document.getElementById('toggleSpecificTypesBtn');
@@ -6770,6 +6923,7 @@
         const toggleArrow = document.getElementById('toggleSpecificTypesArrow');
 
         if (drivingBtn) drivingBtn.addEventListener('click', () => toggleCategoryFilter('driving'));
+        if (flyingBtn) flyingBtn.addEventListener('click', () => toggleCategoryFilter('flying'));
         if (transitBtn) transitBtn.addEventListener('click', () => toggleCategoryFilter('transit'));
         if (selfPoweredBtn) selfPoweredBtn.addEventListener('click', () => toggleCategoryFilter('selfPowered'));
 
@@ -6784,6 +6938,8 @@
         if (summaryPlacesLivedBtn) {
             summaryPlacesLivedBtn.addEventListener('click', () => {
                 showSidebarTab('placesLived');
+                const showSidebarBtn = document.getElementById('show-sidebar-btn');
+                if (showSidebarBtn) showSidebarBtn.click();
             });
         }
 
@@ -6965,6 +7121,7 @@
         const elementsToToggle = [
             document.getElementById('calendarBtn'),
             document.getElementById('tripsBtn'),
+            document.getElementById('timelineMoreBtn'),
             document.getElementById('placesLivedBtn'),
             document.getElementById('startDatePicker'),
             document.getElementById('endDatePicker'),
@@ -8855,12 +9012,14 @@ Departed: ${end}</description>
 
     const MACRO_ACTIVITY_CATEGORIES = {
         driving: ['DRIVING', 'TAXI', 'MOTORCYCLING', 'SNOWMOBILE'],
-        transit: ['FLYING', 'TRAIN', 'SUBWAY', 'BUS', 'TRAM', 'FERRY', 'CABLECAR', 'FUNICULAR', 'GONDOLA_LIFT', 'BOATING', 'SAILING'],
+        flying: ['FLYING', 'IN_FLIGHT'],
+        transit: ['TRAIN', 'SUBWAY', 'BUS', 'TRAM', 'FERRY', 'CABLECAR', 'FUNICULAR', 'GONDOLA_LIFT', 'BOATING', 'SAILING'],
         selfPowered: ['WALKING', 'HIKING', 'RUNNING', 'CYCLING', 'WHEELCHAIR', 'SKATEBOARDING', 'SKATING', 'SKIING', 'SNOWBOARDING', 'SLEDDING', 'SNOWSHOEING', 'KAYAKING', 'ROWING', 'SURFING', 'SWIMMING', 'HORSEBACK_RIDING', 'CATCHING_POKEMON', 'PARAGLIDING', 'KITESURFING']
     };
 
     function updateCategoryFilterButtons() {
         const drivingBtn = document.getElementById('catFilterDriving');
+        const flyingBtn = document.getElementById('catFilterFlying');
         const transitBtn = document.getElementById('catFilterTransit');
         const selfPoweredBtn = document.getElementById('catFilterSelfPowered');
 
@@ -8871,6 +9030,7 @@ Departed: ${end}</description>
         }
 
         if (drivingBtn) drivingBtn.classList.toggle('active', isCategoryActive(MACRO_ACTIVITY_CATEGORIES.driving));
+        if (flyingBtn) flyingBtn.classList.toggle('active', isCategoryActive(MACRO_ACTIVITY_CATEGORIES.flying));
         if (transitBtn) transitBtn.classList.toggle('active', isCategoryActive(MACRO_ACTIVITY_CATEGORIES.transit));
         if (selfPoweredBtn) selfPoweredBtn.classList.toggle('active', isCategoryActive(MACRO_ACTIVITY_CATEGORIES.selfPowered));
     }
@@ -10139,12 +10299,19 @@ Departed: ${end}</description>
     let cachedTrips = null;
     let cachedPlacesLived = null;
     let tripMapPolyline = null;
+    let tripMapPolylines = [];
     let tripMapMarkers = [];
 
     function clearTripMap() {
         if (tripMapPolyline) {
             tripMapPolyline.setMap(null);
             tripMapPolyline = null;
+        }
+        if (tripMapPolylines && tripMapPolylines.length > 0) {
+            tripMapPolylines.forEach(p => {
+                if (p && typeof p.setMap === 'function') p.setMap(null);
+            });
+            tripMapPolylines = [];
         }
         if (tripMapMarkers && tripMapMarkers.length > 0) {
             tripMapMarkers.forEach(m => {
@@ -10568,7 +10735,7 @@ Departed: ${end}</description>
     // Helper: Extract location info from a timeline object
     function extractItemLocationInfo(item) {
         const raw = item.raw || item;
-        let lat = null, lng = null, placeId = null, name = null, semanticType = null;
+        let lat = null, lng = null, endLat = null, endLng = null, placeId = null, name = null, semanticType = null;
         let isActivity = false, activityType = null, pathPoints = [];
 
         if (raw.placeVisit) {
@@ -10596,9 +10763,25 @@ Departed: ${end}</description>
             if (raw.activitySegment.startLocation?.latitudeE7) {
                 lat = raw.activitySegment.startLocation.latitudeE7 / 1e7;
                 lng = raw.activitySegment.startLocation.longitudeE7 / 1e7;
+            } else if (raw.activitySegment.startLocation?.lat) {
+                lat = raw.activitySegment.startLocation.lat;
+                lng = raw.activitySegment.startLocation.lng;
             }
-            if (raw.activitySegment.simplifiedRawPath?.points) {
-                pathPoints = raw.activitySegment.simplifiedRawPath.points;
+            if (raw.activitySegment.endLocation?.latitudeE7) {
+                endLat = raw.activitySegment.endLocation.latitudeE7 / 1e7;
+                endLng = raw.activitySegment.endLocation.longitudeE7 / 1e7;
+            } else if (raw.activitySegment.endLocation?.lat) {
+                endLat = raw.activitySegment.endLocation.lat;
+                endLng = raw.activitySegment.endLocation.lng;
+            }
+            const intermediatePoints = raw.activitySegment.simplifiedRawPath?.points ||
+                raw.activitySegment.timelinePath?.points ||
+                raw.activitySegment.waypointPath?.waypoints ||
+                raw.activitySegment.path;
+            if (intermediatePoints && intermediatePoints.length > 0) {
+                pathPoints = intermediatePoints;
+            } else if (lat !== null && lng !== null && endLat !== null && endLng !== null) {
+                pathPoints = [{ lat, lng }, { lat: endLat, lng: endLng }];
             }
         } else if (raw.activity) {
             isActivity = true;
@@ -10606,6 +10789,13 @@ Departed: ${end}</description>
             if (raw.activity.start) {
                 const geo = parseGeoString(raw.activity.start);
                 if (geo) { lat = geo.lat; lng = geo.lng; }
+            }
+            if (raw.activity.end) {
+                const geo = parseGeoString(raw.activity.end);
+                if (geo) { endLat = geo.lat; endLng = geo.lng; }
+            }
+            if (pathPoints.length === 0 && lat !== null && lng !== null && endLat !== null && endLng !== null) {
+                pathPoints = [{ lat, lng }, { lat: endLat, lng: endLng }];
             }
         }
 
@@ -10670,7 +10860,7 @@ Departed: ${end}</description>
         const isAirport = isAirportLocation(name, formattedAddress, placeDetailsCache[placeId]?.types || []);
 
         return {
-            placeId, name, lat, lng, city, state, country, formattedAddress,
+            placeId, name, lat, lng, endLat, endLng, city, state, country, formattedAddress,
             isActivity, activityType, pathPoints, isExplicitHome, isAirport
         };
     }
@@ -10937,11 +11127,18 @@ Departed: ${end}</description>
 
             let isAway = false;
             let distFromHome = 0;
+            let endDistFromHome = 0;
 
             if (home && loc.lat !== null && loc.lng !== null) {
                 distFromHome = computeHaversineDistance([
                     { lat: home.lat, lng: home.lng },
                     { lat: loc.lat, lng: loc.lng }
+                ]);
+            }
+            if (home && loc.endLat !== null && loc.endLng !== null) {
+                endDistFromHome = computeHaversineDistance([
+                    { lat: home.lat, lng: home.lng },
+                    { lat: loc.endLat, lng: loc.endLng }
                 ]);
             }
 
@@ -10961,13 +11158,23 @@ Departed: ${end}</description>
                     } else {
                         isSignificantFlight = true;
                     }
-                } else if (distFromHome >= 100000) {
+                } else if (loc.lat !== null && loc.endLat !== null) {
+                    const fDist = computeHaversineDistance([{ lat: loc.lat, lng: loc.lng }, { lat: loc.endLat, lng: loc.endLng }]);
+                    if (fDist >= 120000) isSignificantFlight = true;
+                } else if (distFromHome >= 100000 || endDistFromHome >= 100000) {
                     isSignificantFlight = true;
                 }
             }
 
+            const effectiveDistFromHome = Math.max(distFromHome, endDistFromHome);
+
             if (isSignificantFlight) {
-                isAway = true;
+                // If it's a significant flight, it's away if either end is away from home (> 60km), or if it spans across regions
+                if (distFromHome > 60000 || endDistFromHome > 60000) {
+                    isAway = true;
+                } else if (!home) {
+                    isAway = true;
+                }
             } else if (home && distFromHome > 60000) { // Away if > 60 km from home
                 isAway = true;
             } else if (home && loc.country !== "Unknown Country" && home.country !== "Unknown Country" && loc.country !== home.country && distFromHome > 35000) {
@@ -10979,7 +11186,7 @@ Departed: ${end}</description>
                 loc,
                 home,
                 isAway,
-                distFromHome,
+                distFromHome: effectiveDistFromHome,
                 isSignificantFlight
             });
         }
@@ -11050,15 +11257,27 @@ Departed: ${end}</description>
                 if (p.distFromHome > maxDist) maxDist = p.distFromHome;
                 if (p.isSignificantFlight) hasFlight = true;
 
+                const pushMapPt = (pt) => {
+                    if (!pt || isNaN(pt.lat) || isNaN(pt.lng)) return;
+                    if (mapPoints.length > 0) {
+                        const last = mapPoints[mapPoints.length - 1];
+                        if (Math.abs(last.lat - pt.lat) < 1e-5 && Math.abs(last.lng - pt.lng) < 1e-5) return;
+                    }
+                    mapPoints.push(pt);
+                };
+
                 if (p.loc.lat !== null && p.loc.lng !== null) {
-                    mapPoints.push({ lat: p.loc.lat, lng: p.loc.lng });
+                    pushMapPt({ lat: p.loc.lat, lng: p.loc.lng });
                 }
                 if (p.loc.pathPoints && p.loc.pathPoints.length > 0) {
                     for (const pt of p.loc.pathPoints) {
                         const ptLat = pt.lat !== undefined ? pt.lat : (pt.latE7 ? pt.latE7 / 1e7 : null);
                         const ptLng = pt.lng !== undefined ? pt.lng : (pt.lngE7 ? pt.lngE7 / 1e7 : null);
-                        if (ptLat !== null && ptLng !== null) mapPoints.push({ lat: ptLat, lng: ptLng });
+                        if (ptLat !== null && ptLng !== null) pushMapPt({ lat: ptLat, lng: ptLng });
                     }
+                }
+                if (p.loc.endLat !== null && p.loc.endLng !== null) {
+                    pushMapPt({ lat: p.loc.endLat, lng: p.loc.endLng });
                 }
 
                 const dur = p.item.endMoment.diff(p.item.startMoment, 'minutes');
@@ -11356,7 +11575,16 @@ Departed: ${end}</description>
             return true;
         });
 
-        if (badge) badge.textContent = `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'}`;
+        if (badge) {
+            badge.textContent = `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'}`;
+            badge.title = "Click to preview all trips on map";
+            badge.onclick = () => {
+                container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
+                showAllTripsOnMap(filteredTrips);
+                const showMapBtn = document.getElementById('show-map-btn');
+                if (showMapBtn) showMapBtn.click();
+            };
+        }
 
         if (filteredTrips.length === 0) {
             container.innerHTML = `
@@ -11364,6 +11592,7 @@ Departed: ${end}</description>
                     No trips match the selected filters.
                 </div>
             `;
+            clearTripMap();
             return;
         }
 
@@ -11387,12 +11616,14 @@ Departed: ${end}</description>
             `;
 
             for (const trip of byYear[year]) {
-                const flagsHtml = trip.flags.map(f => {
-                    const emoji = typeof f === 'object' ? f.emoji : f;
-                    const name = typeof f === 'object' ? f.country : '';
-                    return `<span class="trip-flag-item"${name ? ` title="${escapeHtml(name)}"` : ''}>${emoji}</span>`;
-                }).join(' ');
-                const routeHtml = trip.routeCities.length > 0
+                const flagSpans = trip.flags.map(f =>
+                    `<span class="trip-flag-item" title="${escapeHtml(f.country || f.name)}">${f.emoji}</span>`
+                ).join('');
+
+                const durationBadge = `<span class="trip-badge badge-duration">${trip.nightLabel}</span>`;
+                const flightBadge = trip.hasFlight ? `<span class="trip-badge badge-flight">✈️ Flight</span>` : '';
+
+                const routeHtml = (trip.routeCities && trip.routeCities.length > 1)
                     ? `<div class="trip-card-route">${trip.routeCities.join('<span class="arrow">→</span>')}</div>`
                     : '';
 
@@ -11400,16 +11631,12 @@ Departed: ${end}</description>
                     <div class="trip-card" data-trip-id="${trip.id}">
                         <div class="trip-card-header">
                             <div class="trip-card-title">${escapeHtml(trip.title)}</div>
-                            <div class="trip-card-flags">
-                                ${flagsHtml}
-                                <span class="trip-chevron">›</span>
-                            </div>
+                            <div class="trip-card-flags">${flagSpans}</div>
                         </div>
                         <div class="trip-card-dates">${trip.dateDisplay}</div>
                         <div class="trip-card-badges">
-                            <span class="trip-badge badge-duration">${trip.durationTag}</span>
-                            <span class="trip-badge badge-nights">${trip.nightLabel}</span>
-                            ${trip.hasFlight ? '<span class="trip-badge badge-flight">✈️ Flight</span>' : ''}
+                            ${durationBadge}
+                            ${flightBadge}
                         </div>
                         ${routeHtml}
                         <div class="trip-card-actions">
@@ -11424,6 +11651,9 @@ Departed: ${end}</description>
 
         container.innerHTML = html;
 
+        // Default to showing all filtered trips on the map at once
+        showAllTripsOnMap(filteredTrips);
+
         container.querySelectorAll('.trip-card').forEach(card => {
             const tripId = card.dataset.tripId;
             const trip = trips.find(t => t.id === tripId);
@@ -11432,7 +11662,11 @@ Departed: ${end}</description>
                 if (e.target.closest('.btn-open-timeline')) return;
                 container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
                 card.classList.add('active-trip');
-                if (trip) showTripOnMap(trip);
+                if (trip) {
+                    showTripOnMap(trip);
+                    const showMapBtn = document.getElementById('show-map-btn');
+                    if (showMapBtn) showMapBtn.click();
+                }
             });
         });
 
@@ -11450,18 +11684,12 @@ Departed: ${end}</description>
         });
     }
 
-    // Step 4: Show Trip on Map
+    // Step 4: Show Trip on Map (single trip with A/B markers)
     function showTripOnMap(trip) {
         if (!map) return;
         clearMap();
         if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
-
-        if (tripMapPolyline) {
-            tripMapPolyline.setMap(null);
-            tripMapPolyline = null;
-        }
-        tripMapMarkers.forEach(m => m.setMap ? m.setMap(null) : (m.map = null));
-        tripMapMarkers = [];
+        clearTripMap();
 
         if (!trip.mapPoints || trip.mapPoints.length === 0) return;
 
@@ -11481,7 +11709,7 @@ Departed: ${end}</description>
         tripMapPolyline = new google.maps.Polyline({
             path: validPath,
             geodesic: true,
-            strokeColor: '#3b82f6',
+            strokeColor: '#0284c7',
             strokeOpacity: 0.85,
             strokeWeight: 4,
             map: map
@@ -11509,6 +11737,48 @@ Departed: ${end}</description>
         }
 
         map.fitBounds(bounds, 50);
+    }
+
+    // Step 4b: Show All Filtered Trips on Map (no A/B pins)
+    function showAllTripsOnMap(tripsToShow) {
+        if (!map) return;
+        clearMap();
+        if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+        clearTripMap();
+
+        if (!tripsToShow || tripsToShow.length === 0) return;
+
+        const bounds = new google.maps.LatLngBounds();
+        let anyPoints = false;
+        const tripColors = ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#06b6d4', '#f97316'];
+
+        tripsToShow.forEach((t, idx) => {
+            if (!t.mapPoints || t.mapPoints.length === 0) return;
+            const validPath = [];
+            for (const pt of t.mapPoints) {
+                if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                    const pos = new google.maps.LatLng(pt.lat, pt.lng);
+                    validPath.push(pos);
+                    bounds.extend(pos);
+                    anyPoints = true;
+                }
+            }
+            if (validPath.length > 0) {
+                const poly = new google.maps.Polyline({
+                    path: validPath,
+                    geodesic: true,
+                    strokeColor: tripColors[idx % tripColors.length],
+                    strokeOpacity: 0.8,
+                    strokeWeight: 3.5,
+                    map: map
+                });
+                tripMapPolylines.push(poly);
+            }
+        });
+
+        if (anyPoints && !bounds.isEmpty()) {
+            map.fitBounds(bounds, 50);
+        }
     }
 
     // Home Map Marker & InfoWindow management
@@ -11643,6 +11913,8 @@ Departed: ${end}</description>
                     showHomeOnMap({ lat, lng, title, address, dates });
                     map.setCenter({ lat, lng });
                     map.setZoom(13);
+                    const showMapBtn = document.getElementById('show-map-btn');
+                    if (showMapBtn) showMapBtn.click();
                 }
             });
         });
@@ -11962,11 +12234,30 @@ Departed: ${end}</description>
                 contextMenu.style.display = 'none';
             });
 
-            // kml export button
+            // More options menu & KML export button
+            const timelineMoreBtn = document.getElementById('timelineMoreBtn');
+            const timelineMoreDropdown = document.getElementById('timelineMoreDropdown');
+            if (timelineMoreBtn && timelineMoreDropdown) {
+                timelineMoreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isShown = timelineMoreDropdown.style.display === 'block';
+                    timelineMoreDropdown.style.display = isShown ? 'none' : 'block';
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!timelineMoreBtn.contains(e.target) && !timelineMoreDropdown.contains(e.target)) {
+                        timelineMoreDropdown.style.display = 'none';
+                    }
+                });
+            }
+
             const kmlBtn = document.getElementById('kmlBtn');
-            kmlBtn.addEventListener('click', () => {
-                exportToKML()
-            });
+            if (kmlBtn) {
+                kmlBtn.addEventListener('click', () => {
+                    if (timelineMoreDropdown) timelineMoreDropdown.style.display = 'none';
+                    exportToKML();
+                });
+            }
 
             // Listen to heatmap slider drags
             document.addEventListener('input', (e) => {

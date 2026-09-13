@@ -14,6 +14,7 @@ If you're like me, you have years worth of timeline data that you want to be abl
 - Find all visited places within the viewable map area
 - Summary of activities by year/month
 - World View shows a heat map of your activity, and a list of countries and cities visited
+- Trips View automatically detects vacations and travels away from home, with duration filters and flight detection
 - Timeline items are editable, including route paths
 - Timezone setting for viewing your travel days with local times
 - Toggle layers on and off, eg to view only places, without travel paths
