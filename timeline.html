@@ -1262,23 +1262,43 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(2px);
             display: none; /* Initially hidden */
             z-index: 1000; /* Ensure above summary view */
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.2em;
+            padding: 20px;
+            box-sizing: border-box;
         }
         #loading-spinner {
-            border: 8px solid #f3f3f3;
+            border: 8px solid rgba(255, 255, 255, 0.2);
             border-top: 8px solid #5A95F5;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1.5s linear infinite;
-            margin-bottom: 15px;
+            width: 52px;
+            height: 52px;
+            animation: spin 1.2s linear infinite;
+            margin-bottom: 18px;
+        }
+        #loading-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 0.2px;
+            text-align: center;
+            max-width: 90%;
+            line-height: 1.35;
+        }
+        #loading-subtext {
+            font-size: 0.9em;
+            font-weight: 400;
+            color: #93c5fd;
+            margin-top: 8px;
+            text-align: center;
+            max-width: 85%;
+            line-height: 1.4;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -2011,6 +2031,31 @@
             padding: 3px 8px;
             border-radius: 8px;
             letter-spacing: 0.2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .trip-badge.clickable-badge {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+        }
+        .trip-badge.clickable-badge:hover {
+            filter: brightness(0.95);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+        .trip-badge.clickable-badge.active {
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+        .trip-badge .badge-toggle-arrow {
+            font-size: 9px;
+            display: inline-block;
+            transition: transform 0.2s ease;
+            opacity: 0.7;
+        }
+        .trip-badge.clickable-badge.active .badge-toggle-arrow {
+            transform: rotate(180deg);
         }
         .trip-badge.badge-duration {
             background-color: #fef3c7;
@@ -2034,7 +2079,11 @@
             color: #475569;
             margin-top: 10px;
             line-height: 1.45;
-            word-break: break-word;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+        .trip-card-route .route-city {
+            white-space: nowrap;
         }
         .trip-card-route .arrow {
             color: #94a3b8;
@@ -2043,33 +2092,95 @@
         }
         .trip-card-flight-row {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 6px;
             font-size: 11px;
             color: #0284c7;
             background: #f0f9ff;
             border: 1px solid #bae6fd;
             border-radius: 8px;
-            padding: 5px 9px;
+            padding: 6px 9px;
             margin-top: 8px;
             font-weight: 500;
         }
         .trip-card-flight-row .flight-icon {
             font-size: 13px;
             flex-shrink: 0;
+            margin-top: 1px;
         }
         .trip-card-flight-row .flight-route {
-            word-break: break-word;
-            line-height: 1.35;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 6px;
+            line-height: 1.4;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+        .trip-card-flight-row .flight-leg {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 3px;
+        }
+        .trip-card-flight-row .flight-city {
+            white-space: nowrap;
         }
         .trip-card-flight-row .flight-leg-arrow {
             color: #0284c7;
-            margin: 0 3px;
+            margin: 0 1px;
             font-weight: bold;
         }
         .trip-card-flight-row .flight-sep {
             color: #94a3b8;
-            margin: 0 5px;
+            margin: 0 2px;
+            user-select: none;
+        }
+        .trip-card-nights-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            font-size: 11px;
+            color: #854d0e;
+            background: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 8px;
+            padding: 6px 9px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .trip-card-nights-row .nights-icon {
+            font-size: 13px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .trip-card-nights-row .nights-cities-list {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 6px;
+            line-height: 1.4;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+        .trip-card-nights-row .stay-city-item {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 3px;
+        }
+        .trip-card-nights-row .stay-city-name {
+            font-weight: 600;
+            color: #713f12;
+        }
+        .trip-card-nights-row .stay-city-nights {
+            color: #a16207;
+            font-weight: 500;
+        }
+        .trip-card-nights-row .flight-sep {
+            color: #ca8a04;
+            margin: 0 2px;
+            user-select: none;
         }
         .trip-card-actions {
             margin-top: 12px;
@@ -2217,6 +2328,443 @@
         }
         .lived-action-btn.btn-danger:hover {
             background-color: #fee2e2;
+        }
+
+        /* --- Timeline Edits Modal Styles --- */
+        .edits-clickable-count {
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background-color 0.15s ease, color 0.15s ease;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .edits-clickable-count:hover {
+            background-color: #e2e8f0;
+            text-decoration: underline;
+        }
+        .edits-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .edits-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .edits-modal-dialog {
+            background: #ffffff;
+            width: 100%;
+            max-width: 1080px;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: scale(0.98);
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .edits-modal-overlay.active .edits-modal-dialog {
+            transform: scale(1);
+        }
+        .edits-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
+        .edits-modal-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .edits-modal-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+        .edits-modal-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .edits-header-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .edits-pill {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.2px;
+        }
+        .edits-pill.all {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+        .edits-pill.addition {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .edits-pill.modification {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        .edits-pill.deletion {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .edits-modal-close {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            line-height: 1;
+            color: #64748b;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .edits-modal-close:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        .edits-modal-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 20px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+        .edits-search-box {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+        }
+        .edits-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+        .edits-search-box input {
+            width: 100%;
+            padding: 7px 30px 7px 32px;
+            font-size: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            box-sizing: border-box;
+        }
+        .edits-search-box input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .edits-clear-search {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+        .edits-clear-search:hover {
+            color: #334155;
+        }
+        .edits-filters-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .edits-filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #475569;
+            font-weight: 500;
+        }
+        .edits-filter-item select {
+            padding: 6px 10px;
+            font-size: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #1e293b;
+            cursor: pointer;
+            outline: none;
+        }
+        .edits-filter-item select:focus {
+            border-color: #3b82f6;
+        }
+        .edits-table-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(85vh - 160px);
+            background: #ffffff;
+            position: relative;
+        }
+        .edits-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 12px;
+        }
+        .edits-table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            z-index: 2;
+            white-space: nowrap;
+        }
+        .edits-table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.15s ease;
+        }
+        .edits-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        .edits-table tbody td {
+            padding: 10px 14px;
+            color: #334155;
+            vertical-align: middle;
+        }
+        .edits-table-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .edits-table-badge.badge-addition {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .edits-table-badge.badge-modification {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        .edits-table-badge.badge-deletion {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .edits-category-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #475569;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .edits-item-name {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 13px;
+            margin-bottom: 2px;
+            word-break: break-word;
+        }
+        .edits-item-detail {
+            font-size: 11px;
+            color: #64748b;
+            word-break: break-word;
+        }
+        .edit-orig-val {
+            font-size: 11px;
+            color: #dc2626;
+            margin-top: 3px;
+            font-weight: 500;
+            line-height: 1.3;
+            word-break: break-word;
+            text-decoration: none;
+        }
+        .edit-orig-prefix {
+            font-size: 10px;
+            font-weight: 700;
+            color: #ef4444;
+            margin-right: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .edits-timestamp {
+            font-size: 11px;
+            color: #334155;
+            white-space: nowrap;
+        }
+        .edits-duration-pill {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 500;
+            color: #475569;
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .edits-actions-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .edits-action-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .edits-action-btn.btn-jump {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+        }
+        .edits-action-btn.btn-jump:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        .edits-action-btn.btn-revert {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        .edits-action-btn.btn-revert:hover {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        .edits-empty-state {
+            padding: 48px 24px;
+            text-align: center;
+            color: #64748b;
+        }
+        .edits-empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.8;
+        }
+        .edits-empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+        .edits-empty-subtext {
+            font-size: 13px;
+            color: #64748b;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        .edits-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 20px;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+        .edits-footer-info {
+            font-size: 11px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .edits-footer-hint code {
+            background: #e2e8f0;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: #0f172a;
+        }
+        .edits-footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .edits-btn {
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .edits-btn.primary {
+            background-color: #3b82f6;
+            color: white;
+            border: 1px solid #2563eb;
+        }
+        .edits-btn.primary:hover {
+            background-color: #2563eb;
+        }
+        .edits-btn.secondary {
+            background-color: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+        .edits-btn.secondary:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
         }
     </style>
 </head>
@@ -2562,13 +3110,14 @@
 
         <div id="loading-overlay">
             <div id="loading-spinner"></div>
-            <span>Loading data...</span>
+            <span id="loading-title">Loading data...</span>
+            <div id="loading-subtext" style="display: none;"></div>
         </div>
 
         <div id="status-bar-container">
             <div id="status-info">
                 <div id="edits-indicator" style="display: none; align-items: center; gap: 8px; font-size: 10px; margin-bottom: 2px;">
-                    <span>
+                    <span id="editsCountBtn" class="edits-clickable-count" title="Click to view and manage timeline edits in a table">
                         Timeline Edits:
                         <span id="saved-edits-count">0</span> saved /
                         <span id="new-edits-count" style="color: #007bff; font-weight: bold;">0</span><span style="color: #007bff; font-weight: bold;"> new</span>
@@ -2656,8 +3205,107 @@
         <pre id="debugOverlayContent"></pre>
     </div>
 
+    <!-- Timeline Edits Overlay Modal -->
+    <div id="timelineEditsModal" class="edits-modal-overlay" style="display: none;">
+        <div class="edits-modal-dialog">
+            <!-- Header -->
+            <div class="edits-modal-header">
+                <div class="edits-modal-title-wrap">
+                    <span class="edits-modal-icon">✏️</span>
+                    <h3 class="edits-modal-title">Timeline Edits</h3>
+                    <div id="editsHeaderBadges" class="edits-header-badges">
+                        <span id="editsTotalBadge" class="edits-pill all">Total: 0</span>
+                        <span id="editsAddedBadge" class="edits-pill addition">+0 Added</span>
+                        <span id="editsModifiedBadge" class="edits-pill modification">✎ 0 Modified</span>
+                        <span id="editsDeletedBadge" class="edits-pill deletion">🗑 0 Deleted</span>
+                    </div>
+                </div>
+                <button id="closeTimelineEditsModalBtn" class="edits-modal-close" title="Close">×</button>
+            </div>
+
+            <!-- Toolbar / Filters -->
+            <div class="edits-modal-toolbar">
+                <div class="edits-search-box">
+                    <span class="edits-search-icon">🔍</span>
+                    <input type="text" id="editsSearchInput" placeholder="Search edits by place name, activity, address, or date..." autocomplete="off">
+                    <button id="editsClearSearchBtn" class="edits-clear-search" style="display: none;" title="Clear search">×</button>
+                </div>
+                <div class="edits-filters-group">
+                    <div class="edits-filter-item">
+                        <label for="editsTypeFilter">Type:</label>
+                        <select id="editsTypeFilter">
+                            <option value="all">All Types</option>
+                            <option value="addition">Added (+)</option>
+                            <option value="modification">Modified (✎)</option>
+                            <option value="deletion">Deleted (🗑)</option>
+                        </select>
+                    </div>
+                    <div class="edits-filter-item">
+                        <label for="editsCategoryFilter">Category:</label>
+                        <select id="editsCategoryFilter">
+                            <option value="all">All Categories</option>
+                            <option value="placeVisit">Place Visits</option>
+                            <option value="activitySegment">Activities / Travel</option>
+                        </select>
+                    </div>
+                    <div class="edits-filter-item">
+                        <label for="editsSortSelect">Sort by:</label>
+                        <select id="editsSortSelect">
+                            <option value="date-desc">Date (Newest First)</option>
+                            <option value="date-asc">Date (Oldest First)</option>
+                            <option value="name-asc">Name (A → Z)</option>
+                            <option value="name-desc">Name (Z → A)</option>
+                            <option value="type">Edit Type</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="edits-table-container">
+                <table id="editsTable" class="edits-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">Type</th>
+                            <th style="width: 140px;">Category</th>
+                            <th>Entry Name / Details</th>
+                            <th style="width: 180px;">Start Date & Time</th>
+                            <th style="width: 180px;">End Date & Time</th>
+                            <th style="width: 90px;">Duration</th>
+                            <th style="width: 150px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editsTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+                <div id="editsEmptyState" class="edits-empty-state" style="display: none;">
+                    <div class="edits-empty-icon">📝</div>
+                    <div id="editsEmptyTitle" class="edits-empty-title">No Timeline Edits Found</div>
+                    <div id="editsEmptySubtext" class="edits-empty-subtext">You haven't added, modified, or deleted any timeline entries yet.</div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="edits-modal-footer">
+                <div class="edits-footer-info">
+                    <span id="editsShowingCount">Showing 0 of 0 edits</span>
+                    <span class="edits-footer-hint">• Edits apply dynamically in your session. Save to <code>TimelineEdits.json</code> in your data folder to keep them permanently.</span>
+                </div>
+                <div class="edits-footer-actions">
+                    <button id="editsModalSaveBtn" class="edits-btn secondary" title="Download TimelineEdits.json">💾 Save Edits</button>
+                    <button id="editsModalCloseBtn" class="edits-btn primary">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="editEntryModal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2000; width: 350px;">
         <h3 id="editEntryTitle" style="margin-top: 0;">Edit Entry</h3>
+        <div id="editOriginalEntryBanner" style="display: none; margin-bottom: 12px; padding: 8px 10px; background-color: #f0f7ff; border-left: 3px solid #3b82f6; border-radius: 4px; font-size: 11px; color: #334155;">
+            <div style="font-weight: 700; color: #1d4ed8; margin-bottom: 2px; text-transform: uppercase; font-size: 9.5px; letter-spacing: 0.5px;">Original Entry</div>
+            <div id="editOriginalEntryContent" style="word-break: break-word;"></div>
+        </div>
 
         <label>Entry Type:</label>
         <select id="editEntryType" style="width: 100%; margin-bottom: 10px; padding: 5px;">
@@ -4068,6 +4716,10 @@
             const indicator = document.createElement('span');
             indicator.className = 'edited-indicator';
             indicator.textContent = '(Edited)';
+            if (item.originalItem && typeof getOriginalItemDetails === 'function') {
+                const orig = getOriginalItemDetails(item.originalItem);
+                if (orig) indicator.title = `Originally: ${orig.name}`;
+            }
             timelineItem.appendChild(indicator);
         } else if (item.isAdded) {
             const indicator = document.createElement('span');
@@ -5721,6 +6373,7 @@
         updateApiCallDisplay();
 
         document.getElementById('loading-overlay').style.display = "flex";
+        setLoadingStatus(`Loading timeline records...`, `${startMoment.format('MMM D')} – ${endMoment.format('MMM D, YYYY')}`);
 
         // Create a new promise that wraps the entire loading process
         return new Promise(async (resolve, reject) => {
@@ -5745,7 +6398,7 @@
                 console.error("Error loading data for date range:", error);
                 reject(error); // Reject the main promise on error
             } finally {
-                document.getElementById('loading-overlay').style.display = "none";
+                resetLoadingStatus();
                 document.getElementById('howToMessage').style.display = "none";
                 document.getElementById('map').classList.remove('hidden');
                 fitMapToData();
@@ -7229,6 +7882,33 @@
         }
     }
 
+    async function setLoadingStatus(mainText, subText = '') {
+        const overlay = document.getElementById('loading-overlay');
+        const titleEl = document.getElementById('loading-title') || document.getElementById('loading-spinner')?.nextElementSibling;
+        const subEl = document.getElementById('loading-subtext');
+        if (overlay && overlay.style.display !== 'flex') {
+            overlay.style.display = 'flex';
+        }
+        if (titleEl) titleEl.textContent = mainText;
+        if (subEl) {
+            subEl.textContent = subText || '';
+            subEl.style.display = subText ? 'block' : 'none';
+        }
+        await new Promise(r => setTimeout(r, 0));
+    }
+
+    function resetLoadingStatus() {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) overlay.style.display = 'none';
+        const titleEl = document.getElementById('loading-title') || document.getElementById('loading-spinner')?.nextElementSibling;
+        const subEl = document.getElementById('loading-subtext');
+        if (titleEl) titleEl.textContent = 'Loading data...';
+        if (subEl) {
+            subEl.textContent = '';
+            subEl.style.display = 'none';
+        }
+    }
+
     // Reads files from the selected directory (handles Takeout structure and single Timeline.json)
     async function readFilesFromDirectory(dirHandle, isRecursive=false) {
         let timelineJsonFile = null;
@@ -7263,6 +7943,7 @@
             // --- Step 1: Scan for Timeline.json and TimelinePlaceCache.json at current level (non-recursive) ---
             let editsFile = null;
             if (!isRecursive) {
+                await setLoadingStatus("Scanning folder for timeline data...");
                 for await (const entry of dirHandle.values()) {
                     if (entry.kind === 'file') {
                         if (entry.name.toLowerCase() === 'timeline.json') {
@@ -7276,6 +7957,7 @@
                 }
 
                 if (editsFile) {
+                    await setLoadingStatus("Processing timeline edits...");
                     try {
                         const file = await editsFile.getFile();
                         const content = await file.text();
@@ -7291,6 +7973,7 @@
 
                 // Load Place Details Cache if found
                 if (placeCacheFile) {
+                    await setLoadingStatus("Loading place details cache...");
                     console.log("Found TimelinePlaceCache.json, attempting to load...");
                     try {
                         const file = await placeCacheFile.getFile();
@@ -7323,6 +8006,7 @@
 
             // --- Step 2: Process single Timeline.json if found ---
             if (timelineJsonFile) {
+                await setLoadingStatus("Reading timeline file (Timeline.json)...");
                 console.log("Found Timeline.json, attempting to parse...");
                 const tz = getSelectedTimezone();
                 const file = await timelineJsonFile.getFile();
@@ -7334,9 +8018,11 @@
                 if (Array.isArray(jsonData)) {
                     dataSourceText = 'Timeline.json (iOS)';
                     console.log('Processing iOS Format Timeline.json...');
+                    await setLoadingStatus("Processing iOS timeline data...");
 
                     // --- Step 1 - Pre-process timelinePath objects ---
                     console.log("Pre-processing timelinePath objects...");
+                    await setLoadingStatus("Processing timeline paths...");
                     const allPathPoints = [];
                     jsonData.forEach(item => {
                         if (item.timelinePath && Array.isArray(item.timelinePath)) {
@@ -7369,7 +8055,7 @@
                     console.log(`Found and processed ${allPathPoints.length} total points from timelinePath.`);
                     let pathPointPointer = 0; // An optimizer for our search loop
 
-
+                    await setLoadingStatus("Organizing visits and activities...");
                     jsonData.forEach(item => {
                         if (!item || !item.startTime || !item.endTime) return; // Basic check
 
@@ -7476,6 +8162,7 @@
                 } else if (jsonData.timelineObjects) {
                     dataSourceText = 'Timeline.json (Standard)';
                     console.log('Processing Standard Format Timeline.json...');
+                    await setLoadingStatus("Processing standard timeline data...");
                     jsonData.timelineObjects.forEach(item => {
                         const endTimestamp = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp;
                         if (!endTimestamp) return;
@@ -7513,6 +8200,7 @@
                 } else if (jsonData.semanticSegments) {
                     dataSourceText = 'Timeline.json (Semantic)';
                     console.log('Processing Semantic History format...');
+                    await setLoadingStatus("Processing semantic timeline data...");
                     // Populate the timelinePath points from every timelinePath object first
                     const allPathPoints = []; // Array to hold all path points with time
                     jsonData.semanticSegments.forEach(segment => {
@@ -7574,9 +8262,11 @@
                         }
                     });
                     // Sort path points by time
+                    await setLoadingStatus("Processing timeline paths...");
                     allPathPoints.sort((a, b) => moment(a.time).valueOf() - moment(b.time).valueOf());
                     let pathPointPointer = 0; // Pointer for efficient matching
 
+                    await setLoadingStatus("Organizing visits and activities...");
                     const processedTimelineObjects = jsonData.semanticSegments.map(segment => {
                         const startTime = segment.startTime;
                         const endTime = segment.endTime;
@@ -7702,6 +8392,14 @@
                         // Process monthly file directly (YYYY_MONTH.json)
                         fileFoundInThisLevel = true; // Mark that we found a file here
                         console.log(`Processing ${entry.name}`);
+                        const fileMatch = entry.name.match(/^(\d{4})_(\w+)\.json$/i);
+                        if (fileMatch) {
+                            const yr = fileMatch[1];
+                            const mo = fileMatch[2].charAt(0).toUpperCase() + fileMatch[2].slice(1).toLowerCase();
+                            await setLoadingStatus(`Reading year ${yr} of the timeline data...`, mo);
+                        } else {
+                            await setLoadingStatus(`Reading ${entry.name}...`);
+                        }
                         const file = await entry.getFile();
                         const content = await file.text();
                         try {
@@ -7748,6 +8446,11 @@
                     } else if (entry.kind === 'directory') {
                         // Make recursive call for subdirectories (e.g., year folders)
                         console.log(`Recursively checking directory: ${entry.name}`);
+                        if (/^\d{4}$/.test(entry.name)) {
+                            await setLoadingStatus(`Reading year ${entry.name} of the timeline data...`);
+                        } else {
+                            await setLoadingStatus(`Reading folder ${entry.name}...`);
+                        }
                         // Await the recursive call to ensure all subfolders are processed before proceeding
                         await readFilesFromDirectory(entry, true);
                     }
@@ -7761,6 +8464,7 @@
 
             // --- Step 4: Post Loading (only on initial call) ---
             if (!isRecursive) {
+                await setLoadingStatus("Applying timeline edits...");
                 applyTimelineEdits();
                 if (Object.keys(timelineData).length > 0) {
                     // Set the global locationBias from the latest found location
@@ -7769,6 +8473,9 @@
                         console.log(`Set search location bias to latest data point:`, locationBias);
                     }
                     console.log("Data loading complete. Enabling UI.");
+
+                    await setLoadingStatus("Analyzing trip info...");
+                    detectTrips();
 
                     // Update the data source indicator text
                     updateCacheIndicator(); // Display the initial cache counts
@@ -7781,6 +8488,7 @@
                     setUIEnabled(true);
                     await setDatePickersToLatestRenderableDate();
 
+                    await setLoadingStatus("Loading timeline records...");
                     // Perform initial data load for the default date range
                     await loadTimelineDataInDateRange(document.getElementById('startDatePicker').value, document.getElementById('endDatePicker').value);
 
@@ -7801,7 +8509,7 @@
         } finally {
             // Hide loading overlay ONLY on the initial, non-recursive call completion
             if (!isRecursive) {
-                document.getElementById('loading-overlay').style.display = "none";
+                resetLoadingStatus();
             }
         }
     }
@@ -7860,16 +8568,38 @@
             }
 
             // Show Restore button ONLY if it's currently an override
+            const origBanner = document.getElementById('editOriginalEntryBanner');
+            const origContent = document.getElementById('editOriginalEntryContent');
             if (item.isEdited) {
                 document.getElementById('restoreEntryBtn').style.display = 'inline-block';
+                if (item.originalItem && origBanner && origContent && typeof getOriginalItemDetails === 'function') {
+                    const orig = getOriginalItemDetails(item.originalItem, editModeActiveItem);
+                    if (orig) {
+                        const origStartFormatted = orig.startTimestamp ? formatTimestamp(orig.startTimestamp, 'MMM D, YYYY · h:mm A') : '';
+                        const origEndFormatted = orig.endTimestamp ? formatTimestamp(orig.endTimestamp, 'h:mm A') : '';
+                        origContent.innerHTML = `
+                            <div><strong>${orig.icon} ${escapeHtml(orig.name)}</strong> ${orig.detail ? `<span style="color:#64748b;">(${escapeHtml(orig.detail)})</span>` : ''}</div>
+                            ${origStartFormatted ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px;">Original Time: ${origStartFormatted} – ${origEndFormatted}</div>` : ''}
+                        `;
+                        origBanner.style.display = 'block';
+                    } else {
+                        origBanner.style.display = 'none';
+                    }
+                } else if (origBanner) {
+                    origBanner.style.display = 'none';
+                }
             } else {
                 document.getElementById('restoreEntryBtn').style.display = 'none';
+                if (origBanner) origBanner.style.display = 'none';
             }
         } else {
             // Adding new
             title.textContent = "Add Entry";
             deleteBtn.style.display = "none";
             editModeActiveItem = null; // Denotes Add Mode
+
+            const origBanner = document.getElementById('editOriginalEntryBanner');
+            if (origBanner) origBanner.style.display = 'none';
 
             // Default to noon of the selected date
             document.getElementById('editStartTime').value = moment.tz(baseDateStr, tz).set({hour:12, minute:0}).format('YYYY-MM-DDTHH:mm:ss');
@@ -7903,6 +8633,7 @@
         initialEditsCount = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
         savedEditsSnapshot = JSON.stringify(timelineEdits);
         updateEditsIndicator();
+        if (typeof renderEditsTable === 'function') renderEditsTable();
     }
 
     document.getElementById('deleteEntryBtn').addEventListener('click', () => {
@@ -7924,12 +8655,21 @@
             });
         } else {
             // Otherwise, it's a base entry (edited or not). Add it to deletions.
+            const itemObj = editModeActiveFullItem.originalItem || editModeActiveFullItem;
+            const pv = itemObj.placeVisit;
+            const as = itemObj.activitySegment;
+            const nameHint = pv?.location?.name || pv?.location?.address || (as ? (as.activityType || 'Travel') : 'Timeline Entry');
+            const categoryHint = pv ? 'Place Visit' : (as ? 'Activity / Travel' : 'Entry');
+
             if (!timelineEdits.deletions) timelineEdits.deletions = [];
             timelineEdits.deletions.push({
                 match: {
                     startTimestamp: origTimes.startTimestamp,
                     endTimestamp: origTimes.endTimestamp
-                }
+                },
+                nameHint: nameHint,
+                categoryHint: categoryHint,
+                originalItem: itemObj
             });
 
             // If we delete an item we previously modified, remove it from the modifications list to keep the file clean
@@ -8250,7 +8990,8 @@
         // Check for ACTUAL changes by comparing the current state to the last saved snapshot
         const hasUnsavedChanges = JSON.stringify(timelineEdits) !== savedEditsSnapshot;
 
-        if (currentTotal > 0 || initialEditsCount > 0 || hasUnsavedChanges) {
+        // Show indicator if edits exist, or if data is loaded into the timeline
+        if (currentTotal > 0 || initialEditsCount > 0 || hasUnsavedChanges || (timelineData && Object.keys(timelineData).length > 0)) {
             indicator.style.display = 'flex';
             savedSpan.textContent = initialEditsCount;
 
@@ -8270,6 +9011,632 @@
             saveBtn.disabled = !hasUnsavedChanges;
         } else {
             indicator.style.display = 'none';
+        }
+
+        const modal = document.getElementById('timelineEditsModal');
+        if (modal && modal.style.display !== 'none' && typeof renderEditsTable === 'function') {
+            renderEditsTable();
+        }
+    }
+
+    // --- Timeline Edits Overlay & Table Logic ---
+    function formatEditDuration(start, end) {
+        if (!start || !end) return '—';
+        const mStart = moment(start);
+        const mEnd = moment(end);
+        const diffMs = mEnd.diff(mStart);
+        if (isNaN(diffMs) || diffMs < 0) return '—';
+        const totalMinutes = Math.round(diffMs / 60000);
+        if (totalMinutes < 1) return '< 1m';
+        const days = Math.floor(totalMinutes / (24 * 60));
+        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+        const mins = totalMinutes % 60;
+        const parts = [];
+        if (days > 0) parts.push(`${days}d`);
+        if (hours > 0) parts.push(`${hours}h`);
+        if (mins > 0 || parts.length === 0) parts.push(`${mins}m`);
+        return parts.join(' ');
+    }
+
+    function findOriginalItemForModification(mod) {
+        if (mod.originalItem) return mod.originalItem;
+        if (mod.replaceWith && mod.replaceWith.originalItem) return mod.replaceWith.originalItem;
+
+        const matchStart = mod.match?.startTimestamp;
+        const matchEnd = mod.match?.endTimestamp;
+
+        if (matchStart && matchEnd && typeof timelineData !== 'undefined') {
+            const matchStartMs = moment(matchStart).valueOf();
+            const matchEndMs = moment(matchEnd).valueOf();
+            const isMatch = (tStart, tEnd) => {
+                if (!tStart || !tEnd) return false;
+                return Math.abs(moment(tStart).valueOf() - matchStartMs) < 1000 &&
+                       Math.abs(moment(tEnd).valueOf() - matchEndMs) < 1000;
+            };
+
+            for (const monthKey in timelineData) {
+                const objs = timelineData[monthKey].timelineObjects || [];
+                const found = objs.find(o => {
+                    if (o.originalItem) {
+                        const origStart = o.originalItem.placeVisit?.duration?.startTimestamp || o.originalItem.activitySegment?.duration?.startTimestamp || o.originalItem.startTime;
+                        const origEnd = o.originalItem.placeVisit?.duration?.endTimestamp || o.originalItem.activitySegment?.duration?.endTimestamp || o.originalItem.endTime;
+                        if (isMatch(origStart, origEnd)) return true;
+                    }
+                    const curStart = o.placeVisit?.duration?.startTimestamp || o.activitySegment?.duration?.startTimestamp || o.startTime;
+                    const curEnd = o.placeVisit?.duration?.endTimestamp || o.activitySegment?.duration?.endTimestamp || o.endTime;
+                    return isMatch(curStart, curEnd);
+                });
+                if (found) {
+                    const orig = found.originalItem || found;
+                    mod.originalItem = orig;
+                    return orig;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function getOriginalItemDetails(orig, match) {
+        if (!orig) return null;
+        // If it's a lightweight originalHint object
+        if (orig.category && orig.name && !orig.placeVisit && !orig.activitySegment && !orig.location) {
+            const isPlace = orig.category.toLowerCase().includes('place');
+            return {
+                name: orig.name,
+                detail: orig.detail || '',
+                category: orig.category,
+                icon: isPlace ? '📍' : (typeof getActivityIcon === 'function' ? getActivityIcon(orig.name) : '🚗'),
+                startTimestamp: orig.startTimestamp || match?.startTimestamp,
+                endTimestamp: orig.endTimestamp || match?.endTimestamp,
+                isPlace: isPlace
+            };
+        }
+
+        const isPlace = Boolean(orig.placeVisit || orig.location || orig.visit);
+        const pv = orig.placeVisit || orig.visit || orig;
+        const as = orig.activitySegment || orig;
+        const startTimestamp = pv.duration?.startTimestamp || as.duration?.startTimestamp || orig.startTime || match?.startTimestamp;
+        const endTimestamp = pv.duration?.endTimestamp || as.duration?.endTimestamp || orig.endTime || match?.endTimestamp;
+
+        let name = 'Original Entry';
+        let detail = '';
+        let category = 'Unknown';
+        let icon = '📍';
+
+        if (isPlace) {
+            const loc = pv.location || pv.topCandidate || orig.location || {};
+            name = loc.name || loc.address || 'Original Place';
+            detail = loc.address && loc.address !== loc.name ? loc.address : (loc.placeId ? `Place ID: ${loc.placeId}` : '');
+            category = 'Place Visit';
+            icon = '📍';
+        } else {
+            const actType = as.activityType || orig.activityType || 'Travel';
+            name = typeof formatActivityType === 'function' ? formatActivityType(actType) : actType.replace(/_/g, ' ');
+            detail = as.distance ? `${formatDistance(as.distance)}` : '';
+            category = 'Activity / Travel';
+            icon = typeof getActivityIcon === 'function' ? getActivityIcon(actType) : '🚗';
+        }
+
+        return {
+            name,
+            detail,
+            category,
+            icon,
+            startTimestamp,
+            endTimestamp,
+            isPlace
+        };
+    }
+
+    function getNormalizedTimelineEdits() {
+        const list = [];
+
+        // 1. Additions
+        (timelineEdits.additions || []).forEach((add, index) => {
+            const item = add.placeVisit || add.activitySegment || add;
+            const isPlace = Boolean(add.placeVisit || item.location);
+            const startTimestamp = item.duration?.startTimestamp || add.startTime || '';
+            const endTimestamp = item.duration?.endTimestamp || add.endTime || '';
+            let name = 'Added Entry';
+            let detail = '';
+            let category = 'Unknown';
+            let icon = '➕';
+
+            if (isPlace) {
+                const loc = item.location || {};
+                name = loc.name || loc.address || 'Added Place';
+                detail = loc.address && loc.address !== loc.name ? loc.address : (loc.placeId ? `Place ID: ${loc.placeId}` : '');
+                category = 'Place Visit';
+                icon = '📍';
+            } else {
+                const actType = item.activityType || 'Travel';
+                name = typeof formatActivityType === 'function' ? formatActivityType(actType) : actType.replace(/_/g, ' ');
+                detail = item.distance ? `${formatDistance(item.distance)}` : '';
+                category = 'Activity / Travel';
+                icon = typeof getActivityIcon === 'function' ? getActivityIcon(actType) : '🚗';
+            }
+
+            list.push({
+                type: 'addition',
+                typeLabel: 'Added',
+                badgeClass: 'badge-addition',
+                rawIndex: index,
+                rawRef: add,
+                startTimestamp,
+                endTimestamp,
+                name,
+                detail,
+                category,
+                icon,
+                isPlace
+            });
+        });
+
+        // 2. Modifications
+        (timelineEdits.modifications || []).forEach((mod, index) => {
+            const rep = mod.replaceWith || {};
+            const item = rep.placeVisit || rep.activitySegment || rep;
+            const isPlace = Boolean(rep.placeVisit || item.location);
+            const startTimestamp = item.duration?.startTimestamp || mod.match?.startTimestamp || '';
+            const endTimestamp = item.duration?.endTimestamp || mod.match?.endTimestamp || '';
+            let name = 'Modified Entry';
+            let detail = '';
+            let category = 'Unknown';
+            let icon = '✎';
+
+            if (isPlace) {
+                const loc = item.location || {};
+                name = loc.name || loc.address || 'Modified Place';
+                detail = loc.address && loc.address !== loc.name ? loc.address : (loc.placeId ? `Place ID: ${loc.placeId}` : '');
+                category = 'Place Visit';
+                icon = '📍';
+            } else {
+                const actType = item.activityType || 'Travel';
+                name = typeof formatActivityType === 'function' ? formatActivityType(actType) : actType.replace(/_/g, ' ');
+                detail = item.distance ? `${formatDistance(item.distance)}` : '';
+                category = 'Activity / Travel';
+                icon = typeof getActivityIcon === 'function' ? getActivityIcon(actType) : '🚗';
+            }
+
+            // Look up original item details
+            const origRaw = findOriginalItemForModification(mod);
+            const original = getOriginalItemDetails(origRaw, mod.match);
+
+            list.push({
+                type: 'modification',
+                typeLabel: 'Modified',
+                badgeClass: 'badge-modification',
+                rawIndex: index,
+                rawRef: mod,
+                startTimestamp,
+                endTimestamp,
+                name,
+                detail,
+                category,
+                icon,
+                isPlace,
+                original
+            });
+        });
+
+        // 3. Deletions
+        (timelineEdits.deletions || []).forEach((del, index) => {
+            const startTimestamp = del.match?.startTimestamp || '';
+            const endTimestamp = del.match?.endTimestamp || '';
+            let name = del.nameHint || 'Deleted Entry';
+            let detail = 'Removed from timeline';
+            let category = del.categoryHint || 'Timeline Entry';
+            let icon = '🗑';
+
+            list.push({
+                type: 'deletion',
+                typeLabel: 'Deleted',
+                badgeClass: 'badge-deletion',
+                rawIndex: index,
+                rawRef: del,
+                startTimestamp,
+                endTimestamp,
+                name,
+                detail,
+                category,
+                icon,
+                isPlace: category.toLowerCase().includes('place')
+            });
+        });
+
+        return list;
+    }
+
+    function renderEditsTable() {
+        const edits = getNormalizedTimelineEdits();
+
+        // Count totals
+        const additionsCount = edits.filter(e => e.type === 'addition').length;
+        const modificationsCount = edits.filter(e => e.type === 'modification').length;
+        const deletionsCount = edits.filter(e => e.type === 'deletion').length;
+
+        // Update header badge elements
+        const totalBadge = document.getElementById('editsTotalBadge');
+        const addedBadge = document.getElementById('editsAddedBadge');
+        const modBadge = document.getElementById('editsModifiedBadge');
+        const delBadge = document.getElementById('editsDeletedBadge');
+
+        if (totalBadge) totalBadge.textContent = `Total: ${edits.length}`;
+        if (addedBadge) addedBadge.textContent = `+${additionsCount} Added`;
+        if (modBadge) modBadge.textContent = `✎ ${modificationsCount} Modified`;
+        if (delBadge) delBadge.textContent = `🗑 ${deletionsCount} Deleted`;
+
+        // Read filter & sort controls
+        const searchInput = document.getElementById('editsSearchInput');
+        const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        const clearSearchBtn = document.getElementById('editsClearSearchBtn');
+        if (clearSearchBtn) clearSearchBtn.style.display = searchVal ? 'block' : 'none';
+
+        const typeFilter = document.getElementById('editsTypeFilter')?.value || 'all';
+        const categoryFilter = document.getElementById('editsCategoryFilter')?.value || 'all';
+        const sortMode = document.getElementById('editsSortSelect')?.value || 'date-desc';
+
+        // Filter list
+        let filtered = edits.filter(edit => {
+            // Type filter
+            if (typeFilter !== 'all' && edit.type !== typeFilter) return false;
+
+            // Category filter
+            if (categoryFilter === 'placeVisit' && !edit.isPlace) return false;
+            if (categoryFilter === 'activitySegment' && edit.isPlace) return false;
+
+            // Search filter (including search in original entry details)
+            if (searchVal) {
+                const tz = getSelectedTimezone();
+                const startDateStr = edit.startTimestamp ? moment.tz(edit.startTimestamp, tz).format('YYYY-MM-DD MMM D MMMM YYYY h:mm A').toLowerCase() : '';
+                const matchName = edit.name.toLowerCase().includes(searchVal);
+                const matchDetail = edit.detail.toLowerCase().includes(searchVal);
+                const matchCategory = edit.category.toLowerCase().includes(searchVal);
+                const matchDate = startDateStr.includes(searchVal);
+                const matchOrig = edit.original ? (
+                    edit.original.name.toLowerCase().includes(searchVal) ||
+                    edit.original.detail.toLowerCase().includes(searchVal) ||
+                    edit.original.category.toLowerCase().includes(searchVal)
+                ) : false;
+                if (!matchName && !matchDetail && !matchCategory && !matchDate && !matchOrig) return false;
+            }
+
+            return true;
+        });
+
+        // Sort list
+        filtered.sort((a, b) => {
+            if (sortMode === 'date-desc') {
+                const timeA = a.startTimestamp ? moment(a.startTimestamp).valueOf() : 0;
+                const timeB = b.startTimestamp ? moment(b.startTimestamp).valueOf() : 0;
+                return timeB - timeA;
+            } else if (sortMode === 'date-asc') {
+                const timeA = a.startTimestamp ? moment(a.startTimestamp).valueOf() : 0;
+                const timeB = b.startTimestamp ? moment(b.startTimestamp).valueOf() : 0;
+                return timeA - timeB;
+            } else if (sortMode === 'name-asc') {
+                return a.name.localeCompare(b.name);
+            } else if (sortMode === 'name-desc') {
+                return b.name.localeCompare(a.name);
+            } else if (sortMode === 'type') {
+                return a.type.localeCompare(b.type);
+            }
+            return 0;
+        });
+
+        // Populate table body
+        const tbody = document.getElementById('editsTableBody');
+        const table = document.getElementById('editsTable');
+        const emptyState = document.getElementById('editsEmptyState');
+        const showingCount = document.getElementById('editsShowingCount');
+
+        if (showingCount) {
+            showingCount.textContent = `Showing ${filtered.length} of ${edits.length} edit${edits.length === 1 ? '' : 's'}`;
+        }
+
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (filtered.length === 0) {
+            if (table) table.style.display = 'none';
+            if (emptyState) {
+                emptyState.style.display = 'block';
+                const emptyTitle = document.getElementById('editsEmptyTitle');
+                const emptySub = document.getElementById('editsEmptySubtext');
+                if (edits.length === 0) {
+                    if (emptyTitle) emptyTitle.textContent = 'No Timeline Edits Found';
+                    if (emptySub) emptySub.textContent = 'You haven\'t added, modified, or deleted any timeline entries yet.';
+                } else {
+                    if (emptyTitle) emptyTitle.textContent = 'No Matching Edits';
+                    if (emptySub) emptySub.textContent = 'Try adjusting your search query or filter dropdowns above.';
+                }
+            }
+            return;
+        }
+
+        if (table) table.style.display = 'table';
+        if (emptyState) emptyState.style.display = 'none';
+
+        filtered.forEach(edit => {
+            const tr = document.createElement('tr');
+
+            const startFormatted = edit.startTimestamp ? formatTimestamp(edit.startTimestamp, 'MMM D, YYYY · h:mm A') : '—';
+            const endFormatted = edit.endTimestamp ? formatTimestamp(edit.endTimestamp, 'MMM D, YYYY · h:mm A') : '—';
+            const durationFormatted = formatEditDuration(edit.startTimestamp, edit.endTimestamp);
+
+            let origCategoryHtml = '';
+            let origNameHtml = '';
+            let origStartHtml = '';
+            let origEndHtml = '';
+            let origDurationHtml = '';
+
+            if (edit.type === 'modification' && edit.original) {
+                const orig = edit.original;
+
+                // 1. Category comparison
+                if (orig.category && edit.category && orig.category.trim().toLowerCase() !== edit.category.trim().toLowerCase()) {
+                    origCategoryHtml = `<div class="edit-orig-val"><span class="edit-orig-prefix">Was:</span> ${orig.icon ? orig.icon + ' ' : ''}${escapeHtml(orig.category)}</div>`;
+                }
+
+                // 2. Name / Details comparison
+                const nameChanged = orig.name && edit.name && orig.name.trim().toLowerCase() !== edit.name.trim().toLowerCase();
+                const detailChanged = (orig.detail || '').trim().toLowerCase() !== (edit.detail || '').trim().toLowerCase();
+                if (nameChanged || detailChanged) {
+                    let origText = escapeHtml(orig.name || '');
+                    if (orig.detail && orig.detail !== orig.name) {
+                        origText += ` (${escapeHtml(orig.detail)})`;
+                    }
+                    if (origText) {
+                        origNameHtml = `<div class="edit-orig-val"><span class="edit-orig-prefix">Was:</span> ${origText}</div>`;
+                    }
+                }
+
+                // 3. Timestamps & Duration comparison (epoch ms based to avoid timezone string mismatches)
+                const origStartMs = orig.startTimestamp ? moment(orig.startTimestamp).valueOf() : null;
+                const editStartMs = edit.startTimestamp ? moment(edit.startTimestamp).valueOf() : null;
+                const origEndMs = orig.endTimestamp ? moment(orig.endTimestamp).valueOf() : null;
+                const editEndMs = edit.endTimestamp ? moment(edit.endTimestamp).valueOf() : null;
+
+                const startChanged = origStartMs !== null && editStartMs !== null && Math.abs(origStartMs - editStartMs) >= 60000;
+                const endChanged = origEndMs !== null && editEndMs !== null && Math.abs(origEndMs - editEndMs) >= 60000;
+
+                if (startChanged) {
+                    origStartHtml = `<div class="edit-orig-val"><span class="edit-orig-prefix">Was:</span> ${formatTimestamp(orig.startTimestamp, 'MMM D, YYYY · h:mm A')}</div>`;
+                }
+                if (endChanged) {
+                    origEndHtml = `<div class="edit-orig-val"><span class="edit-orig-prefix">Was:</span> ${formatTimestamp(orig.endTimestamp, 'MMM D, YYYY · h:mm A')}</div>`;
+                }
+
+                if (origStartMs !== null && origEndMs !== null && editStartMs !== null && editEndMs !== null) {
+                    const origDurMs = origEndMs - origStartMs;
+                    const editDurMs = editEndMs - editStartMs;
+                    if (Math.abs(origDurMs - editDurMs) >= 60000) {
+                        origDurationHtml = `<div class="edit-orig-val"><span class="edit-orig-prefix">Was:</span> ${formatEditDuration(orig.startTimestamp, orig.endTimestamp)}</div>`;
+                    }
+                }
+            }
+
+            tr.innerHTML = `
+                <td>
+                    <span class="edits-table-badge ${edit.badgeClass}">
+                        ${edit.type === 'addition' ? '+' : (edit.type === 'modification' ? '✎' : '🗑')} ${edit.typeLabel}
+                    </span>
+                </td>
+                <td>
+                    <span class="edits-category-tag">${edit.icon} ${escapeHtml(edit.category)}</span>
+                    ${origCategoryHtml}
+                </td>
+                <td>
+                    <div class="edits-item-name">${escapeHtml(edit.name)}</div>
+                    ${edit.detail ? `<div class="edits-item-detail">${escapeHtml(edit.detail)}</div>` : ''}
+                    ${origNameHtml}
+                </td>
+                <td>
+                    <span class="edits-timestamp">${startFormatted}</span>
+                    ${origStartHtml}
+                </td>
+                <td>
+                    <span class="edits-timestamp">${endFormatted}</span>
+                    ${origEndHtml}
+                </td>
+                <td>
+                    <span class="edits-duration-pill">${durationFormatted}</span>
+                    ${origDurationHtml}
+                </td>
+                <td>
+                    <div class="edits-actions-cell">
+                        ${edit.startTimestamp ? `<button class="edits-action-btn btn-jump" data-action="jump" data-start="${edit.startTimestamp}" data-end="${edit.endTimestamp || edit.startTimestamp}" title="Jump to this date in timeline view">📅 View</button>` : ''}
+                        <button class="edits-action-btn btn-revert" data-action="revert" data-type="${edit.type}" data-index="${edit.rawIndex}" title="Revert this ${edit.typeLabel.toLowerCase()}">✕ Revert</button>
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function jumpToEditDate(startTimestamp, endTimestamp) {
+        if (!startTimestamp) return;
+        const tz = getSelectedTimezone();
+        const startDate = moment.tz(startTimestamp, tz).format('YYYY-MM-DD');
+        const endDate = endTimestamp ? moment.tz(endTimestamp, tz).format('YYYY-MM-DD') : startDate;
+
+        // Switch to Date view tab
+        if (typeof showSidebarTab === 'function') {
+            showSidebarTab('date');
+        }
+
+        const startDatePicker = document.getElementById('startDatePicker');
+        const endDatePicker = document.getElementById('endDatePicker');
+        if (startDatePicker) startDatePicker.value = startDate;
+        if (endDatePicker) endDatePicker.value = endDate;
+
+        closeEditsModal();
+
+        if (typeof loadTimelineDataInDateRange === 'function') {
+            loadTimelineDataInDateRange(startDate, endDate, false);
+        }
+    }
+
+    function revertTimelineEdit(type, rawIndex) {
+        const itemTypeLabel = type === 'addition' ? 'addition' : (type === 'modification' ? 'modification' : 'deletion');
+        if (!confirm(`Are you sure you want to revert this ${itemTypeLabel}?`)) return;
+
+        if (type === 'addition') {
+            const add = timelineEdits.additions[rawIndex];
+            if (add) {
+                const item = add.placeVisit || add.activitySegment || add;
+                const start = item.duration?.startTimestamp || add.startTime;
+                const end = item.duration?.endTimestamp || add.endTime;
+                timelineEdits.additions.splice(rawIndex, 1);
+                liveUpdateTimelineData('delete', null, { startTimestamp: start, endTimestamp: end });
+            }
+        } else if (type === 'modification') {
+            const mod = timelineEdits.modifications[rawIndex];
+            if (mod) {
+                // If originalItem was saved, restore it
+                let orig = mod.replaceWith?.originalItem;
+                const matchStart = mod.match?.startTimestamp;
+                const matchEnd = mod.match?.endTimestamp;
+
+                if (!orig) {
+                    // Search in timelineData
+                    for (const monthKey in timelineData) {
+                        const objs = timelineData[monthKey].timelineObjects || [];
+                        const found = objs.find(o => o.originalItem && (
+                            (o.placeVisit?.duration?.startTimestamp === matchStart && o.placeVisit?.duration?.endTimestamp === matchEnd) ||
+                            (o.activitySegment?.duration?.startTimestamp === matchStart && o.activitySegment?.duration?.endTimestamp === matchEnd)
+                        ));
+                        if (found && found.originalItem) {
+                            orig = found.originalItem;
+                            break;
+                        }
+                    }
+                }
+
+                timelineEdits.modifications.splice(rawIndex, 1);
+                if (orig) {
+                    liveUpdateTimelineData('restore', orig, { startTimestamp: matchStart, endTimestamp: matchEnd });
+                }
+            }
+        } else if (type === 'deletion') {
+            const del = timelineEdits.deletions[rawIndex];
+            if (del) {
+                timelineEdits.deletions.splice(rawIndex, 1);
+                if (del.originalItem) {
+                    liveUpdateTimelineData('restore', del.originalItem, del.match || {});
+                }
+            }
+        }
+
+        updateEditsIndicator();
+        renderEditsTable();
+
+        if (uiEnabled && document.getElementById('goBtn')) {
+            document.getElementById('goBtn').click();
+        }
+    }
+
+    function openEditsModal() {
+        const modal = document.getElementById('timelineEditsModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => {
+            modal.classList.add('active');
+        });
+        renderEditsTable();
+    }
+
+    function closeEditsModal() {
+        const modal = document.getElementById('timelineEditsModal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 200);
+    }
+
+    function initTimelineEditsOverlay() {
+        const editsCountBtn = document.getElementById('editsCountBtn');
+        if (editsCountBtn) {
+            editsCountBtn.addEventListener('click', openEditsModal);
+        }
+
+        const closeBtn = document.getElementById('closeTimelineEditsModalBtn');
+        if (closeBtn) closeBtn.addEventListener('click', closeEditsModal);
+
+        const footerCloseBtn = document.getElementById('editsModalCloseBtn');
+        if (footerCloseBtn) footerCloseBtn.addEventListener('click', closeEditsModal);
+
+        const saveBtn = document.getElementById('editsModalSaveBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                saveEditsToFile();
+            });
+        }
+
+        // Close on clicking backdrop
+        const modal = document.getElementById('timelineEditsModal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeEditsModal();
+                }
+            });
+        }
+
+        // Close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const m = document.getElementById('timelineEditsModal');
+                if (m && m.style.display !== 'none') {
+                    closeEditsModal();
+                }
+            }
+        });
+
+        // Filter / Sort listeners
+        const searchInput = document.getElementById('editsSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', debounce(renderEditsTable, 150));
+        }
+
+        const clearSearchBtn = document.getElementById('editsClearSearchBtn');
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                renderEditsTable();
+            });
+        }
+
+        const typeFilter = document.getElementById('editsTypeFilter');
+        if (typeFilter) typeFilter.addEventListener('change', renderEditsTable);
+
+        const categoryFilter = document.getElementById('editsCategoryFilter');
+        if (categoryFilter) categoryFilter.addEventListener('change', renderEditsTable);
+
+        const sortSelect = document.getElementById('editsSortSelect');
+        if (sortSelect) sortSelect.addEventListener('change', renderEditsTable);
+
+        // Action buttons delegation in tbody
+        const tbody = document.getElementById('editsTableBody');
+        if (tbody) {
+            tbody.addEventListener('click', (e) => {
+                const btn = e.target.closest('.edits-action-btn');
+                if (!btn) return;
+
+                const action = btn.getAttribute('data-action');
+                if (action === 'jump') {
+                    const start = btn.getAttribute('data-start');
+                    const end = btn.getAttribute('data-end');
+                    jumpToEditDate(start, end);
+                } else if (action === 'revert') {
+                    const type = btn.getAttribute('data-type');
+                    const index = parseInt(btn.getAttribute('data-index'), 10);
+                    revertTimelineEdit(type, index);
+                }
+            });
         }
     }
 
@@ -8857,8 +10224,17 @@
                 const itemEnd = item.placeVisit?.duration?.endTimestamp || item.activitySegment?.duration?.endTimestamp || item.endTime;
 
                 // Check Deletions
-                const isDeleted = timelineEdits.deletions.some(del => del.match.startTimestamp === itemStart && del.match.endTimestamp === itemEnd);
-                if (isDeleted) return false;
+                const del = (timelineEdits.deletions || []).find(d => d.match.startTimestamp === itemStart && d.match.endTimestamp === itemEnd);
+                if (del) {
+                    if (!del.originalItem) del.originalItem = item;
+                    if (!del.nameHint) {
+                        del.nameHint = item.placeVisit?.location?.name || item.placeVisit?.location?.address || (item.activitySegment ? (item.activitySegment.activityType || 'Travel') : 'Timeline Entry');
+                    }
+                    if (!del.categoryHint) {
+                        del.categoryHint = item.placeVisit ? 'Place Visit' : (item.activitySegment ? 'Activity / Travel' : 'Entry');
+                    }
+                    return false;
+                }
 
                 return true;
             }).map(item => {
@@ -10928,16 +12304,21 @@ Departed: ${end}</description>
             if (loc.isActivity || loc.lat === null || loc.lng === null) continue;
 
             const durationMinutes = item.endMoment.diff(item.startMoment, 'minutes');
-            const startHour = item.startMoment.hour();
-            const endHour = item.endMoment.hour();
+            const localTz = (typeof getTimezoneForVisit === 'function')
+                ? getTimezoneForVisit(loc.lat, loc.lng, loc.placeId)
+                : 'UTC';
+            const localStart = localTz ? item.startMoment.clone().tz(localTz) : item.startMoment;
+            const localEnd = localTz ? item.endMoment.clone().tz(localTz) : item.endMoment;
+            const startHour = localStart.hour();
+            const endHour = localEnd.hour();
 
             // Overnight condition:
             // Explicit home, or visit spans nighttime (e.g. past 2am and duration >= 3.5 hrs), or long evening-to-morning stay
-            const spansNight = (durationMinutes >= 200 && (item.startMoment.isBefore(item.endMoment.clone().startOf('day').add(5, 'hours')) || startHour >= 22 || endHour <= 6));
+            const spansNight = (durationMinutes >= 200 && (localStart.isBefore(localEnd.clone().startOf('day').add(5, 'hours')) || startHour >= 22 || endHour <= 6));
             const isOvernight = loc.isExplicitHome || spansNight;
 
             if (isOvernight) {
-                const nightDate = (startHour < 6) ? item.startMoment.clone().subtract(1, 'day').format('YYYY-MM-DD') : item.startMoment.format('YYYY-MM-DD');
+                const nightDate = (startHour < 6) ? localStart.clone().subtract(1, 'day').format('YYYY-MM-DD') : localStart.format('YYYY-MM-DD');
                 overnightStays.push({
                     nightDate,
                     startMs: item.startMs,
@@ -11284,8 +12665,25 @@ Departed: ${end}</description>
             const firstItem = chunk[0].item;
             const lastItem = chunk[chunk.length - 1].item;
 
-            const startMoment = firstItem.startMoment;
-            const endMoment = lastItem.endMoment;
+            const home = chunk[0].home;
+            const homeCountry = home?.country || "Taiwan";
+            const homeCity = home?.city;
+
+            // Resolve primary timezone for this trip chunk (from destination items, or home base)
+            let tripTz = null;
+            for (const p of chunk) {
+                if (p.loc.lat !== null && p.loc.lng !== null && typeof getTimezoneForVisit === 'function') {
+                    const tz = getTimezoneForVisit(p.loc.lat, p.loc.lng, p.loc.placeId);
+                    if (tz && tz !== 'UTC') { tripTz = tz; break; }
+                }
+            }
+            if (!tripTz && home && typeof getTimezoneForVisit === 'function') {
+                tripTz = getTimezoneForVisit(home.lat, home.lng, home.placeId);
+            }
+            if (!tripTz || tripTz === 'UTC') tripTz = getSelectedTimezone();
+
+            const tripStartM = firstItem.startMoment.clone().tz(tripTz);
+            const tripEndM = lastItem.endMoment.clone().tz(tripTz);
 
             const nightsSet = new Set();
             let hasFlight = false;
@@ -11298,11 +12696,8 @@ Departed: ${end}</description>
             const groundPaths = [];
             let currentGroundPath = [];
 
-            const home = chunk[0].home;
-            const homeCountry = home?.country || "Taiwan";
-            const homeCity = home?.city;
-
             const cityNights = {};
+            const cityNightsDates = {};
             const cityDurationMs = {};
             const cityVisitCounts = {};
             const cityAirportVisitCounts = {};
@@ -11367,15 +12762,22 @@ Departed: ${end}</description>
                         const toAirport = resolveAirportInfo(endLat, endLng, toAptName, toCity);
                         const distMeters = p.item.raw.activitySegment?.distance || computeHaversineDistance([{ lat: startLat, lng: startLng }, { lat: endLat, lng: endLng }]);
 
+                        const fromTz = (fromAirport && fromAirport.lat && fromAirport.lng && typeof getTimezoneForVisit === 'function')
+                            ? getTimezoneForVisit(fromAirport.lat, fromAirport.lng)
+                            : tripTz;
+                        const toTz = (toAirport && toAirport.lat && toAirport.lng && typeof getTimezoneForVisit === 'function')
+                            ? getTimezoneForVisit(toAirport.lat, toAirport.lng)
+                            : tripTz;
+
                         flights.push({
                             from: fromAirport,
                             to: toAirport,
                             fromCoord: { lat: startLat, lng: startLng },
                             toCoord: { lat: endLat, lng: endLng },
                             distanceKm: Math.round(distMeters / 1000),
-                            departureDate: p.item.startMoment.format("YYYY-MM-DD"),
-                            departureTime: p.item.startMoment.format("MMM D, h:mm A"),
-                            arrivalTime: p.item.endMoment.format("MMM D, h:mm A"),
+                            departureDate: p.item.startMoment.clone().tz(fromTz).format("YYYY-MM-DD"),
+                            departureTime: p.item.startMoment.clone().tz(fromTz).format("MMM D, h:mm A"),
+                            arrivalTime: p.item.endMoment.clone().tz(toTz).format("MMM D, h:mm A"),
                             pathPoints: p.loc.pathPoints || []
                         });
                     }
@@ -11447,10 +12849,18 @@ Departed: ${end}</description>
                 }
 
                 const dur = p.item.endMoment.diff(p.item.startMoment, 'minutes');
-                const startHour = p.item.startMoment.hour();
-                const endHour = p.item.endMoment.hour();
+                let itemTz = null;
+                if (p.loc.lat !== null && p.loc.lng !== null && typeof getTimezoneForVisit === 'function') {
+                    itemTz = getTimezoneForVisit(p.loc.lat, p.loc.lng, p.loc.placeId);
+                }
+                if (!itemTz || itemTz === 'UTC') itemTz = tripTz;
+
+                const localStart = p.item.startMoment.clone().tz(itemTz);
+                const localEnd = p.item.endMoment.clone().tz(itemTz);
+                const startHour = localStart.hour();
+                const endHour = localEnd.hour();
                 const spansNight = (dur >= 180 && (
-                    p.item.startMoment.clone().startOf('day').isBefore(p.item.endMoment.clone().startOf('day')) ||
+                    localStart.clone().startOf('day').isBefore(localEnd.clone().startOf('day')) ||
                     startHour >= 22 || endHour <= 6 ||
                     (startHour <= 4 && endHour >= 6) ||
                     (dur >= 360 && (startHour <= 7 || endHour >= 21 || startHour >= 20 || endHour <= 8)) ||
@@ -11459,10 +12869,16 @@ Departed: ${end}</description>
 
                 // Real overnight stay: must span nighttime hours, and must NOT be an airport terminal layover
                 if (!p.loc.isActivity && p.loc.lat !== null && spansNight && !p.loc.isAirport) {
-                    const nightDate = (startHour < 6) ? p.item.startMoment.clone().subtract(1, 'day').format('YYYY-MM-DD') : p.item.startMoment.format('YYYY-MM-DD');
+                    const nightDate = (startHour < 6) ? localStart.clone().subtract(1, 'day').format('YYYY-MM-DD') : localStart.format('YYYY-MM-DD');
                     nightsSet.add(nightDate);
-                    if (p.loc.city && p.loc.city !== "Unknown City") {
-                        cityNights[p.loc.city] = (cityNights[p.loc.city] || 0) + 1;
+                    let stayCity = (p.loc.city && p.loc.city !== "Unknown City") ? p.loc.city : null;
+                    if (!stayCity && p.loc.name && p.loc.name !== "Unknown Location") stayCity = p.loc.name;
+                    if (!stayCity && p.loc.country && p.loc.country !== "Unknown Country") stayCity = p.loc.country;
+                    if (stayCity) {
+                        if (!cityNightsDates[stayCity]) cityNightsDates[stayCity] = new Set();
+                        cityNightsDates[stayCity].add(nightDate);
+                        cityNights[stayCity] = cityNightsDates[stayCity].size;
+                        if (!firstSeenInTrip[stayCity]) firstSeenInTrip[stayCity] = p.item.startMs;
                     }
                     if (p.loc.country && p.loc.country !== "Unknown Country") {
                         let cntry = p.loc.country;
@@ -11510,9 +12926,9 @@ Departed: ${end}</description>
             }
 
             // Calculation of nights:
-            const spanDays = Math.max(0, Math.round(endMoment.diff(startMoment, 'days')));
+            const spanDays = Math.max(0, Math.round(tripEndM.diff(tripStartM, 'days')));
             let totalNights = Math.max(nightsSet.size, spanDays);
-            if (nightsSet.size === 0 && !hasFlight && endMoment.diff(startMoment, 'hours') < 30) {
+            if (nightsSet.size === 0 && !hasFlight && tripEndM.diff(tripStartM, 'hours') < 30) {
                 totalNights = 0;
             }
 
@@ -11666,17 +13082,40 @@ Departed: ${end}</description>
 
             const nightLabel = totalNights === 1 ? "1 night" : `${totalNights} nights`;
 
+            // Build stayed cities breakdown
+            let stayedCities = Object.keys(cityNightsDates).map(cityName => ({
+                city: cityName,
+                nights: cityNightsDates[cityName].size,
+                firstSeen: firstSeenInTrip[cityName] || 0
+            }));
+            stayedCities.sort((a, b) => a.firstSeen - b.firstSeen);
+
+            if (stayedCities.length === 0 && totalNights > 0) {
+                const fallbackCity = (cleanRouteCities.length > 0 ? cleanRouteCities[0] : null) ||
+                                     (routeCities.length > 0 ? routeCities[0] : null) ||
+                                     title;
+                if (fallbackCity && fallbackCity !== "Trip" && fallbackCity !== "International Trip") {
+                    stayedCities.push({
+                        city: fallbackCity,
+                        nights: totalNights,
+                        firstSeen: 0
+                    });
+                }
+            }
+
             trips.push({
-                id: `trip_${startMoment.valueOf()}`,
-                startDate: startMoment.format("YYYY-MM-DD"),
-                endDate: endMoment.format("YYYY-MM-DD"),
-                dateDisplay: `${startMoment.format("MMM D, YYYY")} – ${endMoment.format("MMM D, YYYY")}`,
-                year: startMoment.year(),
+                id: `trip_${firstItem.startMoment.valueOf()}`,
+                startDate: tripStartM.format("YYYY-MM-DD"),
+                endDate: tripEndM.format("YYYY-MM-DD"),
+                dateDisplay: `${tripStartM.format("MMM D, YYYY")} – ${tripEndM.format("MMM D, YYYY")}`,
+                year: tripStartM.year(),
                 title,
                 flags: uniqueFlags,
                 totalNights,
                 nightLabel,
                 durationTag,
+                stayedCities,
+                cityNights,
                 hasFlight,
                 flights,
                 flightRouteStr,
@@ -11803,26 +13242,51 @@ Departed: ${end}</description>
                     `<span class="trip-flag-item" title="${escapeHtml(f.country || f.name)}">${f.emoji}</span>`
                 ).join('');
 
-                const durationBadge = `<span class="trip-badge badge-duration">${trip.nightLabel}</span>`;
-                const flightBadge = trip.hasFlight ? `<span class="trip-badge badge-flight">✈️ Flight</span>` : '';
+                const durationBadge = `<span class="trip-badge badge-duration clickable-badge" title="Click to view cities stayed in" data-action="toggle-nights">${trip.nightLabel} <span class="badge-toggle-arrow">▾</span></span>`;
+
+                const flightCount = trip.flights && trip.flights.length > 0 ? trip.flights.length : 1;
+                const flightLabel = `${flightCount} ${flightCount === 1 ? 'Flight' : 'Flights'}`;
+                const flightBadge = trip.hasFlight ? `<span class="trip-badge badge-flight clickable-badge" title="Click to view flight details" data-action="toggle-flights">✈️ ${flightLabel} <span class="badge-toggle-arrow">▾</span></span>` : '';
 
                 let flightRowHtml = '';
                 if (trip.flights && trip.flights.length > 0) {
                     const legsText = trip.flights.map(fl => {
                         const fromLabel = fl.from?.city || fl.from?.name || 'Origin';
                         const toLabel = fl.to?.city || fl.to?.name || 'Dest';
-                        return `${escapeHtml(fromLabel)}<span class="flight-leg-arrow">➔</span>${escapeHtml(toLabel)}`;
+                        return `<span class="flight-leg"><span class="flight-city">${escapeHtml(fromLabel)}</span><span class="flight-leg-arrow">➔</span><span class="flight-city">${escapeHtml(toLabel)}</span></span>`;
                     }).join('<span class="flight-sep">·</span>');
                     flightRowHtml = `
-                        <div class="trip-card-flight-row" title="Flights detected on this trip">
+                        <div class="trip-card-flight-row" title="Flights detected on this trip" style="display: none;">
                             <span class="flight-icon">✈️</span>
                             <span class="flight-route">${legsText}</span>
                         </div>
                     `;
                 }
 
+                let nightsRowHtml = '';
+                if (trip.stayedCities && trip.stayedCities.length > 0) {
+                    const citiesText = trip.stayedCities.map(st => {
+                        const nLabel = `${st.nights} ${st.nights === 1 ? 'night' : 'nights'}`;
+                        return `<span class="stay-city-item"><span class="stay-city-name">${escapeHtml(st.city)}</span> <span class="stay-city-nights">(${nLabel})</span></span>`;
+                    }).join('<span class="flight-sep">·</span>');
+                    nightsRowHtml = `
+                        <div class="trip-card-nights-row" title="Cities stayed in" style="display: none;">
+                            <span class="nights-icon">🏨</span>
+                            <span class="nights-cities-list">${citiesText}</span>
+                        </div>
+                    `;
+                } else if (trip.totalNights > 0) {
+                    const nLabel = `${trip.totalNights} ${trip.totalNights === 1 ? 'night' : 'nights'}`;
+                    nightsRowHtml = `
+                        <div class="trip-card-nights-row" title="Cities stayed in" style="display: none;">
+                            <span class="nights-icon">🏨</span>
+                            <span class="nights-cities-list"><span class="stay-city-item"><span class="stay-city-name">${escapeHtml(trip.title)}</span> <span class="stay-city-nights">(${nLabel})</span></span></span>
+                        </div>
+                    `;
+                }
+
                 const routeHtml = (trip.routeCities && trip.routeCities.length > 1)
-                    ? `<div class="trip-card-route">${trip.routeCities.join('<span class="arrow">→</span>')}</div>`
+                    ? `<div class="trip-card-route">${trip.routeCities.map(c => `<span class="route-city">${escapeHtml(c)}</span>`).join(' <span class="arrow">→</span> ')}</div>`
                     : '';
 
                 html += `
@@ -11837,6 +13301,7 @@ Departed: ${end}</description>
                             ${flightBadge}
                         </div>
                         ${flightRowHtml}
+                        ${nightsRowHtml}
                         ${routeHtml}
                         <div class="trip-card-actions">
                             <button class="trip-action-btn btn-view-map" data-trip-id="${trip.id}">🗺️ Preview Map</button>
@@ -11859,6 +13324,27 @@ Departed: ${end}</description>
 
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-open-timeline')) return;
+                const clickableBadge = e.target.closest('.clickable-badge');
+                if (clickableBadge) {
+                    e.stopPropagation();
+                    const action = clickableBadge.dataset.action;
+                    if (action === 'toggle-flights') {
+                        const row = card.querySelector('.trip-card-flight-row');
+                        if (row) {
+                            const isHidden = window.getComputedStyle(row).display === 'none';
+                            row.style.display = isHidden ? 'flex' : 'none';
+                            clickableBadge.classList.toggle('active', isHidden);
+                        }
+                    } else if (action === 'toggle-nights') {
+                        const row = card.querySelector('.trip-card-nights-row');
+                        if (row) {
+                            const isHidden = window.getComputedStyle(row).display === 'none';
+                            row.style.display = isHidden ? 'flex' : 'none';
+                            clickableBadge.classList.toggle('active', isHidden);
+                        }
+                    }
+                    return;
+                }
                 container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
                 card.classList.add('active-trip');
                 if (trip) {
@@ -12599,6 +14085,7 @@ Departed: ${end}</description>
             initSearch();
             initCurrentLocationButton();
             initEditModal();
+            initTimelineEditsOverlay();
             initTripsAndPlacesLived();
             showSidebarTab('date');
             updateApiCallDisplay();
