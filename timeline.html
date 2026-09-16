@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  September 13, 2026
+        Version:  September 16, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -236,8 +236,34 @@
             padding: 5px 0 5px 10px;
         }
         #activityFilters {
+            display: none;
             margin-left: 20px;
-            padding-top: 5px;
+            padding: 4px 0 6px 10px;
+            border-left: 2px solid #e2e8f0;
+            margin-bottom: 6px;
+        }
+        .activity-filter-toggle-btn {
+            background: none;
+            border: none;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #0284c7;
+            cursor: pointer;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .activity-filter-toggle-btn:hover {
+            background-color: #f0f9ff;
+            color: #0369a1;
+            text-decoration: underline;
+        }
+        .activity-filter-toggle-btn.open #activityFilterArrow {
+            transform: rotate(180deg);
         }
         #timezone-select,
         #distance-unit-select {
@@ -1898,25 +1924,25 @@
         #tripsListContainer {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 12px 16px 40px 16px;
+            padding: 0 16px 40px 16px;
         }
         .trip-year-group {
-            margin-bottom: 22px;
-        }
-        .trip-year-group {
-            margin-bottom: 26px;
+            margin-bottom: 24px;
         }
         .trip-year-header {
             position: sticky;
             top: 0;
             z-index: 10;
             background: #f8f9fa;
-            padding: 12px 0 10px 0;
-            margin: 18px 0 12px 0;
+            padding: 10px 16px 8px 16px;
+            margin: 0 -16px 12px -16px;
             display: flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 1px 0 #f1f5f9;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .trip-year-group:not(:first-child) .trip-year-header {
+            margin-top: 16px;
         }
         .trip-year-header .year-badge {
             background-color: #0f172a;
@@ -1964,6 +1990,19 @@
             border-color: #007bff;
             background-color: #f0f7ff;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        @keyframes tripCardGlow {
+            0% {
+                transform: scale(1.02);
+                box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.45);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+            }
+        }
+        .trip-card.highlight-flash {
+            animation: tripCardGlow 0.7s ease-out;
         }
         .trip-card-header {
             display: flex;
@@ -2061,6 +2100,11 @@
             background-color: #fef3c7;
             color: #92400e;
             border-color: #fde68a;
+        }
+        .trip-badge.badge-day-trip {
+            background-color: #fdfbe5;
+            color: #713f12;
+            border-color: #fef08a;
         }
         .trip-badge.badge-nights {
             background-color: #e0f2fe;
@@ -2205,6 +2249,29 @@
             background-color: #007bff;
             color: #ffffff;
             border-color: #007bff;
+        }
+        .trip-action-btn.btn-edit-trip.is-default {
+            filter: grayscale(1);
+            opacity: 0.75;
+        }
+        .trip-action-btn.btn-edit-trip.is-default:hover {
+            filter: grayscale(1);
+            opacity: 1;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            border-color: #94a3b8;
+        }
+        .trip-action-btn.btn-edit-trip.is-edited {
+            filter: none;
+            opacity: 1;
+            color: #92400e;
+            background-color: #fefce8;
+            border-color: #fde047;
+        }
+        .trip-action-btn.btn-edit-trip.is-edited:hover {
+            background-color: #fde047;
+            color: #78350f;
+            border-color: #eab308;
         }
 
         /* --- Places Lived View Styles --- */
@@ -2766,6 +2833,462 @@
             background-color: #f1f5f9;
             color: #0f172a;
         }
+
+        /* --- Trip Customizations & Actions Header --- */
+        .trips-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+            margin-bottom: 2px;
+        }
+        .trip-action-top-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            user-select: none;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            white-space: nowrap;
+            height: 25px;
+            box-sizing: border-box;
+        }
+        .trip-action-top-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+        }
+        .trip-action-top-btn:active {
+            transform: translateY(0);
+        }
+        .trip-action-top-btn.btn-add {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+            font-size: 11px;
+            padding: 3px 9px;
+            height: 25px;
+        }
+        .trip-action-top-btn.btn-add:hover {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+        }
+        .trip-action-top-btn.btn-save {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        .trip-action-top-btn.btn-save:hover {
+            background-color: #dcfce7;
+            border-color: #86efac;
+        }
+        .trip-action-top-btn.btn-save.has-unsaved {
+            background-color: #fefce8;
+            border-color: #fde047;
+            color: #854d0e;
+        }
+        .trip-action-top-btn.btn-manage {
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+            color: #475569;
+        }
+        .trip-action-top-btn.btn-manage:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .trip-action-top-btn .btn-icon {
+            font-size: 12px;
+            line-height: 1;
+        }
+        .unsaved-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #f59e0b;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+            display: inline-block;
+            margin-left: 2px;
+            animation: pulse-dot 1.8s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        .hidden-count-badge {
+            background-color: #64748b;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 9px;
+            line-height: 1.2;
+            margin-left: 2px;
+        }
+        .trips-footer-hidden-container {
+            text-align: center;
+            padding: 16px 0 24px 0;
+        }
+        .view-hidden-trips-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: color 0.15s, background-color 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .view-hidden-trips-btn:hover {
+            color: #1d4ed8;
+            background-color: #e2e8f0;
+        }
+
+        /* --- Trip Card Notes & Badges --- */
+        .trip-card-notes {
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            font-size: 11px;
+            color: #334155;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 7px 10px;
+            margin-top: 8px;
+            line-height: 1.45;
+            word-break: break-word;
+            position: relative;
+            transition: background-color 0.15s;
+        }
+        .trip-card-notes.is-overflow {
+            cursor: pointer;
+        }
+        .trip-card-notes.is-overflow:hover {
+            background-color: #f1f5f9;
+        }
+        .trip-card-notes .notes-icon {
+            font-size: 13px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .trip-card-notes .notes-text-wrapper {
+            flex-grow: 1;
+            min-width: 0;
+            position: relative;
+            max-height: 4.35em; /* 3 full lines (3 * 1.45em) */
+            overflow: hidden;
+            transition: max-height 0.25s ease-out;
+        }
+        .trip-card-notes.expanded .notes-text-wrapper {
+            max-height: 1500px;
+            transition: max-height 0.35s ease-in;
+        }
+        .trip-card-notes .notes-text-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1.45em;
+            background: linear-gradient(to bottom, rgba(248, 250, 252, 0), #f8fafc 90%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .trip-card-notes.is-overflow:not(.expanded) .notes-text-wrapper::after {
+            opacity: 1;
+        }
+        .trip-card-notes.is-overflow:hover:not(.expanded) .notes-text-wrapper::after {
+            background: linear-gradient(to bottom, rgba(241, 245, 249, 0), #f1f5f9 90%);
+        }
+        .trip-card-notes .notes-text {
+            white-space: pre-wrap;
+            display: block;
+        }
+        .trip-badge.badge-custom {
+            background-color: #f5f3ff;
+            color: #7c3aed;
+            border-color: #ddd6fe;
+        }
+        .trip-badge.badge-edited {
+            background-color: #fffbeb;
+            color: #b45309;
+            border-color: #fde68a;
+        }
+        .trip-edited-pencil {
+            display: inline-block;
+            font-size: 13px;
+            opacity: 0.55;
+            margin-left: 5px;
+            vertical-align: middle;
+            cursor: default;
+            transition: opacity 0.2s;
+        }
+        .trip-card:hover .trip-edited-pencil {
+            opacity: 0.95;
+        }
+
+        /* --- Trip Edit Modal & Manage Dialog --- */
+        .trip-edit-dialog, .trip-manage-dialog {
+            width: 480px;
+            max-width: 92vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .trip-modal-pill {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+        .trip-modal-pill.auto {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+        .trip-modal-pill.custom {
+            background: #f5f3ff;
+            color: #7c3aed;
+            border: 1px solid #ddd6fe;
+        }
+        .trip-modal-pill.edited {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+        .trip-modal-body {
+            padding: 16px 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .trip-modal-field {
+            margin-bottom: 14px;
+        }
+        .trip-modal-field.flex-1 {
+            flex: 1;
+        }
+        .trip-modal-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 5px;
+        }
+        .trip-modal-field input[type="text"],
+        .trip-modal-field input[type="date"],
+        .trip-modal-field textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 10px;
+            font-size: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background-color: #ffffff;
+            color: #0f172a;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .trip-modal-field input[type="text"]:focus,
+        .trip-modal-field input[type="date"]:focus,
+        .trip-modal-field textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .trip-modal-field textarea {
+            resize: vertical;
+            min-height: 72px;
+            line-height: 1.4;
+        }
+        .trip-modal-row {
+            display: flex;
+            gap: 12px;
+        }
+        .trip-title-input-wrap {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .trip-modal-reset-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 7px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .trip-modal-reset-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .trip-field-hint {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .trip-modal-footer {
+            padding: 12px 20px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .trip-modal-footer-left, .trip-modal-footer-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .trip-btn {
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 7px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .trip-btn.primary {
+            background-color: #2563eb;
+            color: white;
+            border-color: #1d4ed8;
+        }
+        .trip-btn.primary:hover {
+            background-color: #1d4ed8;
+        }
+        .trip-btn.secondary {
+            background-color: #ffffff;
+            color: #334155;
+            border-color: #cbd5e1;
+        }
+        .trip-btn.secondary:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+        }
+        .trip-btn.danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border-color: #fca5a5;
+        }
+        .trip-btn.danger:hover {
+            background-color: #fecaca;
+            color: #991b1b;
+        }
+        .trip-btn.warning {
+            background-color: #fef3c7;
+            color: #b45309;
+            border-color: #fcd34d;
+        }
+        .trip-btn.warning:hover {
+            background-color: #fde68a;
+            color: #92400e;
+        }
+
+        /* --- Manage Hidden Trips Modal Section --- */
+        .trip-manage-section {
+            margin-bottom: 20px;
+        }
+        .trip-manage-section:last-child {
+            margin-bottom: 0;
+        }
+        .trip-manage-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+        }
+        .trip-manage-section-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin: 0 0 10px 0;
+            line-height: 1.4;
+        }
+        .hidden-trips-list-container {
+            max-height: 210px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .hidden-trip-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+            gap: 10px;
+        }
+        .hidden-trip-item:last-child {
+            border-bottom: none;
+        }
+        .hidden-trip-info {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .hidden-trip-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hidden-trip-dates {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .hidden-trip-restore-btn {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+        }
+        .hidden-trip-restore-btn:hover {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+        }
+        .trip-io-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+        .trip-io-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -2920,7 +3443,7 @@
                             <div class="trips-search-row">
                                 <div class="trips-search-bar">
                                     <span class="search-icon">🔍</span>
-                                    <input type="text" id="tripSearchInput" placeholder="Search by city, country, or year..." autocomplete="off">
+                                    <input type="text" id="tripSearchInput" placeholder="Search by city, country, year, or notes..." autocomplete="off">
                                     <span id="clearTripSearchBtn" class="clear-icon">&times;</span>
                                 </div>
                                 <span id="tripsCountBadge" class="trips-count-badge">0 trips</span>
@@ -2943,6 +3466,10 @@
                                             </div>
                                         </div>
                                         <label class="dropdown-item">
+                                            <input type="checkbox" class="duration-checkbox" value="0" checked>
+                                            <span>Day trips (0 nights)</span>
+                                        </label>
+                                        <label class="dropdown-item">
                                             <input type="checkbox" class="duration-checkbox" value="1-2" checked>
                                             <span>1–2 nights</span>
                                         </label>
@@ -2961,6 +3488,15 @@
                                     </div>
                                 </div>
                                 <button id="tripFlightToggleBtn" class="trip-filter-toggle" type="button" title="Flights only">✈️</button>
+                            </div>
+                            <div class="trips-actions-row">
+                                <button id="saveTripsBtn" class="trip-action-top-btn btn-save" type="button" title="Save trip changes to TimelineTrips.json" style="display: none;">
+                                    <span class="btn-icon">💾</span> Save Changes
+                                    <span id="tripsUnsavedDot" class="unsaved-dot" style="display: none;" title="Unsaved changes"></span>
+                                </button>
+                                <button id="addNewTripBtn" class="trip-action-top-btn btn-add" type="button" title="Add a new custom trip">
+                                    <span class="btn-icon">➕</span> Add Trip
+                                </button>
                             </div>
                         </div>
                         <div id="tripsListContainer">
@@ -3056,10 +3592,16 @@
                     <label class="settings-option">
                         <input type="checkbox" id="showVisits" class="settings-checkbox" checked> Show Visits
                     </label>
-                    <label class="settings-option">
-                        <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
-                    </label>
-                    <div id="activityFilters" style="margin-left: 20px;"></div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <label class="settings-option" style="margin-bottom: 0;">
+                            <input type="checkbox" id="showActivities" class="settings-checkbox" checked> Show Activities
+                        </label>
+                        <button type="button" id="toggleActivityFiltersBtn" class="activity-filter-toggle-btn" style="display: none;" title="Toggle activity filter list">
+                            <span id="activityFilterCountText">0 of 0 selected</span>
+                            <span id="activityFilterArrow" style="font-size: 10px; transition: transform 0.2s ease;">▾</span>
+                        </button>
+                    </div>
+                    <div id="activityFilters"></div>
 
                     <h4>Map Theme</h4>
                     <label for="map-theme-select">Select map style:</label>
@@ -3075,6 +3617,20 @@
                         <input type="checkbox" id="debugModeToggle" class="settings-checkbox"> Enable Debug Mode
                     </label>
 
+                    <label for="minTripDistanceInput">Min Trip Distance from Home:</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <div style="display: inline-flex; align-items: center; background: #ffffff; border: 1px solid #ced4da; border-radius: 4px; padding: 0 8px;">
+                            <input type="number" id="minTripDistanceInput" placeholder="60" min="5" max="500" step="any" style="width: 65px; border: none; padding: 7px 0; outline: none; font-size: 14px; background: transparent;">
+                            <span style="font-size: 13px; font-weight: 600; color: #475569; margin-left: 4px;">km</span>
+                        </div>
+                        <span style="color: #94a3b8; font-size: 14px; font-weight: 600;">⇄</span>
+                        <div style="display: inline-flex; align-items: center; background: #ffffff; border: 1px solid #ced4da; border-radius: 4px; padding: 0 8px;">
+                            <input type="number" id="minTripDistanceMilesInput" placeholder="37" min="3" max="310" step="any" style="width: 65px; border: none; padding: 7px 0; outline: none; font-size: 14px; background: transparent;">
+                            <span style="font-size: 13px; font-weight: 600; color: #475569; margin-left: 4px;">miles</span>
+                        </div>
+                        <span style="font-size: 11px; color: #64748b;">(enter either; calculated in km)</span>
+                    </div>
+
                     <label for="homePlaceIdsInput">Home Place IDs (comma-separated):</label>
                     <input type="text" id="homePlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
 
@@ -3082,7 +3638,7 @@
                     <input type="text" id="workPlaceIdsInput" placeholder="ChIJ... , ChIK..." class="settings-text-input">
 
                     <div class="settings-button-row">
-                        <button id="saveAdvancedSettingsBtn" class="control-btn" style="flex: 1; padding: 6px;">Save IDs</button>
+                        <button id="saveAdvancedSettingsBtn" class="control-btn" style="flex: 1; padding: 6px;">Save Advanced Settings</button>
                     </div>
 
                     <h4 style="margin-top: 20px; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
@@ -3203,6 +3759,86 @@
             <button id="closeDebugOverlayBtn">×</button>
         </div>
         <pre id="debugOverlayContent"></pre>
+    </div>
+
+    <!-- Trip Edit / Add Modal -->
+    <div id="tripEditModal" class="edits-modal-overlay" style="display: none;">
+        <div class="edits-modal-dialog trip-edit-dialog">
+            <div class="edits-modal-header">
+                <div class="edits-modal-title-wrap">
+                    <span class="edits-modal-icon" id="tripModalIcon">✏️</span>
+                    <h3 class="edits-modal-title" id="tripModalHeading">Edit Trip</h3>
+                    <span id="tripModalTypeBadge" class="trip-modal-pill auto">Auto</span>
+                </div>
+                <button id="closeTripEditModalBtn" class="edits-modal-close" type="button" title="Close">×</button>
+            </div>
+
+            <div class="trip-modal-body">
+                <div class="trip-modal-field">
+                    <label for="tripModalTitleInput">Trip Title</label>
+                    <div class="trip-title-input-wrap">
+                        <input type="text" id="tripModalTitleInput" placeholder="e.g. Summer in Tokyo & Kyoto" autocomplete="off">
+                        <button type="button" id="tripModalResetTitleBtn" class="trip-modal-reset-btn" title="Reset to auto-detected title" style="display: none;">↺ Reset</button>
+                    </div>
+                    <span class="trip-field-hint" id="tripModalAutoTitleHint" style="display: none;">Auto title: <em id="tripModalAutoTitleVal"></em></span>
+                </div>
+
+                <div class="trip-modal-row">
+                    <div class="trip-modal-field flex-1">
+                        <label for="tripModalStartDateInput">Start Date</label>
+                        <input type="date" id="tripModalStartDateInput">
+                    </div>
+                    <div class="trip-modal-field flex-1">
+                        <label for="tripModalEndDateInput">End Date</label>
+                        <input type="date" id="tripModalEndDateInput">
+                    </div>
+                </div>
+                <span class="trip-field-hint" id="tripModalAutoDatesHint" style="display: none;">Auto dates: <em id="tripModalAutoDatesVal"></em></span>
+
+                <div class="trip-modal-field">
+                    <label for="tripModalNotesInput">Notes & Memories</label>
+                    <textarea id="tripModalNotesInput" rows="3" placeholder="Add notes and memories... (searchable)"></textarea>
+                </div>
+            </div>
+
+            <div class="trip-modal-footer">
+                <div class="trip-modal-footer-left">
+                    <button id="tripModalDeleteBtn" class="trip-btn danger" type="button">🗑️ Delete Trip</button>
+                    <button id="tripModalResetAllBtn" class="trip-btn warning" type="button" style="display: none;" title="Reset all changes back to auto-detected">↺ Reset to Auto</button>
+                </div>
+                <div class="trip-modal-footer-right">
+                    <button id="tripModalCancelBtn" class="trip-btn secondary" type="button">Cancel</button>
+                    <button id="tripModalSaveBtn" class="trip-btn primary" type="button">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Hidden Trips Modal -->
+    <div id="tripManageModal" class="edits-modal-overlay" style="display: none;">
+        <div class="edits-modal-dialog trip-manage-dialog">
+            <div class="edits-modal-header">
+                <div class="edits-modal-title-wrap">
+                    <span class="edits-modal-icon">⚙️</span>
+                    <h3 class="edits-modal-title">Manage Hidden Trips</h3>
+                </div>
+                <button id="closeTripManageModalBtn" class="edits-modal-close" type="button" title="Close">×</button>
+            </div>
+
+            <div class="trip-modal-body">
+                <div class="trip-manage-section">
+                    <h4 class="trip-manage-section-title">Hidden Auto-Detected Trips (<span id="hiddenTripsListCount">0</span>)</h4>
+                    <p class="trip-manage-section-desc">These auto-detected trips were hidden/deleted. You can restore them to appear back in your timeline.</p>
+                    <div id="hiddenTripsList" class="hidden-trips-list-container">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="trip-modal-footer" style="justify-content: flex-end;">
+                <button id="closeTripManageModalFooterBtn" class="trip-btn primary" type="button">Done</button>
+            </div>
+        </div>
     </div>
 
     <!-- Timeline Edits Overlay Modal -->
@@ -3570,6 +4206,12 @@
     let editModeActiveFullItem = null;
     let homePlaceIds = [];
     let workPlaceIds = [];
+    let minTripDistanceKm = 60;
+
+    // Trip Customizations Store (persisted to TimelineTrips.json & localStorage)
+    let tripDataStore = { customTrips: [], tripOverrides: {}, deletedTripIds: [] };
+    let savedTripsSnapshot = JSON.stringify({ customTrips: [], tripOverrides: {}, deletedTripIds: [] });
+    let activeTripModalContext = null; // { mode: 'edit' | 'add', trip }
 
     let worldMapMode = 'pins'; // 'pins' or 'heatmap'
     let heatmapLayer = null;
@@ -6286,8 +6928,8 @@
         // Sort data for the day chronologically
         allRelevantData.sort((a, b) => {
             // Determine start times consistently
-            const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
-            const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+            const timeA = Date.parse(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime) || 0;
+            const timeB = Date.parse(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime) || 0;
             return timeA - timeB;
         });
 
@@ -6352,7 +6994,9 @@
         const summarySidebar = document.getElementById('summarySidebarContent');
         if (summarySidebar) summarySidebar.style.display = 'none';
         const timelineEl = document.getElementById('timeline');
-        if (timelineEl) timelineEl.style.display = 'block';
+        if (timelineEl) {
+            timelineEl.style.display = (typeof tripsViewVisible !== 'undefined' && tripsViewVisible) ? 'none' : 'block';
+        }
 
         if (!uiEnabled) return;
 
@@ -6401,7 +7045,14 @@
                 resetLoadingStatus();
                 document.getElementById('howToMessage').style.display = "none";
                 document.getElementById('map').classList.remove('hidden');
-                fitMapToData();
+                if (typeof tripsViewVisible !== 'undefined' && tripsViewVisible) {
+                    const timelineEl = document.getElementById('timeline');
+                    if (timelineEl) timelineEl.style.display = 'none';
+                    const tripsView = document.getElementById('tripsView');
+                    if (tripsView) tripsView.style.display = 'flex';
+                } else {
+                    fitMapToData();
+                }
                 console.log(`Finished loading range. Total API Calls: ${placeApiCallCount}`);
             }
         });
@@ -7487,6 +8138,27 @@
         });
     }
 
+    // Updates the toggle button text for activity filters (e.g. "5 of 15 selected")
+    function updateActivityFilterCountText() {
+        const activityFilters = document.getElementById('activityFilters');
+        const countSpan = document.getElementById('activityFilterCountText');
+        const toggleBtn = document.getElementById('toggleActivityFiltersBtn');
+        if (!activityFilters || !countSpan || !toggleBtn) return;
+
+        const allCheckboxes = activityFilters.querySelectorAll('.activity-filter-checkbox');
+        const total = allCheckboxes.length;
+        if (total === 0) {
+            toggleBtn.style.display = 'none';
+            activityFilters.style.display = 'none';
+            toggleBtn.classList.remove('open');
+            return;
+        }
+
+        toggleBtn.style.display = 'inline-flex';
+        const checked = [...allCheckboxes].filter(cb => cb.checked).length;
+        countSpan.textContent = `${checked} of ${total} selected`;
+    }
+
     // Populates the activity filter checkboxes based on loaded data
     function populateActivityFilters() {
         const activityFilters = document.getElementById('activityFilters');
@@ -7558,10 +8230,16 @@
                 const allActivityFilters = activityFilters.querySelectorAll('.activity-filter-checkbox');
                 document.getElementById('showActivities').checked = [...allActivityFilters].some(cb => cb.checked);
 
+                // Update toggle link counter
+                updateActivityFilterCountText();
+
                 // Reload data with current date range and new filters
                 loadTimelineDataInDateRange(document.getElementById('startDatePicker').value, document.getElementById('endDatePicker').value, false);
             });
         });
+
+        // Refresh toggle link count display
+        updateActivityFilterCountText();
     }
 
     // Initializes the settings button and its options panel
@@ -7570,11 +8248,26 @@
         const showActivitiesCheckbox = document.getElementById('showActivities');
         const showVisitsCheckbox = document.getElementById('showVisits');
         const activityFiltersDiv = document.getElementById('activityFilters');
+        const toggleFiltersBtn = document.getElementById('toggleActivityFiltersBtn');
 
         // Toggle settings tab visibility
         settingsBtn.addEventListener('click', () => {
             showSidebarTab('settings');
         });
+
+        // Toggle activity filters dropdown/collapsible list
+        if (toggleFiltersBtn) {
+            toggleFiltersBtn.addEventListener('click', () => {
+                const isCurrentlyOpen = activityFiltersDiv.style.display === 'block';
+                if (isCurrentlyOpen) {
+                    activityFiltersDiv.style.display = 'none';
+                    toggleFiltersBtn.classList.remove('open');
+                } else {
+                    activityFiltersDiv.style.display = 'block';
+                    toggleFiltersBtn.classList.add('open');
+                }
+            });
+        }
 
         // Function to reload data based on current filters and date range
         const reloadData = () => {
@@ -7591,6 +8284,8 @@
             const isChecked = this.checked;
             // Check/uncheck all individual activity filters
             activityFiltersDiv.querySelectorAll('.activity-filter-checkbox').forEach(checkbox => checkbox.checked = isChecked);
+            // Refresh toggle link counter
+            updateActivityFilterCountText();
             // Reload data
             reloadData();
         });
@@ -7869,6 +8564,7 @@
             selectedSummaryYear = null;
             updateApiCallDisplay();
             document.getElementById('activityFilters').innerHTML = ''; // Clear activity filters
+            updateActivityFilterCountText();
             document.getElementById('date-range-info').innerHTML = ''; // Clear date range info
             // Reset summary view state
             document.getElementById('summaryView').classList.remove('expanded-year-active');
@@ -7942,6 +8638,7 @@
         try {
             // --- Step 1: Scan for Timeline.json and TimelinePlaceCache.json at current level (non-recursive) ---
             let editsFile = null;
+            let tripsFile = null;
             if (!isRecursive) {
                 await setLoadingStatus("Scanning folder for timeline data...");
                 for await (const entry of dirHandle.values()) {
@@ -7952,6 +8649,8 @@
                             placeCacheFile = entry;
                         } else if (entry.name.toLowerCase() === 'timelineedits.json') {
                             editsFile = entry;
+                        } else if (entry.name.toLowerCase() === 'timelinetrips.json') {
+                            tripsFile = entry;
                         }
                     }
                 }
@@ -7968,6 +8667,18 @@
                         updateEditsIndicator();
                     } catch (e) {
                         console.error("Error reading TimelineEdits.json", e);
+                    }
+                }
+
+                if (tripsFile) {
+                    await setLoadingStatus("Loading custom trips...");
+                    try {
+                        const file = await tripsFile.getFile();
+                        const content = await file.text();
+                        loadTripDataFromParsedJson(JSON.parse(content), true);
+                        console.log(`Loaded custom trips from TimelineTrips.json`);
+                    } catch (e) {
+                        console.error("Error reading TimelineTrips.json", e);
                     }
                 }
 
@@ -8263,7 +8974,7 @@
                     });
                     // Sort path points by time
                     await setLoadingStatus("Processing timeline paths...");
-                    allPathPoints.sort((a, b) => moment(a.time).valueOf() - moment(b.time).valueOf());
+                    allPathPoints.sort((a, b) => (Date.parse(a.time) || 0) - (Date.parse(b.time) || 0));
                     let pathPointPointer = 0; // Pointer for efficient matching
 
                     await setLoadingStatus("Organizing visits and activities...");
@@ -8474,8 +9185,13 @@
                     }
                     console.log("Data loading complete. Enabling UI.");
 
+                    cachedTrips = null;
+                    cachedPlacesLived = null;
                     await setLoadingStatus("Analyzing trip info...");
                     detectTrips();
+                    if (typeof renderTripsView === 'function') {
+                        renderTripsView();
+                    }
 
                     // Update the data source indicator text
                     updateCacheIndicator(); // Display the initial cache counts
@@ -8491,6 +9207,15 @@
                     await setLoadingStatus("Loading timeline records...");
                     // Perform initial data load for the default date range
                     await loadTimelineDataInDateRange(document.getElementById('startDatePicker').value, document.getElementById('endDatePicker').value);
+
+                    if (tripsViewVisible) {
+                        if (typeof window.activateTripsView === 'function') {
+                            window.activateTripsView();
+                        } else {
+                            const tb = document.getElementById('tripsBtn');
+                            if (tb) tb.click();
+                        }
+                    }
 
                 } else {
                     // No data was successfully loaded
@@ -8966,8 +9691,8 @@
             timelineData[newMonthKey].timelineObjects.push(newObj);
 
             timelineData[newMonthKey].timelineObjects.sort((a, b) => {
-                const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
-                const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+                const timeA = Date.parse(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime) || 0;
+                const timeB = Date.parse(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime) || 0;
                 return timeA - timeB;
             });
 
@@ -9308,12 +10033,12 @@
         // Sort list
         filtered.sort((a, b) => {
             if (sortMode === 'date-desc') {
-                const timeA = a.startTimestamp ? moment(a.startTimestamp).valueOf() : 0;
-                const timeB = b.startTimestamp ? moment(b.startTimestamp).valueOf() : 0;
+                const timeA = a.startTimestamp ? (Date.parse(a.startTimestamp) || 0) : 0;
+                const timeB = b.startTimestamp ? (Date.parse(b.startTimestamp) || 0) : 0;
                 return timeB - timeA;
             } else if (sortMode === 'date-asc') {
-                const timeA = a.startTimestamp ? moment(a.startTimestamp).valueOf() : 0;
-                const timeB = b.startTimestamp ? moment(b.startTimestamp).valueOf() : 0;
+                const timeA = a.startTimestamp ? (Date.parse(a.startTimestamp) || 0) : 0;
+                const timeB = b.startTimestamp ? (Date.parse(b.startTimestamp) || 0) : 0;
                 return timeA - timeB;
             } else if (sortMode === 'name-asc') {
                 return a.name.localeCompare(b.name);
@@ -10014,15 +10739,117 @@
         // Populate initial values
         homeInput.value = homePlaceIds.join(', ');
         workInput.value = workPlaceIds.join(', ');
+        const minTripDistInput = document.getElementById('minTripDistanceInput');
+        const minTripDistMilesInput = document.getElementById('minTripDistanceMilesInput');
+
+        const kmToMiles = (km) => {
+            if (isNaN(km) || km <= 0) return '';
+            const mi = km * 0.621371;
+            return mi % 1 === 0 ? mi : parseFloat(mi.toFixed(1));
+        };
+
+        const milesToKm = (mi) => {
+            if (isNaN(mi) || mi <= 0) return '';
+            const km = mi * 1.60934;
+            return km % 1 === 0 ? km : parseFloat(km.toFixed(1));
+        };
+
+        if (minTripDistInput) {
+            minTripDistInput.value = minTripDistanceKm;
+            if (minTripDistMilesInput) {
+                minTripDistMilesInput.value = kmToMiles(minTripDistanceKm);
+            }
+
+            let tripDistDebounceTimer = null;
+            const applyDistChange = (newKm, debounce = false) => {
+                if (tripDistDebounceTimer) clearTimeout(tripDistDebounceTimer);
+                const doUpdate = async () => {
+                    if (newKm > 0 && newKm !== minTripDistanceKm) {
+                        minTripDistanceKm = newKm;
+                        await saveSetting('minTripDistanceKm', minTripDistanceKm);
+                        cachedTrips = null;
+                        if (typeof renderTripsView === 'function') renderTripsView();
+                        console.log(`Min trip distance updated to ${minTripDistanceKm} km (${kmToMiles(minTripDistanceKm)} mi). Trips refreshed.`);
+                    }
+                };
+                if (debounce) {
+                    tripDistDebounceTimer = setTimeout(doUpdate, 350);
+                } else {
+                    doUpdate();
+                }
+            };
+
+            const handleKmInput = () => {
+                const km = parseFloat(minTripDistInput.value);
+                if (!isNaN(km) && km > 0) {
+                    if (minTripDistMilesInput && document.activeElement !== minTripDistMilesInput) {
+                        minTripDistMilesInput.value = kmToMiles(km);
+                    }
+                    applyDistChange(km, true);
+                }
+            };
+
+            const handleKmChange = () => {
+                const km = parseFloat(minTripDistInput.value);
+                if (!isNaN(km) && km > 0) {
+                    if (minTripDistMilesInput && document.activeElement !== minTripDistMilesInput) {
+                        minTripDistMilesInput.value = kmToMiles(km);
+                    }
+                    applyDistChange(km, false);
+                }
+            };
+
+            const handleMilesInput = () => {
+                if (!minTripDistMilesInput) return;
+                const mi = parseFloat(minTripDistMilesInput.value);
+                if (!isNaN(mi) && mi > 0) {
+                    const km = milesToKm(mi);
+                    if (minTripDistInput && document.activeElement !== minTripDistInput) {
+                        minTripDistInput.value = km;
+                    }
+                    applyDistChange(km, true);
+                }
+            };
+
+            const handleMilesChange = () => {
+                if (!minTripDistMilesInput) return;
+                const mi = parseFloat(minTripDistMilesInput.value);
+                if (!isNaN(mi) && mi > 0) {
+                    const km = milesToKm(mi);
+                    if (minTripDistInput && document.activeElement !== minTripDistInput) {
+                        minTripDistInput.value = km;
+                    }
+                    applyDistChange(km, false);
+                }
+            };
+
+            minTripDistInput.addEventListener('input', handleKmInput);
+            minTripDistInput.addEventListener('change', handleKmChange);
+
+            if (minTripDistMilesInput) {
+                minTripDistMilesInput.addEventListener('input', handleMilesInput);
+                minTripDistMilesInput.addEventListener('change', handleMilesChange);
+            }
+        }
 
         const saveAdvancedBtn = document.getElementById('saveAdvancedSettingsBtn');
         saveAdvancedBtn.addEventListener('click', async () => {
             homePlaceIds = homeInput.value.split(',').map(s => s.trim()).filter(s => s);
             workPlaceIds = workInput.value.split(',').map(s => s.trim()).filter(s => s);
 
+            if (minTripDistInput) {
+                const val = parseFloat(minTripDistInput.value);
+                if (val > 0) {
+                    minTripDistanceKm = val;
+                    await saveSetting('minTripDistanceKm', minTripDistanceKm);
+                    cachedTrips = null;
+                    if (typeof renderTripsView === 'function') renderTripsView();
+                }
+            }
+
             await saveSetting('homePlaceIds', homePlaceIds);
             await saveSetting('workPlaceIds', workPlaceIds);
-            alert('Custom Home and Work IDs saved! If data is already loaded, you may need to reload the date range or summary to see all changes.');
+            alert('Advanced settings saved! If data is already loaded, trips and summary views will update accordingly.');
         });
 
         const exportBtn = document.getElementById('exportSettingsBtn');
@@ -10060,11 +10887,20 @@
         });
 
         exportBtn.addEventListener('click', async () => {
+            if (minTripDistInput) {
+                const val = parseInt(minTripDistInput.value, 10);
+                if (val > 0) {
+                    minTripDistanceKm = val;
+                    await saveSetting('minTripDistanceKm', minTripDistanceKm);
+                }
+            }
+
             const settingsToExport = {
-                displayTimezone: await getSetting('displayTimezone') || 'default',
-                distanceUnit: await getSetting('distanceUnit') || 'km',
-                homePlaceIds: await getSetting('homePlaceIds') || [],
-                workPlaceIds: await getSetting('workPlaceIds') || []
+                displayTimezone: await getSetting('displayTimezone') || displayTimezone || 'default',
+                distanceUnit: await getSetting('distanceUnit') || distanceUnit || 'km',
+                homePlaceIds: homePlaceIds.length > 0 ? homePlaceIds : (await getSetting('homePlaceIds') || []),
+                workPlaceIds: workPlaceIds.length > 0 ? workPlaceIds : (await getSetting('workPlaceIds') || []),
+                minTripDistanceKm: minTripDistanceKm || (await getSetting('minTripDistanceKm')) || 60
             };
 
             const blob = new Blob([JSON.stringify(settingsToExport, null, 2)], { type: 'application/json' });
@@ -10110,6 +10946,12 @@
                         workPlaceIds = importedSettings.workPlaceIds;
                         await saveSetting('workPlaceIds', workPlaceIds);
                         workInput.value = workPlaceIds.join(', ');
+                    }
+                    if (importedSettings.minTripDistanceKm) {
+                        minTripDistanceKm = importedSettings.minTripDistanceKm;
+                        await saveSetting('minTripDistanceKm', minTripDistanceKm);
+                        if (minTripDistInput) minTripDistInput.value = minTripDistanceKm;
+                        if (minTripDistMilesInput) minTripDistMilesInput.value = kmToMiles(minTripDistanceKm);
                     }
 
                     alert('Settings imported successfully! Reload data to fully apply changes.');
@@ -10204,8 +11046,8 @@
 
         // Sort the final combined list chronologically
         allItemsInRange.sort((a, b) => {
-            const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
-            const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+            const timeA = Date.parse(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime) || 0;
+            const timeB = Date.parse(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime) || 0;
             return timeA - timeB;
         });
         return allItemsInRange;
@@ -10272,8 +11114,8 @@
         // 3. Re-sort chronologically
         for (const monthKey in timelineData) {
             timelineData[monthKey].timelineObjects.sort((a, b) => {
-                const timeA = moment(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime);
-                const timeB = moment(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime);
+                const timeA = Date.parse(a.placeVisit?.duration?.startTimestamp || a.activitySegment?.duration?.startTimestamp || a.startTime) || 0;
+                const timeB = Date.parse(b.placeVisit?.duration?.startTimestamp || b.activitySegment?.duration?.startTimestamp || b.startTime) || 0;
                 return timeA - timeB;
             });
         }
@@ -11751,11 +12593,12 @@ Departed: ${end}</description>
     let tripFilterState = {
         search: '',
         year: 'all',
-        durations: new Set(['1-2', '3-7', '8-14', '15+']),
+        durations: new Set(['0', '1-2', '3-7', '8-14', '15+']),
         flightsOnly: false
     };
 
     function getTripDurationBucket(totalNights) {
+        if (totalNights === 0) return '0';
         if (totalNights <= 2) return '1-2';
         if (totalNights <= 7) return '3-7';
         if (totalNights <= 14) return '8-14';
@@ -11766,14 +12609,14 @@ Departed: ${end}</description>
         const labelEl = document.getElementById('tripDurationDropdownLabel');
         if (!labelEl) return;
         const count = tripFilterState.durations.size;
-        if (count === 4) {
+        if (count === 5) {
             labelEl.textContent = 'All Durations';
         } else if (count === 0) {
             labelEl.textContent = 'Duration: None';
-        } else if (count === 3 && !tripFilterState.durations.has('1-2')) {
-            labelEl.textContent = '3+ nights';
+        } else if (count === 4 && !tripFilterState.durations.has('0')) {
+            labelEl.textContent = 'Overnight only';
         } else if (count === 1) {
-            const map = { '1-2': '1–2 nights', '3-7': '3–7 nights', '8-14': '8–14 nights', '15+': '15+ nights' };
+            const map = { '0': 'Day trips', '1-2': '1–2 nights', '3-7': '3–7 nights', '8-14': '8–14 nights', '15+': '15+ nights' };
             const single = [...tripFilterState.durations][0];
             labelEl.textContent = map[single] || single;
         } else {
@@ -12504,6 +13347,597 @@ Departed: ${end}</description>
         return closest;
     }
 
+    // Helper: Slice timeline items by date range and process into away/flight chunk items
+    function buildChunkForDateRange(startDateStr, endDateStr, allItems, residences, preEraBase, fallbackHome) {
+        if (!startDateStr || !endDateStr || !allItems || allItems.length === 0) return [];
+        const startMs = moment(startDateStr).startOf('day').valueOf();
+        const endMs = moment(endDateStr).endOf('day').valueOf();
+        const filteredItems = allItems.filter(item => item.startMs <= endMs && item.endMs >= startMs);
+
+        const chunk = [];
+        for (const item of filteredItems) {
+            const loc = extractItemLocationInfo(item);
+            let home = getActiveResidenceForTime(item.startMs, residences);
+            if (!home) {
+                home = preEraBase || fallbackHome;
+            }
+
+            let distFromHome = 0;
+            let endDistFromHome = 0;
+            if (home && loc.lat !== null && loc.lng !== null) {
+                distFromHome = computeHaversineDistance([
+                    { lat: home.lat, lng: home.lng },
+                    { lat: loc.lat, lng: loc.lng }
+                ]);
+            }
+            if (home && loc.endLat !== null && loc.endLng !== null) {
+                endDistFromHome = computeHaversineDistance([
+                    { lat: home.lat, lng: home.lng },
+                    { lat: loc.endLat, lng: loc.endLng }
+                ]);
+            }
+
+            let isSignificantFlight = false;
+            if (loc.isActivity && loc.activityType === "FLYING") {
+                let maxSpanDist = 0;
+                if (loc.lat !== null && loc.endLat !== null) {
+                    maxSpanDist = Math.max(maxSpanDist, computeHaversineDistance([{ lat: loc.lat, lng: loc.lng }, { lat: loc.endLat, lng: loc.endLng }]));
+                }
+                if (loc.pathPoints && loc.pathPoints.length >= 2) {
+                    const p1 = loc.pathPoints[0];
+                    const p2 = loc.pathPoints[loc.pathPoints.length - 1];
+                    const lat1 = p1.lat ?? (p1.latE7 ? p1.latE7 / 1e7 : null);
+                    const lng1 = p1.lng ?? (p1.lngE7 ? p1.lngE7 / 1e7 : null);
+                    const lat2 = p2.lat ?? (p2.latE7 ? p2.latE7 / 1e7 : null);
+                    const lng2 = p2.lng ?? (p2.lngE7 ? p2.lngE7 / 1e7 : null);
+                    if (lat1 !== null && lat2 !== null) {
+                        maxSpanDist = Math.max(maxSpanDist, computeHaversineDistance([{ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 }]));
+                    }
+                    if (loc.lat !== null && lat2 !== null) {
+                        maxSpanDist = Math.max(maxSpanDist, computeHaversineDistance([{ lat: loc.lat, lng: loc.lng }, { lat: lat2, lng: lng2 }]));
+                    }
+                }
+                if (maxSpanDist >= 120000 || distFromHome >= 100000 || endDistFromHome >= 100000) {
+                    isSignificantFlight = true;
+                }
+            }
+
+            const effectiveDistFromHome = Math.max(distFromHome, endDistFromHome);
+
+            chunk.push({
+                item,
+                loc,
+                home,
+                isAway: true,
+                distFromHome: effectiveDistFromHome,
+                isSignificantFlight
+            });
+        }
+        return chunk;
+    }
+
+    // Helper: Analyze a chunk of away items (or construct fallback trip object) into a complete trip
+    function analyzeTripItems(chunk, tripOptions = {}) {
+        if (!chunk || chunk.length === 0) {
+            const sDate = tripOptions.startDate || moment().format("YYYY-MM-DD");
+            const eDate = tripOptions.endDate || sDate;
+            const startM = moment(sDate);
+            const endM = moment(eDate);
+            const nights = Math.max(0, endM.diff(startM, 'days'));
+            let durationTag = "1–2 nights";
+            if (nights >= 15) durationTag = "15+ nights";
+            else if (nights >= 8) durationTag = "8–14 nights";
+            else if (nights >= 3) durationTag = "3–7 nights";
+
+            return {
+                id: tripOptions.id || `trip_custom_${Date.now()}`,
+                startDate: sDate,
+                endDate: eDate,
+                dateDisplay: `${startM.format("MMM D, YYYY")} – ${endM.format("MMM D, YYYY")}`,
+                year: startM.year(),
+                title: tripOptions.overrideTitle || "Custom Trip",
+                autoTitle: tripOptions.autoTitle || "Custom Trip",
+                notes: tripOptions.overrideNotes || "",
+                flags: [],
+                totalNights: nights,
+                nightLabel: nights === 1 ? "1 night" : `${nights} nights`,
+                durationTag,
+                stayedCities: [],
+                cityNights: {},
+                hasFlight: false,
+                flights: [],
+                flightRouteStr: '',
+                airportStops: [],
+                groundPaths: [],
+                routeCities: [],
+                mapPoints: [],
+                isCustom: Boolean(tripOptions.isCustom),
+                isEdited: Boolean(tripOptions.isEdited)
+            };
+        }
+
+        const firstItem = chunk[0].item;
+        const lastItem = chunk[chunk.length - 1].item;
+
+        const home = chunk[0].home;
+        const homeCountry = home?.country || "Taiwan";
+        const homeCity = home?.city;
+
+        // Resolve primary timezone for this trip chunk (from destination items, or home base)
+        let tripTz = null;
+        for (const p of chunk) {
+            if (p.loc.lat !== null && p.loc.lng !== null && typeof getTimezoneForVisit === 'function') {
+                const tz = getTimezoneForVisit(p.loc.lat, p.loc.lng, p.loc.placeId);
+                if (tz && tz !== 'UTC') { tripTz = tz; break; }
+            }
+        }
+        if (!tripTz && home && typeof getTimezoneForVisit === 'function') {
+            tripTz = getTimezoneForVisit(home.lat, home.lng, home.placeId);
+        }
+        if (!tripTz || tripTz === 'UTC') tripTz = getSelectedTimezone();
+
+        const forcedStartM = tripOptions.startDate ? moment.tz(tripOptions.startDate, tripTz) : null;
+        const forcedEndM = tripOptions.endDate ? moment.tz(tripOptions.endDate, tripTz) : null;
+        const tripStartM = forcedStartM || firstItem.startMoment.clone().tz(tripTz);
+        const tripEndM = forcedEndM || lastItem.endMoment.clone().tz(tripTz);
+        const tripStartStr = tripOptions.startDate || tripStartM.format("YYYY-MM-DD");
+        const tripEndStr = tripOptions.endDate || tripEndM.format("YYYY-MM-DD");
+
+        const nightsSet = new Set();
+        let hasFlight = false;
+        let maxDist = 0;
+        const routeCities = [];
+        const routeCountries = [];
+        const mapPoints = [];
+        const flights = [];
+        const airportStops = [];
+        const groundPaths = [];
+        let currentGroundPath = [];
+
+        const cityNights = {};
+        const cityNightsDates = {};
+        const cityDurationMs = {};
+        const cityVisitCounts = {};
+        const cityAirportVisitCounts = {};
+        const firstSeenInTrip = {};
+
+        const countryNights = {};
+        const countryDurationMs = {};
+        const countryVisitCounts = {};
+        const countryAirportVisitCounts = {};
+        const firstSeenCountry = {};
+
+        for (let i = 0; i < chunk.length; i++) {
+            const p = chunk[i];
+            if (p.distFromHome > maxDist) maxDist = p.distFromHome;
+
+            // Flight segment detection
+            if (p.isSignificantFlight || (p.loc.isActivity && p.loc.activityType === "FLYING")) {
+                hasFlight = true;
+                let startLat = p.loc.lat;
+                let startLng = p.loc.lng;
+                let endLat = p.loc.endLat;
+                let endLng = p.loc.endLng;
+
+                if (p.loc.pathPoints && p.loc.pathPoints.length >= 2) {
+                    const pt0 = p.loc.pathPoints[0];
+                    const ptLast = p.loc.pathPoints[p.loc.pathPoints.length - 1];
+                    const p0Lat = pt0.lat !== undefined ? pt0.lat : (pt0.latE7 ? pt0.latE7 / 1e7 : null);
+                    const p0Lng = pt0.lng !== undefined ? pt0.lng : (pt0.lngE7 ? pt0.lngE7 / 1e7 : null);
+                    const pLLat = ptLast.lat !== undefined ? ptLast.lat : (ptLast.latE7 ? ptLast.latE7 / 1e7 : null);
+                    const pLLng = ptLast.lng !== undefined ? ptLast.lng : (ptLast.lngE7 ? ptLast.lngE7 / 1e7 : null);
+                    if (startLat === null && p0Lat !== null) { startLat = p0Lat; startLng = p0Lng; }
+                    if (endLat === null && pLLat !== null) { endLat = pLLat; endLng = pLLng; }
+                }
+
+                if (startLat !== null && startLng !== null && endLat !== null && endLng !== null) {
+                    let fromAptName = '';
+                    let fromCity = p.loc.city && p.loc.city !== 'Unknown City' ? p.loc.city : '';
+                    let toAptName = '';
+                    let toCity = '';
+                    if (i > 0) {
+                        if (chunk[i - 1].loc.isAirport) fromAptName = chunk[i - 1].loc.name;
+                        if (!fromCity && chunk[i - 1].loc.city && chunk[i - 1].loc.city !== 'Unknown City') {
+                            fromCity = chunk[i - 1].loc.city;
+                        }
+                    } else if (homeCity && home) {
+                        if (computeHaversineDistance([{ lat: home.lat, lng: home.lng }, { lat: startLat, lng: startLng }]) < 60000) {
+                            fromCity = homeCity;
+                        }
+                    }
+                    if (i < chunk.length - 1) {
+                        if (chunk[i + 1].loc.isAirport) toAptName = chunk[i + 1].loc.name;
+                        if (chunk[i + 1].loc.city && chunk[i + 1].loc.city !== 'Unknown City') {
+                            toCity = chunk[i + 1].loc.city;
+                        }
+                    } else if (homeCity && home) {
+                        if (computeHaversineDistance([{ lat: home.lat, lng: home.lng }, { lat: endLat, lng: endLng }]) < 60000) {
+                            toCity = homeCity;
+                        }
+                    }
+
+                    const fromAirport = resolveAirportInfo(startLat, startLng, fromAptName, fromCity);
+                    const toAirport = resolveAirportInfo(endLat, endLng, toAptName, toCity);
+                    const distMeters = p.item.raw.activitySegment?.distance || computeHaversineDistance([{ lat: startLat, lng: startLng }, { lat: endLat, lng: endLng }]);
+
+                    const fromTz = (fromAirport && fromAirport.lat && fromAirport.lng && typeof getTimezoneForVisit === 'function')
+                        ? getTimezoneForVisit(fromAirport.lat, fromAirport.lng)
+                        : tripTz;
+                    const toTz = (toAirport && toAirport.lat && toAirport.lng && typeof getTimezoneForVisit === 'function')
+                        ? getTimezoneForVisit(toAirport.lat, toAirport.lng)
+                        : tripTz;
+
+                    flights.push({
+                        from: fromAirport,
+                        to: toAirport,
+                        fromCoord: { lat: startLat, lng: startLng },
+                        toCoord: { lat: endLat, lng: endLng },
+                        distanceKm: Math.round(distMeters / 1000),
+                        departureDate: p.item.startMoment.clone().tz(fromTz).format("YYYY-MM-DD"),
+                        departureTime: p.item.startMoment.clone().tz(fromTz).format("MMM D, h:mm A"),
+                        arrivalTime: p.item.endMoment.clone().tz(toTz).format("MMM D, h:mm A"),
+                        pathPoints: p.loc.pathPoints || []
+                    });
+                }
+
+                // Break ground path at flight
+                if (currentGroundPath.length > 0) {
+                    groundPaths.push(currentGroundPath);
+                    currentGroundPath = [];
+                }
+                continue;
+            }
+
+            // Airport visit stop
+            if (p.loc.isAirport && !p.loc.isActivity && p.loc.lat !== null && p.loc.lng !== null) {
+                const apt = resolveAirportInfo(p.loc.lat, p.loc.lng, p.loc.name, p.loc.city);
+                if (apt && !airportStops.some(a => (Math.abs(a.lat - apt.lat) < 0.01 && Math.abs(a.lng - apt.lng) < 0.01) || (a.name && a.name === apt.name))) {
+                    airportStops.push(apt);
+                }
+            }
+
+            // Filter out spurious GPS jumps to home while traveling away
+            let isSpuriousHome = false;
+            if (home && p.distFromHome < 25000) {
+                let hasEarlierAway = false;
+                for (let k = i - 1; k >= 0; k--) {
+                    if (chunk[k].distFromHome > 150000) { hasEarlierAway = true; break; }
+                }
+                let hasLaterAway = false;
+                for (let k = i + 1; k < chunk.length; k++) {
+                    if (chunk[k].distFromHome > 150000) { hasLaterAway = true; break; }
+                }
+                if (hasEarlierAway && hasLaterAway) isSpuriousHome = true;
+            }
+
+            if (isSpuriousHome) {
+                continue;
+            }
+
+            const pushMapPt = (pt) => {
+                if (!pt || isNaN(pt.lat) || isNaN(pt.lng)) return;
+                if (home && p.distFromHome > 150000) {
+                    const dHome = computeHaversineDistance([{ lat: home.lat, lng: home.lng }, pt]);
+                    if (dHome < 50000) return;
+                }
+                if (mapPoints.length > 0) {
+                    const last = mapPoints[mapPoints.length - 1];
+                    if (Math.abs(last.lat - pt.lat) < 1e-5 && Math.abs(last.lng - pt.lng) < 1e-5) return;
+                }
+                mapPoints.push(pt);
+                if (currentGroundPath.length > 0) {
+                    const lastG = currentGroundPath[currentGroundPath.length - 1];
+                    if (Math.abs(lastG.lat - pt.lat) < 1e-5 && Math.abs(lastG.lng - pt.lng) < 1e-5) return;
+                }
+                currentGroundPath.push(pt);
+            };
+
+            if (p.loc.lat !== null && p.loc.lng !== null) {
+                pushMapPt({ lat: p.loc.lat, lng: p.loc.lng });
+            }
+            if (p.loc.pathPoints && p.loc.pathPoints.length > 0) {
+                for (const pt of p.loc.pathPoints) {
+                    const ptLat = pt.lat !== undefined ? pt.lat : (pt.latE7 ? pt.latE7 / 1e7 : null);
+                    const ptLng = pt.lng !== undefined ? pt.lng : (pt.lngE7 ? pt.lngE7 / 1e7 : null);
+                    if (ptLat !== null && ptLng !== null) pushMapPt({ lat: ptLat, lng: ptLng });
+                }
+            }
+            if (p.loc.endLat !== null && p.loc.endLng !== null) {
+                pushMapPt({ lat: p.loc.endLat, lng: p.loc.endLng });
+            }
+
+            const dur = p.item.endMoment.diff(p.item.startMoment, 'minutes');
+            let itemTz = null;
+            if (p.loc.lat !== null && p.loc.lng !== null && typeof getTimezoneForVisit === 'function') {
+                itemTz = getTimezoneForVisit(p.loc.lat, p.loc.lng, p.loc.placeId);
+            }
+            if (!itemTz || itemTz === 'UTC') itemTz = tripTz;
+
+            const localStart = p.item.startMoment.clone().tz(itemTz);
+            const localEnd = p.item.endMoment.clone().tz(itemTz);
+            const startHour = localStart.hour();
+            const endHour = localEnd.hour();
+            const spansNight = (dur >= 180 && (
+                localStart.clone().startOf('day').isBefore(localEnd.clone().startOf('day')) ||
+                startHour >= 22 || endHour <= 6 ||
+                (startHour <= 4 && endHour >= 6) ||
+                (dur >= 360 && (startHour <= 7 || endHour >= 21 || startHour >= 20 || endHour <= 8)) ||
+                dur >= 480
+            ));
+
+            // Real overnight stay: must span nighttime hours, and must NOT be an airport terminal layover
+            if (!p.loc.isActivity && p.loc.lat !== null && spansNight && !p.loc.isAirport) {
+                const nightDate = (startHour < 6) ? localStart.clone().subtract(1, 'day').format('YYYY-MM-DD') : localStart.format('YYYY-MM-DD');
+                if ((!tripStartStr || nightDate >= tripStartStr) && (!tripEndStr || nightDate < tripEndStr)) {
+                    nightsSet.add(nightDate);
+                    let stayCity = (p.loc.city && p.loc.city !== "Unknown City") ? p.loc.city : null;
+                    if (!stayCity && p.loc.name && p.loc.name !== "Unknown Location") stayCity = p.loc.name;
+                    if (!stayCity && p.loc.country && p.loc.country !== "Unknown Country") stayCity = p.loc.country;
+                    if (stayCity) {
+                        if (!cityNightsDates[stayCity]) cityNightsDates[stayCity] = new Set();
+                        cityNightsDates[stayCity].add(nightDate);
+                        cityNights[stayCity] = cityNightsDates[stayCity].size;
+                        if (!firstSeenInTrip[stayCity]) firstSeenInTrip[stayCity] = p.item.startMs;
+                    }
+                    if (p.loc.country && p.loc.country !== "Unknown Country") {
+                        let cntry = p.loc.country;
+                        if (cntry === "Türkiye") cntry = "Turkey";
+                        countryNights[cntry] = (countryNights[cntry] || 0) + 1;
+                    }
+                }
+            }
+
+            if (p.loc.city && p.loc.city !== "Unknown City") {
+                cityDurationMs[p.loc.city] = (cityDurationMs[p.loc.city] || 0) + dur;
+                cityVisitCounts[p.loc.city] = (cityVisitCounts[p.loc.city] || 0) + 1;
+                if (p.loc.isAirport) {
+                    cityAirportVisitCounts[p.loc.city] = (cityAirportVisitCounts[p.loc.city] || 0) + 1;
+                }
+                if (!firstSeenInTrip[p.loc.city]) firstSeenInTrip[p.loc.city] = p.item.startMs;
+
+                // Route breadcrumbs: only include actual visited cities (exclude home city!)
+                if (!p.loc.isActivity && p.loc.city !== homeCity && (dur >= 45 || (cityNights[p.loc.city] || 0) >= 1 || p.loc.isAirport)) {
+                    const lastRouteCity = routeCities.length > 0 ? routeCities[routeCities.length - 1] : null;
+                    if (lastRouteCity !== p.loc.city) {
+                        routeCities.push(p.loc.city);
+                    }
+                }
+            }
+
+            if (p.loc.country && p.loc.country !== "Unknown Country") {
+                let cntry = p.loc.country;
+                if (cntry === "Türkiye") cntry = "Turkey";
+                countryDurationMs[cntry] = (countryDurationMs[cntry] || 0) + dur;
+                countryVisitCounts[cntry] = (countryVisitCounts[cntry] || 0) + 1;
+                if (p.loc.isAirport) {
+                    countryAirportVisitCounts[cntry] = (countryAirportVisitCounts[cntry] || 0) + 1;
+                }
+                if (!firstSeenCountry[cntry]) firstSeenCountry[cntry] = p.item.startMs;
+
+                const lastCountry = routeCountries.length > 0 ? routeCountries[routeCountries.length - 1] : null;
+                if (lastCountry !== cntry) {
+                    routeCountries.push(cntry);
+                }
+            }
+        }
+        if (currentGroundPath.length > 0) {
+            groundPaths.push(currentGroundPath);
+        }
+
+        // Night calculations
+        const calendarNights = Math.max(0, moment(tripEndStr).diff(moment(tripStartStr), 'days'));
+        let totalNights = nightsSet.size;
+        if (tripOptions.isCustom || (tripOptions.startDate && tripOptions.endDate)) {
+            totalNights = calendarNights;
+        } else if (totalNights === 0) {
+            totalNights = calendarNights;
+        }
+        if (calendarNights > 0 && totalNights > calendarNights) {
+            totalNights = calendarNights;
+        }
+
+        // Destination countries (exclude home, and exclude airport-only transit layovers)
+        const nonAirportCountries = [...new Set(routeCountries)].filter(cntry => {
+            if (cntry === homeCountry) return false;
+            const total = countryVisitCounts[cntry] || 0;
+            const air = countryAirportVisitCounts[cntry] || 0;
+            return air < total; // has at least one visit outside the airport
+        });
+
+        // Clean route countries for flags: filter out airport-only layovers if real destinations exist
+        const cleanRouteCountries = routeCountries.filter(cntry => {
+            if (nonAirportCountries.length > 0 && (countryAirportVisitCounts[cntry] || 0) === (countryVisitCounts[cntry] || 0)) {
+                return false;
+            }
+            return true;
+        });
+
+        // Multi-country qualification:
+        // A country qualifies as a major destination if traveler stayed >= 2 nights, OR >= 24h duration, OR (>= 1 night and >= 12h duration)
+        const qualifyingCountries = nonAirportCountries.filter(cntry => {
+            const n = countryNights[cntry] || 0;
+            const hrs = (countryDurationMs[cntry] || 0) / 3600000;
+            return n >= 2 || hrs >= 24 || (n >= 1 && hrs >= 12);
+        });
+
+        // Filter out home city from unique cities visited
+        const candidateCities = Object.keys(cityDurationMs).filter(c => !homeCity || c !== homeCity);
+
+        // Filter out airport layover cities where every single visit in that city was at the airport
+        const nonAirportCities = candidateCities.filter(c => {
+            const total = cityVisitCounts[c] || 0;
+            const air = cityAirportVisitCounts[c] || 0;
+            return air < total; // has at least one visit outside the airport
+        });
+
+        const eligibleCities = nonAirportCities.length > 0 ? nonAirportCities : candidateCities;
+
+        // Route breadcrumbs: exclude homeCity, and exclude airport-only layover cities
+        const cleanRouteCities = routeCities.filter(c => {
+            if (c === homeCity) return false;
+            if (nonAirportCities.length > 0 && (cityAirportVisitCounts[c] || 0) === (cityVisitCounts[c] || 0)) {
+                return false;
+            }
+            return true;
+        });
+
+        let flightRouteStr = '';
+        if (flights.length > 0) {
+            flightRouteStr = flights.map(fl => {
+                const fromStr = fl.from?.city || fl.from?.name || 'Origin';
+                const toStr = fl.to?.city || fl.to?.name || 'Dest';
+                return `${fromStr} ➔ ${toStr}`;
+            }).join(' · ');
+        }
+
+        let title = "";
+        const isDomestic = routeCountries.length === 0 || (routeCountries.length === 1 && routeCountries[0] === homeCountry);
+
+        if (qualifyingCountries.length >= 2) {
+            const rankedCountries = [...qualifyingCountries].sort((a, b) => {
+                const nA = countryNights[a] || 0;
+                const nB = countryNights[b] || 0;
+                if (nB !== nA) return nB - nA;
+                return (countryDurationMs[b] || 0) - (countryDurationMs[a] || 0);
+            });
+
+            const numToPick = (rankedCountries.length >= 3 && (countryNights[rankedCountries[2]] || 0) >= 3) ? 3 : 2;
+            const chosen = rankedCountries.slice(0, numToPick);
+            chosen.sort((a, b) => (firstSeenCountry[a] || 0) - (firstSeenCountry[b] || 0));
+            title = chosen.map(c => formatCountryName(c)).join(' · ');
+        } else {
+            const rankedCities = [...eligibleCities].sort((a, b) => {
+                const nA = cityNights[a] || 0;
+                const nB = cityNights[b] || 0;
+                if (nB !== nA) return nB - nA;
+                return (cityDurationMs[b] || 0) - (cityDurationMs[a] || 0);
+            });
+
+            let titleCandidates = [];
+            if (rankedCities.length > 0) {
+                titleCandidates.push(rankedCities[0]);
+                if (rankedCities.length >= 2) {
+                    const topCityHasNights = (cityNights[rankedCities[0]] || 0) >= 1;
+                    let secondCity = null;
+                    for (let ci = 1; ci < rankedCities.length; ci++) {
+                        const c2 = rankedCities[ci];
+                        if (c2 === rankedCities[0]) continue;
+                        const c2HasNights = (cityNights[c2] || 0) >= 1;
+                        const c2Hours = (cityDurationMs[c2] || 0) / 3600000;
+                        if (topCityHasNights && !c2HasNights && c2Hours < 6) continue;
+                        secondCity = c2;
+                        break;
+                    }
+                    if (secondCity && secondCity !== rankedCities[0]) {
+                        titleCandidates.push(secondCity);
+                    }
+                }
+            }
+
+            titleCandidates = [...new Set(titleCandidates)];
+
+            if (titleCandidates.length === 1) {
+                title = titleCandidates[0];
+            } else if (titleCandidates.length >= 2) {
+                titleCandidates.sort((a, b) => (firstSeenInTrip[a] || 0) - (firstSeenInTrip[b] || 0));
+                title = titleCandidates.join(' · ');
+            } else if (!isDomestic) {
+                const destCountries = nonAirportCountries.length > 0 ? nonAirportCountries : routeCountries.filter(c => c !== homeCountry);
+                if (destCountries.length > 0) {
+                    title = destCountries.map(c => formatCountryName(c)).slice(0, 2).join(' · ');
+                } else {
+                    title = "International Trip";
+                }
+            } else {
+                title = "Trip";
+            }
+        }
+
+        const tripFlags = (cleanRouteCountries.length > 0 ? cleanRouteCountries : (routeCountries.length > 0 ? routeCountries : [homeCountry]))
+            .map(c => ({
+                country: formatCountryName(c) || c,
+                emoji: getCountryFlagEmoji(c)
+            }))
+            .filter(item => Boolean(item.emoji));
+
+        const uniqueFlags = [];
+        const seenEmojis = new Set();
+        for (const f of tripFlags) {
+            if (!seenEmojis.has(f.emoji)) {
+                seenEmojis.add(f.emoji);
+                uniqueFlags.push(f);
+            }
+        }
+
+        let durationTag = "1–2 nights";
+        if (totalNights >= 15) durationTag = "15+ nights";
+        else if (totalNights >= 8) durationTag = "8–14 nights";
+        else if (totalNights >= 3) durationTag = "3–7 nights";
+        else if (totalNights >= 1) durationTag = "1–2 nights";
+        else durationTag = "Day trip";
+
+        const nightLabel = totalNights === 0 ? "Day trip" : (totalNights === 1 ? "1 night" : `${totalNights} nights`);
+
+        let stayedCities = Object.keys(cityNightsDates).map(cityName => ({
+            city: cityName,
+            nights: Math.min(totalNights, cityNightsDates[cityName].size),
+            firstSeen: firstSeenInTrip[cityName] || 0
+        }));
+        stayedCities.sort((a, b) => a.firstSeen - b.firstSeen);
+
+        if (stayedCities.length === 0 && totalNights > 0) {
+            const fallbackCity = (cleanRouteCities.length > 0 ? cleanRouteCities[0] : null) ||
+                                 (routeCities.length > 0 ? routeCities[0] : null) ||
+                                 title;
+            if (fallbackCity && fallbackCity !== "Trip" && fallbackCity !== "International Trip") {
+                stayedCities.push({
+                    city: fallbackCity,
+                    nights: totalNights,
+                    firstSeen: 0
+                });
+            }
+        }
+
+        const tripId = tripOptions.id || `trip_${firstItem.startMoment.valueOf()}`;
+        const autoTitle = tripOptions.autoTitle || title;
+        const autoStartDate = tripOptions.autoStartDate || tripOptions.startDate || tripStartM.format("YYYY-MM-DD");
+        const autoEndDate = tripOptions.autoEndDate || tripOptions.endDate || tripEndM.format("YYYY-MM-DD");
+        const finalTitle = tripOptions.overrideTitle || title;
+        const notes = tripOptions.overrideNotes !== undefined ? tripOptions.overrideNotes : '';
+        const isCustom = Boolean(tripOptions.isCustom);
+        const isEdited = Boolean(tripOptions.isEdited || (tripOptions.overrideTitle && tripOptions.overrideTitle !== autoTitle) || (notes && notes.trim()));
+
+        return {
+            id: tripId,
+            rawId: tripOptions.rawId || tripId,
+            startDate: tripOptions.startDate || tripStartM.format("YYYY-MM-DD"),
+            endDate: tripOptions.endDate || tripEndM.format("YYYY-MM-DD"),
+            autoStartDate,
+            autoEndDate,
+            dateDisplay: `${(tripOptions.startDate ? moment(tripOptions.startDate) : tripStartM).format("MMM D, YYYY")} – ${(tripOptions.endDate ? moment(tripOptions.endDate) : tripEndM).format("MMM D, YYYY")}`,
+            year: (tripOptions.startDate ? moment(tripOptions.startDate) : tripStartM).year(),
+            title: finalTitle,
+            autoTitle,
+            notes,
+            isCustom,
+            isEdited,
+            flags: uniqueFlags,
+            totalNights,
+            nightLabel,
+            durationTag,
+            stayedCities,
+            cityNights,
+            hasFlight,
+            flights,
+            flightRouteStr,
+            airportStops,
+            groundPaths,
+            allRouteCities: (typeof cleanRouteCities !== 'undefined' && cleanRouteCities.length > 0 ? cleanRouteCities : routeCities),
+            routeCities: (typeof cleanRouteCities !== 'undefined' && cleanRouteCities.length > 0 ? cleanRouteCities : routeCities).slice(0, 7),
+            mapPoints
+        };
+    }
+
     // Step 2: Detect Trips
     function detectTrips() {
         if (cachedTrips) return cachedTrips;
@@ -12511,8 +13945,43 @@ Departed: ${end}</description>
         const residences = detectPlacesLived();
         const allItems = getAllTimelineItemsChronological();
         if (allItems.length === 0) {
-            cachedTrips = [];
-            return [];
+            if (!tripDataStore.customTrips || tripDataStore.customTrips.length === 0) {
+                return [];
+            }
+            // Timeline data has not loaded into memory yet; do not cache this temporary state
+            return (tripDataStore.customTrips || []).map(ct => {
+                const startM = moment(ct.startDate);
+                const endM = moment(ct.endDate);
+                const nights = Math.max(0, endM.diff(startM, 'days'));
+                return {
+                    id: ct.id,
+                    rawId: ct.id,
+                    startDate: ct.startDate,
+                    endDate: ct.endDate,
+                    autoStartDate: ct.startDate,
+                    autoEndDate: ct.endDate,
+                    dateDisplay: `${startM.format("MMM D, YYYY")} – ${endM.format("MMM D, YYYY")}`,
+                    year: startM.year(),
+                    title: ct.title,
+                    autoTitle: ct.title,
+                    notes: ct.notes || '',
+                    isCustom: true,
+                    isEdited: false,
+                    flags: [],
+                    totalNights: nights,
+                    nightLabel: nights === 1 ? "1 night" : `${nights} nights`,
+                    durationTag: nights >= 15 ? "15+ nights" : (nights >= 8 ? "8–14 nights" : (nights >= 3 ? "3–7 nights" : "1–2 nights")),
+                    stayedCities: [],
+                    cityNights: {},
+                    hasFlight: false,
+                    flights: [],
+                    flightRouteStr: '',
+                    airportStops: [],
+                    groundPaths: [],
+                    routeCities: [],
+                    mapPoints: []
+                };
+            });
         }
 
         // Identify pre-residence base for items before the first detected residence
@@ -12598,18 +14067,36 @@ Departed: ${end}</description>
                 }
             }
 
-            const effectiveDistFromHome = Math.max(distFromHome, endDistFromHome);
+            let maxPathDistFromHome = 0;
+            if (home && loc.pathPoints && loc.pathPoints.length > 0) {
+                for (const pt of loc.pathPoints) {
+                    const ptLat = pt.lat !== undefined ? pt.lat : (pt.latE7 ? pt.latE7 / 1e7 : null);
+                    const ptLng = pt.lng !== undefined ? pt.lng : (pt.lngE7 ? pt.lngE7 / 1e7 : null);
+                    if (ptLat !== null && ptLng !== null) {
+                        const d = computeHaversineDistance([{ lat: home.lat, lng: home.lng }, { lat: ptLat, lng: ptLng }]);
+                        if (d > maxPathDistFromHome) maxPathDistFromHome = d;
+                    }
+                }
+            }
 
-            if (isSignificantFlight) {
-                // If it's a significant flight, it's away if either end is away from home (> 60km), or if it spans across regions
-                if (distFromHome > 60000 || endDistFromHome > 60000) {
-                    isAway = true;
-                } else if (!home) {
+            const effectiveDistFromHome = Math.max(distFromHome, endDistFromHome, maxPathDistFromHome);
+            const minTripDistanceMeters = (typeof minTripDistanceKm === 'number' && minTripDistanceKm > 0 ? minTripDistanceKm : 60) * 1000;
+
+            const isWork = Boolean(
+                loc.semanticType === "TYPE_WORK" ||
+                loc.semanticType === "WORK" ||
+                (loc.placeId && workPlaceIds && workPlaceIds.includes(loc.placeId))
+            );
+
+            if (isWork) {
+                isAway = false;
+            } else if (isSignificantFlight) {
+                if (effectiveDistFromHome > minTripDistanceMeters || !home) {
                     isAway = true;
                 }
-            } else if (home && distFromHome > 60000) { // Away if > 60 km from home
+            } else if (home && effectiveDistFromHome > minTripDistanceMeters) { // Away if > threshold from home
                 isAway = true;
-            } else if (home && loc.country !== "Unknown Country" && home.country !== "Unknown Country" && loc.country !== home.country && distFromHome > 35000) {
+            } else if (home && loc.country !== "Unknown Country" && home.country !== "Unknown Country" && loc.country !== home.country && effectiveDistFromHome > 35000) {
                 isAway = true;
             }
 
@@ -12630,15 +14117,28 @@ Departed: ${end}</description>
             const p = processedItems[i];
             if (p.isAway) {
                 if (!currentChunk) {
-                    currentChunk = [p];
+                    currentChunk = [];
+                    // Preceding outbound transit (e.g. drive from home to trip destination)
+                    if (i > 0) {
+                        const prev = processedItems[i - 1];
+                        if (prev.loc.isActivity && (p.item.startMs - prev.item.endMs < 4 * 3600000)) {
+                            currentChunk.push(prev);
+                        }
+                    }
+                    currentChunk.push(p);
                 } else {
                     const prevP = currentChunk[currentChunk.length - 1];
                     const gapHours = (p.item.startMs - prevP.item.endMs) / 3600000;
-                    // If gap between consecutive away items is > 168 hours (7 days) without returning home, split.
-                    // This prevents data dark zones (e.g. traveling in China or offline roaming) from prematurely splitting a trip!
                     if (gapHours > 168) {
                         tripChunks.push(currentChunk);
-                        currentChunk = [p];
+                        currentChunk = [];
+                        if (i > 0) {
+                            const prev = processedItems[i - 1];
+                            if (prev.loc.isActivity && (p.item.startMs - prev.item.endMs < 4 * 3600000)) {
+                                currentChunk.push(prev);
+                            }
+                        }
+                        currentChunk.push(p);
                     } else {
                         currentChunk.push(p);
                     }
@@ -12652,6 +14152,10 @@ Departed: ${end}</description>
                     if (gapFromPrevHours < 36 && nextAway && hoursAtHome < 18) {
                         currentChunk.push(p);
                     } else {
+                        // Following return transit (e.g. drive back from trip destination home)
+                        if (p.loc.isActivity && gapFromPrevHours < 4) {
+                            currentChunk.push(p);
+                        }
                         tripChunks.push(currentChunk);
                         currentChunk = null;
                     }
@@ -12660,476 +14164,174 @@ Departed: ${end}</description>
         }
         if (currentChunk) tripChunks.push(currentChunk);
 
+        // Filter out any chunk that has no overnight stay and where ALL place visits are work visits (daily work commute)
+        const validTripChunks = tripChunks.filter(chunk => {
+            const hasFlight = chunk.some(p => p.isSignificantFlight);
+            if (hasFlight) return true;
+            const nonWorkVisits = chunk.filter(p => !p.loc.isActivity && p.loc.semanticType !== "TYPE_WORK" && p.loc.semanticType !== "WORK" && (!p.loc.placeId || !workPlaceIds.includes(p.loc.placeId)));
+            return nonWorkVisits.length > 0;
+        });
+
         const trips = [];
-        for (const chunk of tripChunks) {
-            const firstItem = chunk[0].item;
-            const lastItem = chunk[chunk.length - 1].item;
+        for (const chunk of validTripChunks) {
+            const rawTrip = analyzeTripItems(chunk);
+            rawTrip.autoStartDate = rawTrip.startDate;
+            rawTrip.autoEndDate = rawTrip.endDate;
+            rawTrip.rawId = rawTrip.id;
 
-            const home = chunk[0].home;
-            const homeCountry = home?.country || "Taiwan";
-            const homeCity = home?.city;
-
-            // Resolve primary timezone for this trip chunk (from destination items, or home base)
-            let tripTz = null;
-            for (const p of chunk) {
-                if (p.loc.lat !== null && p.loc.lng !== null && typeof getTimezoneForVisit === 'function') {
-                    const tz = getTimezoneForVisit(p.loc.lat, p.loc.lng, p.loc.placeId);
-                    if (tz && tz !== 'UTC') { tripTz = tz; break; }
-                }
-            }
-            if (!tripTz && home && typeof getTimezoneForVisit === 'function') {
-                tripTz = getTimezoneForVisit(home.lat, home.lng, home.placeId);
-            }
-            if (!tripTz || tripTz === 'UTC') tripTz = getSelectedTimezone();
-
-            const tripStartM = firstItem.startMoment.clone().tz(tripTz);
-            const tripEndM = lastItem.endMoment.clone().tz(tripTz);
-
-            const nightsSet = new Set();
-            let hasFlight = false;
-            let maxDist = 0;
-            const routeCities = [];
-            const routeCountries = [];
-            const mapPoints = [];
-            const flights = [];
-            const airportStops = [];
-            const groundPaths = [];
-            let currentGroundPath = [];
-
-            const cityNights = {};
-            const cityNightsDates = {};
-            const cityDurationMs = {};
-            const cityVisitCounts = {};
-            const cityAirportVisitCounts = {};
-            const firstSeenInTrip = {};
-
-            const countryNights = {};
-            const countryDurationMs = {};
-            const countryVisitCounts = {};
-            const countryAirportVisitCounts = {};
-            const firstSeenCountry = {};
-
-            for (let i = 0; i < chunk.length; i++) {
-                const p = chunk[i];
-                if (p.distFromHome > maxDist) maxDist = p.distFromHome;
-
-                // Flight segment detection
-                if (p.isSignificantFlight || (p.loc.isActivity && p.loc.activityType === "FLYING")) {
-                    hasFlight = true;
-                    let startLat = p.loc.lat;
-                    let startLng = p.loc.lng;
-                    let endLat = p.loc.endLat;
-                    let endLng = p.loc.endLng;
-
-                    if (p.loc.pathPoints && p.loc.pathPoints.length >= 2) {
-                        const pt0 = p.loc.pathPoints[0];
-                        const ptLast = p.loc.pathPoints[p.loc.pathPoints.length - 1];
-                        const p0Lat = pt0.lat !== undefined ? pt0.lat : (pt0.latE7 ? pt0.latE7 / 1e7 : null);
-                        const p0Lng = pt0.lng !== undefined ? pt0.lng : (pt0.lngE7 ? pt0.lngE7 / 1e7 : null);
-                        const pLLat = ptLast.lat !== undefined ? ptLast.lat : (ptLast.latE7 ? ptLast.latE7 / 1e7 : null);
-                        const pLLng = ptLast.lng !== undefined ? ptLast.lng : (ptLast.lngE7 ? ptLast.lngE7 / 1e7 : null);
-                        if (startLat === null && p0Lat !== null) { startLat = p0Lat; startLng = p0Lng; }
-                        if (endLat === null && pLLat !== null) { endLat = pLLat; endLng = pLLng; }
-                    }
-
-                    if (startLat !== null && startLng !== null && endLat !== null && endLng !== null) {
-                        let fromAptName = '';
-                        let fromCity = p.loc.city && p.loc.city !== 'Unknown City' ? p.loc.city : '';
-                        let toAptName = '';
-                        let toCity = '';
-                        if (i > 0) {
-                            if (chunk[i - 1].loc.isAirport) fromAptName = chunk[i - 1].loc.name;
-                            if (!fromCity && chunk[i - 1].loc.city && chunk[i - 1].loc.city !== 'Unknown City') {
-                                fromCity = chunk[i - 1].loc.city;
-                            }
-                        } else if (homeCity && home) {
-                            if (computeHaversineDistance([{ lat: home.lat, lng: home.lng }, { lat: startLat, lng: startLng }]) < 60000) {
-                                fromCity = homeCity;
-                            }
-                        }
-                        if (i < chunk.length - 1) {
-                            if (chunk[i + 1].loc.isAirport) toAptName = chunk[i + 1].loc.name;
-                            if (chunk[i + 1].loc.city && chunk[i + 1].loc.city !== 'Unknown City') {
-                                toCity = chunk[i + 1].loc.city;
-                            }
-                        } else if (homeCity && home) {
-                            if (computeHaversineDistance([{ lat: home.lat, lng: home.lng }, { lat: endLat, lng: endLng }]) < 60000) {
-                                toCity = homeCity;
-                            }
-                        }
-
-                        const fromAirport = resolveAirportInfo(startLat, startLng, fromAptName, fromCity);
-                        const toAirport = resolveAirportInfo(endLat, endLng, toAptName, toCity);
-                        const distMeters = p.item.raw.activitySegment?.distance || computeHaversineDistance([{ lat: startLat, lng: startLng }, { lat: endLat, lng: endLng }]);
-
-                        const fromTz = (fromAirport && fromAirport.lat && fromAirport.lng && typeof getTimezoneForVisit === 'function')
-                            ? getTimezoneForVisit(fromAirport.lat, fromAirport.lng)
-                            : tripTz;
-                        const toTz = (toAirport && toAirport.lat && toAirport.lng && typeof getTimezoneForVisit === 'function')
-                            ? getTimezoneForVisit(toAirport.lat, toAirport.lng)
-                            : tripTz;
-
-                        flights.push({
-                            from: fromAirport,
-                            to: toAirport,
-                            fromCoord: { lat: startLat, lng: startLng },
-                            toCoord: { lat: endLat, lng: endLng },
-                            distanceKm: Math.round(distMeters / 1000),
-                            departureDate: p.item.startMoment.clone().tz(fromTz).format("YYYY-MM-DD"),
-                            departureTime: p.item.startMoment.clone().tz(fromTz).format("MMM D, h:mm A"),
-                            arrivalTime: p.item.endMoment.clone().tz(toTz).format("MMM D, h:mm A"),
-                            pathPoints: p.loc.pathPoints || []
-                        });
-                    }
-
-                    // Break ground path at flight
-                    if (currentGroundPath.length > 0) {
-                        groundPaths.push(currentGroundPath);
-                        currentGroundPath = [];
-                    }
-                    continue;
-                }
-
-                // Airport visit stop
-                if (p.loc.isAirport && !p.loc.isActivity && p.loc.lat !== null && p.loc.lng !== null) {
-                    const apt = resolveAirportInfo(p.loc.lat, p.loc.lng, p.loc.name, p.loc.city);
-                    if (apt && !airportStops.some(a => (Math.abs(a.lat - apt.lat) < 0.01 && Math.abs(a.lng - apt.lng) < 0.01) || (a.name && a.name === apt.name))) {
-                        airportStops.push(apt);
-                    }
-                }
-
-                // Filter out spurious GPS jumps to home while traveling away
-                let isSpuriousHome = false;
-                if (home && p.distFromHome < 25000) {
-                    let hasEarlierAway = false;
-                    for (let k = i - 1; k >= 0; k--) {
-                        if (chunk[k].distFromHome > 150000) { hasEarlierAway = true; break; }
-                    }
-                    let hasLaterAway = false;
-                    for (let k = i + 1; k < chunk.length; k++) {
-                        if (chunk[k].distFromHome > 150000) { hasLaterAway = true; break; }
-                    }
-                    if (hasEarlierAway && hasLaterAway) isSpuriousHome = true;
-                }
-
-                if (isSpuriousHome) {
-                    continue;
-                }
-
-                const pushMapPt = (pt) => {
-                    if (!pt || isNaN(pt.lat) || isNaN(pt.lng)) return;
-                    if (home && p.distFromHome > 150000) {
-                        const dHome = computeHaversineDistance([{ lat: home.lat, lng: home.lng }, pt]);
-                        if (dHome < 50000) return;
-                    }
-                    if (mapPoints.length > 0) {
-                        const last = mapPoints[mapPoints.length - 1];
-                        if (Math.abs(last.lat - pt.lat) < 1e-5 && Math.abs(last.lng - pt.lng) < 1e-5) return;
-                    }
-                    mapPoints.push(pt);
-                    if (currentGroundPath.length > 0) {
-                        const lastG = currentGroundPath[currentGroundPath.length - 1];
-                        if (Math.abs(lastG.lat - pt.lat) < 1e-5 && Math.abs(lastG.lng - pt.lng) < 1e-5) return;
-                    }
-                    currentGroundPath.push(pt);
-                };
-
-                if (p.loc.lat !== null && p.loc.lng !== null) {
-                    pushMapPt({ lat: p.loc.lat, lng: p.loc.lng });
-                }
-                if (p.loc.pathPoints && p.loc.pathPoints.length > 0) {
-                    for (const pt of p.loc.pathPoints) {
-                        const ptLat = pt.lat !== undefined ? pt.lat : (pt.latE7 ? pt.latE7 / 1e7 : null);
-                        const ptLng = pt.lng !== undefined ? pt.lng : (pt.lngE7 ? pt.lngE7 / 1e7 : null);
-                        if (ptLat !== null && ptLng !== null) pushMapPt({ lat: ptLat, lng: ptLng });
-                    }
-                }
-                if (p.loc.endLat !== null && p.loc.endLng !== null) {
-                    pushMapPt({ lat: p.loc.endLat, lng: p.loc.endLng });
-                }
-
-                const dur = p.item.endMoment.diff(p.item.startMoment, 'minutes');
-                let itemTz = null;
-                if (p.loc.lat !== null && p.loc.lng !== null && typeof getTimezoneForVisit === 'function') {
-                    itemTz = getTimezoneForVisit(p.loc.lat, p.loc.lng, p.loc.placeId);
-                }
-                if (!itemTz || itemTz === 'UTC') itemTz = tripTz;
-
-                const localStart = p.item.startMoment.clone().tz(itemTz);
-                const localEnd = p.item.endMoment.clone().tz(itemTz);
-                const startHour = localStart.hour();
-                const endHour = localEnd.hour();
-                const spansNight = (dur >= 180 && (
-                    localStart.clone().startOf('day').isBefore(localEnd.clone().startOf('day')) ||
-                    startHour >= 22 || endHour <= 6 ||
-                    (startHour <= 4 && endHour >= 6) ||
-                    (dur >= 360 && (startHour <= 7 || endHour >= 21 || startHour >= 20 || endHour <= 8)) ||
-                    dur >= 480
-                ));
-
-                // Real overnight stay: must span nighttime hours, and must NOT be an airport terminal layover
-                if (!p.loc.isActivity && p.loc.lat !== null && spansNight && !p.loc.isAirport) {
-                    const nightDate = (startHour < 6) ? localStart.clone().subtract(1, 'day').format('YYYY-MM-DD') : localStart.format('YYYY-MM-DD');
-                    nightsSet.add(nightDate);
-                    let stayCity = (p.loc.city && p.loc.city !== "Unknown City") ? p.loc.city : null;
-                    if (!stayCity && p.loc.name && p.loc.name !== "Unknown Location") stayCity = p.loc.name;
-                    if (!stayCity && p.loc.country && p.loc.country !== "Unknown Country") stayCity = p.loc.country;
-                    if (stayCity) {
-                        if (!cityNightsDates[stayCity]) cityNightsDates[stayCity] = new Set();
-                        cityNightsDates[stayCity].add(nightDate);
-                        cityNights[stayCity] = cityNightsDates[stayCity].size;
-                        if (!firstSeenInTrip[stayCity]) firstSeenInTrip[stayCity] = p.item.startMs;
-                    }
-                    if (p.loc.country && p.loc.country !== "Unknown Country") {
-                        let cntry = p.loc.country;
-                        if (cntry === "Türkiye") cntry = "Turkey";
-                        countryNights[cntry] = (countryNights[cntry] || 0) + 1;
-                    }
-                }
-
-                if (p.loc.city && p.loc.city !== "Unknown City") {
-                    cityDurationMs[p.loc.city] = (cityDurationMs[p.loc.city] || 0) + dur;
-                    cityVisitCounts[p.loc.city] = (cityVisitCounts[p.loc.city] || 0) + 1;
-                    if (p.loc.isAirport) {
-                        cityAirportVisitCounts[p.loc.city] = (cityAirportVisitCounts[p.loc.city] || 0) + 1;
-                    }
-                    if (!firstSeenInTrip[p.loc.city]) firstSeenInTrip[p.loc.city] = p.item.startMs;
-
-                    // Route breadcrumbs: only include actual visited cities (exclude home city!)
-                    if (!p.loc.isActivity && p.loc.city !== homeCity && (dur >= 45 || (cityNights[p.loc.city] || 0) >= 1 || p.loc.isAirport)) {
-                        const lastRouteCity = routeCities.length > 0 ? routeCities[routeCities.length - 1] : null;
-                        if (lastRouteCity !== p.loc.city) {
-                            if (!(routeCities.length >= 2 && routeCities[routeCities.length - 2] === p.loc.city)) {
-                                routeCities.push(p.loc.city);
-                            }
-                        }
-                    }
-                }
-
-                if (p.loc.country && p.loc.country !== "Unknown Country") {
-                    let cntry = p.loc.country;
-                    if (cntry === "Türkiye") cntry = "Turkey";
-                    countryDurationMs[cntry] = (countryDurationMs[cntry] || 0) + dur;
-                    countryVisitCounts[cntry] = (countryVisitCounts[cntry] || 0) + 1;
-                    if (p.loc.isAirport) {
-                        countryAirportVisitCounts[cntry] = (countryAirportVisitCounts[cntry] || 0) + 1;
-                    }
-                    if (!firstSeenCountry[cntry]) firstSeenCountry[cntry] = p.item.startMs;
-                    if (!routeCountries.includes(cntry)) {
-                        routeCountries.push(cntry);
-                    }
-                }
-            }
-
-            if (currentGroundPath.length > 0) {
-                groundPaths.push(currentGroundPath);
-            }
-
-            // Calculation of nights:
-            const spanDays = Math.max(0, Math.round(tripEndM.diff(tripStartM, 'days')));
-            let totalNights = Math.max(nightsSet.size, spanDays);
-            if (nightsSet.size === 0 && !hasFlight && tripEndM.diff(tripStartM, 'hours') < 30) {
-                totalNights = 0;
-            }
-
-            // Eliminate trips with 0 nights and no flights (e.g. isolated photo GPS points, day errands)
-            if (totalNights < 1 && !hasFlight) {
+            // Skip if deleted / hidden
+            if (tripDataStore.deletedTripIds && tripDataStore.deletedTripIds.includes(rawTrip.id)) {
                 continue;
             }
-            if (totalNights === 0) totalNights = 1;
 
-            // Destination countries (exclude home, and exclude airport-only transit layovers)
-            const nonAirportCountries = routeCountries.filter(cntry => {
-                if (cntry === homeCountry) return false;
-                const total = countryVisitCounts[cntry] || 0;
-                const air = countryAirportVisitCounts[cntry] || 0;
-                return air < total; // has at least one visit outside the airport
-            });
-
-            // Clean route countries for flags: filter out airport-only layovers if real destinations exist
-            const cleanRouteCountries = routeCountries.filter(cntry => {
-                if (nonAirportCountries.length > 0 && (countryAirportVisitCounts[cntry] || 0) === (countryVisitCounts[cntry] || 0)) {
-                    return false;
-                }
-                return true;
-            });
-
-            // Multi-country qualification:
-            // A country qualifies as a major destination if traveler stayed >= 2 nights, OR >= 24h duration, OR (>= 1 night and >= 12h duration)
-            const qualifyingCountries = nonAirportCountries.filter(cntry => {
-                const n = countryNights[cntry] || 0;
-                const hrs = (countryDurationMs[cntry] || 0) / 60;
-                return n >= 2 || hrs >= 24 || (n >= 1 && hrs >= 12);
-            });
-
-            // Filter out home city
-            const candidateCities = Object.keys(cityDurationMs).filter(c => !homeCity || c !== homeCity);
-
-            // Filter out airport layover cities where every single visit in that city was at the airport
-            const nonAirportCities = candidateCities.filter(c => {
-                const total = cityVisitCounts[c] || 0;
-                const air = cityAirportVisitCounts[c] || 0;
-                return air < total; // has at least one visit outside the airport
-            });
-
-            const eligibleCities = nonAirportCities.length > 0 ? nonAirportCities : candidateCities;
-
-            // Route breadcrumbs: exclude homeCity, and exclude airport-only layover cities
-            const cleanRouteCities = routeCities.filter(c => {
-                if (c === homeCity) return false;
-                if (nonAirportCities.length > 0 && (cityAirportVisitCounts[c] || 0) === (cityVisitCounts[c] || 0)) {
-                    return false;
-                }
-                return true;
-            });
-
-            let flightRouteStr = '';
-            if (flights.length > 0) {
-                flightRouteStr = flights.map(fl => {
-                    const fromStr = fl.from?.city || fl.from?.name || 'Origin';
-                    const toStr = fl.to?.city || fl.to?.name || 'Dest';
-                    return `${fromStr} ➔ ${toStr}`;
-                }).join(' · ');
-            }
-
-            let title = "";
-            const isDomestic = routeCountries.length === 0 || (routeCountries.length === 1 && routeCountries[0] === homeCountry);
-
-            if (qualifyingCountries.length >= 2) {
-                // Multi-country international trip: Title with the top countries!
-                const rankedCountries = [...qualifyingCountries].sort((a, b) => {
-                    const nA = countryNights[a] || 0;
-                    const nB = countryNights[b] || 0;
-                    if (nB !== nA) return nB - nA;
-                    return (countryDurationMs[b] || 0) - (countryDurationMs[a] || 0);
-                });
-
-                // Pick top 2 (or top 3 if 3rd country also had >= 3 nights)
-                const numToPick = (rankedCountries.length >= 3 && (countryNights[rankedCountries[2]] || 0) >= 3) ? 3 : 2;
-                const chosen = rankedCountries.slice(0, numToPick);
-
-                // Order chosen countries chronologically by first visit in trip
-                chosen.sort((a, b) => (firstSeenCountry[a] || 0) - (firstSeenCountry[b] || 0));
-                title = chosen.map(c => formatCountryName(c)).join(' · ');
-            } else {
-                // Single-country or domestic trip: Title with the top cities!
-                const rankedCities = [...eligibleCities].sort((a, b) => {
-                    const nA = cityNights[a] || 0;
-                    const nB = cityNights[b] || 0;
-                    if (nB !== nA) return nB - nA;
-                    return (cityDurationMs[b] || 0) - (cityDurationMs[a] || 0);
-                });
-
-                let titleCandidates = [];
-                if (rankedCities.length > 0) {
-                    titleCandidates.push(rankedCities[0]);
-                    if (rankedCities.length >= 2) {
-                        const topCityHasNights = (cityNights[rankedCities[0]] || 0) >= 1;
-                        let secondCity = null;
-                        for (let ci = 1; ci < rankedCities.length; ci++) {
-                            const c2 = rankedCities[ci];
-                            const c2HasNights = (cityNights[c2] || 0) >= 1;
-                            const c2Hours = (cityDurationMs[c2] || 0) / 3600000;
-                            if (topCityHasNights && !c2HasNights && c2Hours < 6) continue;
-                            secondCity = c2;
-                            break;
-                        }
-                        if (secondCity) {
-                            titleCandidates.push(secondCity);
-                        }
-                    }
-                }
-
-                if (titleCandidates.length === 1) {
-                    title = titleCandidates[0];
-                } else if (titleCandidates.length >= 2) {
-                    titleCandidates.sort((a, b) => (firstSeenInTrip[a] || 0) - (firstSeenInTrip[b] || 0));
-                    title = titleCandidates.join(' · ');
-                } else if (!isDomestic) {
-                    const destCountries = nonAirportCountries.length > 0 ? nonAirportCountries : routeCountries.filter(c => c !== homeCountry);
-                    if (destCountries.length > 0) {
-                        title = destCountries.map(c => formatCountryName(c)).slice(0, 2).join(' · ');
-                    } else {
-                        title = "International Trip";
-                    }
-                } else {
-                    title = "Trip";
-                }
-            }
-
-            const tripFlags = (cleanRouteCountries.length > 0 ? cleanRouteCountries : (routeCountries.length > 0 ? routeCountries : [homeCountry]))
-                .map(c => ({
-                    country: formatCountryName(c) || c,
-                    emoji: getCountryFlagEmoji(c)
-                }))
-                .filter(item => Boolean(item.emoji));
-
-            const uniqueFlags = [];
-            const seenEmojis = new Set();
-            for (const f of tripFlags) {
-                if (!seenEmojis.has(f.emoji)) {
-                    seenEmojis.add(f.emoji);
-                    uniqueFlags.push(f);
-                }
-            }
-
-            // Duration tags aligned with nights brackets
-            let durationTag = "1–2 nights";
-            if (totalNights >= 15) durationTag = "15+ nights";
-            else if (totalNights >= 8) durationTag = "8–14 nights";
-            else if (totalNights >= 3) durationTag = "3–7 nights";
-            else durationTag = "1–2 nights";
-
-            const nightLabel = totalNights === 1 ? "1 night" : `${totalNights} nights`;
-
-            // Build stayed cities breakdown
-            let stayedCities = Object.keys(cityNightsDates).map(cityName => ({
-                city: cityName,
-                nights: cityNightsDates[cityName].size,
-                firstSeen: firstSeenInTrip[cityName] || 0
-            }));
-            stayedCities.sort((a, b) => a.firstSeen - b.firstSeen);
-
-            if (stayedCities.length === 0 && totalNights > 0) {
-                const fallbackCity = (cleanRouteCities.length > 0 ? cleanRouteCities[0] : null) ||
-                                     (routeCities.length > 0 ? routeCities[0] : null) ||
-                                     title;
-                if (fallbackCity && fallbackCity !== "Trip" && fallbackCity !== "International Trip") {
-                    stayedCities.push({
-                        city: fallbackCity,
-                        nights: totalNights,
-                        firstSeen: 0
+            // Check if overridden
+            if (tripDataStore.tripOverrides && tripDataStore.tripOverrides[rawTrip.id]) {
+                const override = tripDataStore.tripOverrides[rawTrip.id];
+                const dateChanged = (override.startDate && override.startDate !== rawTrip.startDate) ||
+                                    (override.endDate && override.endDate !== rawTrip.endDate);
+                if (dateChanged) {
+                    const customChunk = buildChunkForDateRange(
+                        override.startDate || rawTrip.startDate,
+                        override.endDate || rawTrip.endDate,
+                        allItems, residences, preEraBase, fallbackHome
+                    );
+                    const overriddenTrip = analyzeTripItems(customChunk, {
+                        id: rawTrip.id,
+                        rawId: rawTrip.id,
+                        startDate: override.startDate || rawTrip.startDate,
+                        endDate: override.endDate || rawTrip.endDate,
+                        autoStartDate: rawTrip.startDate,
+                        autoEndDate: rawTrip.endDate,
+                        overrideTitle: override.title || rawTrip.autoTitle,
+                        overrideNotes: override.notes !== undefined ? override.notes : rawTrip.notes,
+                        isEdited: true,
+                        autoTitle: rawTrip.autoTitle
                     });
+                    trips.push(overriddenTrip);
+                } else {
+                    if (override.title) {
+                        rawTrip.title = override.title;
+                        rawTrip.isCustomTitle = true;
+                    }
+                    if (override.notes !== undefined) {
+                        rawTrip.notes = override.notes;
+                    }
+                    rawTrip.isEdited = true;
+                    trips.push(rawTrip);
                 }
+            } else {
+                trips.push(rawTrip);
             }
-
-            trips.push({
-                id: `trip_${firstItem.startMoment.valueOf()}`,
-                startDate: tripStartM.format("YYYY-MM-DD"),
-                endDate: tripEndM.format("YYYY-MM-DD"),
-                dateDisplay: `${tripStartM.format("MMM D, YYYY")} – ${tripEndM.format("MMM D, YYYY")}`,
-                year: tripStartM.year(),
-                title,
-                flags: uniqueFlags,
-                totalNights,
-                nightLabel,
-                durationTag,
-                stayedCities,
-                cityNights,
-                hasFlight,
-                flights,
-                flightRouteStr,
-                airportStops,
-                groundPaths,
-                routeCities: (typeof cleanRouteCities !== 'undefined' && cleanRouteCities.length > 0 ? cleanRouteCities : routeCities).slice(0, 7),
-                mapPoints
-            });
         }
 
-        trips.sort((a, b) => moment(b.startDate).valueOf() - moment(a.startDate).valueOf());
+        // Process Custom Trips
+        if (tripDataStore.customTrips && tripDataStore.customTrips.length > 0) {
+            for (const ct of tripDataStore.customTrips) {
+                const customChunk = buildChunkForDateRange(
+                    ct.startDate, ct.endDate,
+                    allItems, residences, preEraBase, fallbackHome
+                );
+                const customTripObj = analyzeTripItems(customChunk, {
+                    id: ct.id,
+                    startDate: ct.startDate,
+                    endDate: ct.endDate,
+                    overrideTitle: ct.title,
+                    overrideNotes: ct.notes,
+                    isCustom: true
+                });
+                trips.push(customTripObj);
+            }
+        }
+
+        trips.sort((a, b) => (Date.parse(b.startDate) || 0) - (Date.parse(a.startDate) || 0));
         cachedTrips = trips;
         return trips;
     }
+
+    function normalizeSearchText(str) {
+        if (!str) return '';
+        return str.toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    const CITY_NAME_ALIASES = [
+        ['seville', 'sevilla'],
+        ['vienna', 'wien', 'becs'],
+        ['rome', 'roma'],
+        ['florence', 'firenze'],
+        ['venice', 'venezia'],
+        ['milan', 'milano'],
+        ['naples', 'napoli'],
+        ['turin', 'torino'],
+        ['genoa', 'genova'],
+        ['munich', 'munchen', 'muenchen'],
+        ['cologne', 'koln', 'koeln'],
+        ['nuremberg', 'nurnberg', 'nuernberg'],
+        ['frankfurt', 'frankfurt am main'],
+        ['prague', 'praha'],
+        ['warsaw', 'warszawa'],
+        ['krakow', 'cracow'],
+        ['lisbon', 'lisboa'],
+        ['porto', 'oporto'],
+        ['athens', 'athina'],
+        ['brussels', 'bruxelles', 'brussel'],
+        ['bruges', 'brugge'],
+        ['antwerp', 'antwerpen', 'anvers'],
+        ['geneva', 'geneve', 'genf'],
+        ['zurich', 'zurich', 'zuerich'],
+        ['lucerne', 'luzern'],
+        ['basel', 'bale'],
+        ['copenhagen', 'kobenhavn'],
+        ['gothenburg', 'goteborg'],
+        ['stockholm', 'holmia'],
+        ['helsinki', 'helsingfors'],
+        ['kyiv', 'kiev'],
+        ['moscow', 'moskva'],
+        ['saint petersburg', 'st. petersburg', 'st petersburg', 'sankt peterburg'],
+        ['bucharest', 'bucuresti'],
+        ['belgrade', 'beograd'],
+        ['dubrovnik', 'ragusa'],
+        ['bratislava', 'pressburg'],
+        ['budapest', 'pest'],
+        ['ljubljana', 'laibach'],
+        ['bangkok', 'krung thep'],
+        ['tokyo', 'tokio'],
+        ['taipei', 'taipei city', 'taibei'],
+        ['new taipei', 'new taipei city', 'xinbei'],
+        ['kaohsiung', 'gaoxiong'],
+        ['taichung', 'taizhong'],
+        ['tainan', 'tainan city'],
+        ['hsinchu', 'xinzhu'],
+        ['beijing', 'peking'],
+        ['guangzhou', 'canton'],
+        ['hong kong', 'xianggang'],
+        ['macau', 'macao', 'aomen'],
+        ['ho chi minh', 'saigon', 'tp hcm'],
+        ['hanoi', 'ha noi'],
+        ['seoul', 'hanyang'],
+        ['singapore', 'singapura'],
+        ['delhi', 'new delhi'],
+        ['mumbai', 'bombay'],
+        ['kolkata', 'calcutta'],
+        ['chennai', 'madras'],
+        ['bengaluru', 'bangalore'],
+        ['cairo', 'al qahirah'],
+        ['alexandria', 'al iskandariyah'],
+        ['istanbul', 'constantinople', 'stamboul'],
+        ['damascus', 'dimashq'],
+        ['jerusalem', 'yerushalayim', 'al-quds'],
+        ['havana', 'la habana'],
+        ['mexico city', 'ciudad de mexico', 'cdmx'],
+        ['bogota', 'bogota'],
+        ['sao paulo', 'sao paulo'],
+        ['algiers', 'alger'],
+        ['tunis', 'tounes'],
+        ['casablanca', 'dar el beida'],
+        ['marrakech', 'marrakesh']
+    ];
 
     // Step 3: Render Trips View (with Year, Duration, Flight & Search Filters)
     function renderTripsView() {
@@ -13168,16 +14370,52 @@ Departed: ${end}</description>
             }
         }
 
-        const query = tripFilterState.search.trim().toLowerCase();
+        const rawQuery = tripFilterState.search.trim();
+        let queryTerms = [];
+        if (rawQuery) {
+            queryTerms = rawQuery.split(/\s+/).filter(Boolean).map(term => {
+                const normTerm = normalizeSearchText(term);
+                const variants = new Set([normTerm]);
+                for (const group of CITY_NAME_ALIASES) {
+                    const normGroup = group.map(normalizeSearchText);
+                    if (normGroup.some(alias => alias === normTerm || normTerm.includes(alias) || alias.includes(normTerm))) {
+                        for (const alias of normGroup) variants.add(alias);
+                    }
+                }
+                return Array.from(variants);
+            });
+        }
 
         const filteredTrips = trips.filter(t => {
-            // Search filter
-            if (query) {
-                const matches = t.title.toLowerCase().includes(query) ||
-                                t.year.toString().includes(query) ||
-                                t.dateDisplay.toLowerCase().includes(query) ||
-                                t.routeCities.some(c => c.toLowerCase().includes(query));
-                if (!matches) return false;
+            // Search filter (searches title, autoTitle, year, dates, route cities, stayed cities, notes, flags, flights)
+            if (queryTerms.length > 0) {
+                const searchFields = [
+                    t.title,
+                    t.autoTitle,
+                    String(t.year),
+                    t.dateDisplay,
+                    t.startDate,
+                    t.endDate,
+                    t.notes,
+                    ...(t.allRouteCities || []),
+                    ...(t.routeCities || []),
+                    ...(t.stayedCities ? t.stayedCities.map(s => s.city) : []),
+                    ...(t.cityNights ? Object.keys(t.cityNights) : []),
+                    ...(t.flags ? t.flags.map(f => f.country) : []),
+                    ...(t.flights ? t.flights.flatMap(fl => [
+                        fl.from?.city, fl.to?.city,
+                        fl.from?.name, fl.to?.name,
+                        fl.from?.iata, fl.to?.iata
+                    ]) : [])
+                ].filter(Boolean).map(normalizeSearchText);
+
+                const matchesAllTerms = queryTerms.every(variants => {
+                    return searchFields.some(field => {
+                        return variants.some(v => field.includes(v));
+                    });
+                });
+
+                if (!matchesAllTerms) return false;
             }
 
             // Year filter
@@ -13209,11 +14447,25 @@ Departed: ${end}</description>
         }
 
         if (filteredTrips.length === 0) {
-            container.innerHTML = `
+            let emptyHtml = `
                 <div style="text-align: center; color: #94a3b8; padding: 35px 10px; font-size: 13px;">
                     No trips match the selected filters.
                 </div>
             `;
+            if (tripDataStore.deletedTripIds && tripDataStore.deletedTripIds.length > 0) {
+                emptyHtml += `
+                    <div class="trips-footer-hidden-container">
+                        <button type="button" class="view-hidden-trips-btn" id="viewHiddenTripsFooterBtn">
+                            View hidden trips (${tripDataStore.deletedTripIds.length})
+                        </button>
+                    </div>
+                `;
+            }
+            container.innerHTML = emptyHtml;
+            const viewHiddenBtn = container.querySelector('#viewHiddenTripsFooterBtn');
+            if (viewHiddenBtn) {
+                viewHiddenBtn.addEventListener('click', () => openTripManageModal());
+            }
             clearTripMap();
             return;
         }
@@ -13242,7 +14494,19 @@ Departed: ${end}</description>
                     `<span class="trip-flag-item" title="${escapeHtml(f.country || f.name)}">${f.emoji}</span>`
                 ).join('');
 
-                const durationBadge = `<span class="trip-badge badge-duration clickable-badge" title="Click to view cities stayed in" data-action="toggle-nights">${trip.nightLabel} <span class="badge-toggle-arrow">▾</span></span>`;
+                const customBadge = trip.isCustom
+                    ? '<span class="trip-badge badge-custom">Custom</span>'
+                    : '';
+
+                const isDayTrip = trip.totalNights === 0 || trip.nightLabel === "Day trip";
+                const hasStayedCities = trip.stayedCities && trip.stayedCities.length > 0;
+                const durationBadgeClass = isDayTrip ? 'trip-badge badge-day-trip' : 'trip-badge badge-duration';
+                const durationBadgeClickable = hasStayedCities ? ' clickable-badge' : '';
+                const durationBadgeTitle = hasStayedCities ? 'Click to view cities stayed in' : (isDayTrip ? 'Day trip (0 nights)' : trip.nightLabel);
+                const durationToggleArrow = hasStayedCities ? ' <span class="badge-toggle-arrow">▾</span>' : '';
+                const durationToggleAction = hasStayedCities ? ' data-action="toggle-nights"' : '';
+
+                const durationBadge = `<span class="${durationBadgeClass}${durationBadgeClickable}" title="${durationBadgeTitle}"${durationToggleAction}>${escapeHtml(trip.nightLabel)}${durationToggleArrow}</span>`;
 
                 const flightCount = trip.flights && trip.flights.length > 0 ? trip.flights.length : 1;
                 const flightLabel = `${flightCount} ${flightCount === 1 ? 'Flight' : 'Flights'}`;
@@ -13285,6 +14549,18 @@ Departed: ${end}</description>
                     `;
                 }
 
+                let notesRowHtml = '';
+                if (trip.notes && trip.notes.trim()) {
+                    notesRowHtml = `
+                        <div class="trip-card-notes" title="Click to expand/collapse note">
+                            <span class="notes-icon">📝</span>
+                            <div class="notes-text-wrapper">
+                                <span class="notes-text">${escapeHtml(trip.notes)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 const routeHtml = (trip.routeCities && trip.routeCities.length > 1)
                     ? `<div class="trip-card-route">${trip.routeCities.map(c => `<span class="route-city">${escapeHtml(c)}</span>`).join(' <span class="arrow">→</span> ')}</div>`
                     : '';
@@ -13297,14 +14573,17 @@ Departed: ${end}</description>
                         </div>
                         <div class="trip-card-dates">${trip.dateDisplay}</div>
                         <div class="trip-card-badges">
+                            ${customBadge}
                             ${durationBadge}
                             ${flightBadge}
                         </div>
                         ${flightRowHtml}
                         ${nightsRowHtml}
+                        ${notesRowHtml}
                         ${routeHtml}
                         <div class="trip-card-actions">
-                            <button class="trip-action-btn btn-view-map" data-trip-id="${trip.id}">🗺️ Preview Map</button>
+                            <button class="trip-action-btn btn-edit-trip ${trip.isEdited ? 'is-edited' : 'is-default'}" data-trip-id="${trip.id}">${trip.isEdited ? '✏️ Edited' : '✏️ Edit'}</button>
+                            <button class="trip-action-btn btn-view-map" data-trip-id="${trip.id}">🗺️ Preview</button>
                             <button class="trip-action-btn btn-open-timeline" data-start="${trip.startDate}" data-end="${trip.endDate}">📅 Open in Timeline ↗</button>
                         </div>
                     </div>
@@ -13313,17 +14592,39 @@ Departed: ${end}</description>
             html += `</div>`;
         }
 
+        if (tripDataStore.deletedTripIds && tripDataStore.deletedTripIds.length > 0) {
+            html += `
+                <div class="trips-footer-hidden-container">
+                    <button type="button" class="view-hidden-trips-btn" id="viewHiddenTripsFooterBtn">
+                        View hidden trips (${tripDataStore.deletedTripIds.length})
+                    </button>
+                </div>
+            `;
+        }
+
         container.innerHTML = html;
 
-        // Default to showing all filtered trips on the map at once
-        showAllTripsOnMap(filteredTrips);
+        // Auto-click preview if search returns only one result
+        if (rawQuery && filteredTrips.length === 1) {
+            const singleCard = container.querySelector('.trip-card');
+            const singlePreviewBtn = container.querySelector('.btn-view-map');
+            if (singleCard && singlePreviewBtn) {
+                container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
+                singleCard.classList.add('active-trip');
+                showTripOnMap(filteredTrips[0]);
+                const showMapBtn = document.getElementById('show-map-btn');
+                if (showMapBtn) showMapBtn.click();
+            }
+        } else {
+            showAllTripsOnMap(filteredTrips);
+        }
 
         container.querySelectorAll('.trip-card').forEach(card => {
             const tripId = card.dataset.tripId;
             const trip = trips.find(t => t.id === tripId);
 
             card.addEventListener('click', (e) => {
-                if (e.target.closest('.btn-open-timeline')) return;
+                if (e.target.closest('.trip-card-actions')) return;
                 const clickableBadge = e.target.closest('.clickable-badge');
                 if (clickableBadge) {
                     e.stopPropagation();
@@ -13355,6 +14656,22 @@ Departed: ${end}</description>
             });
         });
 
+        container.querySelectorAll('.btn-view-map').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tripId = btn.dataset.tripId;
+                const trip = trips.find(t => t.id === tripId);
+                const card = btn.closest('.trip-card');
+                container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
+                if (card) card.classList.add('active-trip');
+                if (trip) {
+                    showTripOnMap(trip);
+                    const showMapBtn = document.getElementById('show-map-btn');
+                    if (showMapBtn) showMapBtn.click();
+                }
+            });
+        });
+
         container.querySelectorAll('.btn-open-timeline').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -13367,6 +14684,38 @@ Departed: ${end}</description>
                 loadTimelineDataInDateRange(start, end);
             });
         });
+
+        container.querySelectorAll('.btn-edit-trip').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tripId = btn.dataset.tripId;
+                const trip = trips.find(t => t.id === tripId);
+                if (trip) openTripModal('edit', trip);
+            });
+        });
+
+        container.querySelectorAll('.trip-card-notes').forEach(notesEl => {
+            const wrapper = notesEl.querySelector('.notes-text-wrapper');
+            const textEl = notesEl.querySelector('.notes-text');
+            if (wrapper && textEl) {
+                if (textEl.scrollHeight > wrapper.clientHeight + 1) {
+                    notesEl.classList.add('is-overflow');
+                }
+            }
+            notesEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (notesEl.classList.contains('is-overflow') || notesEl.classList.contains('expanded')) {
+                    notesEl.classList.toggle('expanded');
+                }
+            });
+        });
+
+        const viewHiddenBtn = container.querySelector('#viewHiddenTripsFooterBtn');
+        if (viewHiddenBtn) {
+            viewHiddenBtn.addEventListener('click', () => {
+                openTripManageModal();
+            });
+        }
     }
 
     // Step 4: Show Trip on Map (single trip with flights & ground paths)
@@ -13600,6 +14949,73 @@ Departed: ${end}</description>
         }
     }
 
+    function scrollToListTrip(tripId) {
+        if (!tripId) return;
+        const tripsView = document.getElementById('tripsView');
+        if (tripsView && (tripsView.style.display === 'none' || (typeof tripsViewVisible !== 'undefined' && !tripsViewVisible))) {
+            if (typeof activateTripsView === 'function') {
+                activateTripsView();
+            }
+        }
+
+        const showSidebarBtn = document.getElementById('show-sidebar-btn');
+        if (showSidebarBtn && showSidebarBtn.parentElement && window.getComputedStyle(showSidebarBtn.parentElement).display === 'flex') {
+            showSidebarBtn.click();
+        }
+
+        const card = document.querySelector(`.trip-card[data-trip-id="${tripId}"]`);
+        if (card) {
+            document.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
+            card.classList.add('active-trip');
+            card.classList.remove('highlight-flash');
+            void card.offsetWidth; // Force DOM reflow to re-trigger animation
+            card.classList.add('highlight-flash');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function showTripRouteInfoWindow(trip, position, flight = null) {
+        if (!map || !position) return;
+        if (!tripMapInfoWindow) tripMapInfoWindow = new google.maps.InfoWindow();
+
+        let flightInfo = '';
+        if (flight) {
+            const fromName = flight.from?.name || flight.from?.city || 'Origin';
+            const toName = flight.to?.name || flight.to?.city || 'Destination';
+            flightInfo = `
+                <div style="font-size: 11px; color: #0284c7; margin-bottom: 4px;">
+                    ✈️ ${escapeHtml(fromName)} → ${escapeHtml(toName)}
+                    ${flight.distanceKm ? ` (${flight.distanceKm.toLocaleString()} km)` : ''}
+                </div>
+            `;
+        }
+
+        const content = document.createElement('div');
+        content.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        content.style.padding = "4px 6px";
+        content.style.color = "#1e293b";
+        content.style.minWidth = "150px";
+
+        content.innerHTML = `
+            <div style="font-weight: 700; font-size: 13px; color: #0f172a; margin-bottom: 2px;">${escapeHtml(trip.title)}</div>
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">${escapeHtml(trip.dateDisplay || '')}</div>
+            ${flightInfo}
+            <button type="button" id="infoWindowViewTripBtn" style="background: #0284c7; color: #ffffff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;">Focus Trip</button>
+        `;
+
+        const focusBtn = content.querySelector('#infoWindowViewTripBtn');
+        if (focusBtn) {
+            focusBtn.addEventListener('click', () => {
+                if (tripMapInfoWindow) tripMapInfoWindow.close();
+                showTripOnMap(trip);
+            });
+        }
+
+        tripMapInfoWindow.setContent(content);
+        tripMapInfoWindow.setPosition(position);
+        tripMapInfoWindow.open(map);
+    }
+
     // Step 4b: Show All Filtered Trips on Map (no A/B pins)
     function showAllTripsOnMap(tripsToShow) {
         if (!map) return;
@@ -13613,8 +15029,16 @@ Departed: ${end}</description>
         let anyPoints = false;
         const tripColors = ['#0284c7', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#06b6d4', '#f97316'];
 
+        const extendPt = (lat, lng) => {
+            if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
+                bounds.extend(new google.maps.LatLng(lat, lng));
+                anyPoints = true;
+            }
+        };
+
         tripsToShow.forEach((t, idx) => {
             const tripColor = tripColors[idx % tripColors.length];
+            let hasDrawnPolyline = false;
 
             // Ground paths
             if (t.groundPaths && t.groundPaths.length > 0) {
@@ -13622,11 +15046,10 @@ Departed: ${end}</description>
                     if (!gp || gp.length < 2) continue;
                     const path = [];
                     for (const pt of gp) {
-                        if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                        if (pt && !isNaN(pt.lat) && !isNaN(pt.lng)) {
                             const pos = new google.maps.LatLng(pt.lat, pt.lng);
                             path.push(pos);
-                            bounds.extend(pos);
-                            anyPoints = true;
+                            extendPt(pt.lat, pt.lng);
                         }
                     }
                     if (path.length > 1) {
@@ -13639,19 +15062,33 @@ Departed: ${end}</description>
                             map: map
                         });
                         tripMapPolylines.push(poly);
+                        hasDrawnPolyline = true;
+
+                        poly.addListener('mouseover', () => {
+                            poly.setOptions({ strokeWeight: 5.5, strokeOpacity: 1.0 });
+                        });
+                        poly.addListener('mouseout', () => {
+                            poly.setOptions({ strokeWeight: 3.5, strokeOpacity: 0.75 });
+                        });
+                        poly.addListener('click', (e) => {
+                            scrollToListTrip(t.id);
+                            showTripRouteInfoWindow(t, e.latLng);
+                        });
                     }
                 }
-            } else if (t.mapPoints && t.mapPoints.length > 0) {
+            }
+
+            // Fallback ground path from mapPoints if no groundPaths polyline was drawn
+            if (!hasDrawnPolyline && t.mapPoints && t.mapPoints.length > 1) {
                 const validPath = [];
                 for (const pt of t.mapPoints) {
-                    if (!isNaN(pt.lat) && !isNaN(pt.lng)) {
+                    if (pt && !isNaN(pt.lat) && !isNaN(pt.lng)) {
                         const pos = new google.maps.LatLng(pt.lat, pt.lng);
                         validPath.push(pos);
-                        bounds.extend(pos);
-                        anyPoints = true;
+                        extendPt(pt.lat, pt.lng);
                     }
                 }
-                if (validPath.length > 0) {
+                if (validPath.length > 1) {
                     const poly = new google.maps.Polyline({
                         path: validPath,
                         geodesic: true,
@@ -13661,6 +15098,52 @@ Departed: ${end}</description>
                         map: map
                     });
                     tripMapPolylines.push(poly);
+                    hasDrawnPolyline = true;
+
+                    poly.addListener('mouseover', () => {
+                        poly.setOptions({ strokeWeight: 5.5, strokeOpacity: 1.0 });
+                    });
+                    poly.addListener('mouseout', () => {
+                        poly.setOptions({ strokeWeight: 3.5, strokeOpacity: 0.8 });
+                    });
+                    poly.addListener('click', (e) => {
+                        scrollToListTrip(t.id);
+                        showTripRouteInfoWindow(t, e.latLng);
+                    });
+                }
+            }
+
+            // If trip has place visits without polylines (e.g. isolated stops), draw place markers
+            if (!hasDrawnPolyline && t.mapPoints && t.mapPoints.length > 0) {
+                for (const pt of t.mapPoints) {
+                    if (pt && !isNaN(pt.lat) && !isNaN(pt.lng)) {
+                        extendPt(pt.lat, pt.lng);
+                        const marker = new google.maps.Marker({
+                            position: { lat: pt.lat, lng: pt.lng },
+                            map: map,
+                            title: t.title,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 6,
+                                fillColor: tripColor,
+                                fillOpacity: 0.85,
+                                strokeColor: '#ffffff',
+                                strokeWeight: 1.5
+                            }
+                        });
+                        marker.addListener('click', () => {
+                            scrollToListTrip(t.id);
+                            showTripRouteInfoWindow(t, marker.getPosition());
+                        });
+                        tripMapMarkers.push(marker);
+                    }
+                }
+            }
+
+            // Ensure all mapPoints extend bounds even if polylines are present
+            if (t.mapPoints && t.mapPoints.length > 0) {
+                for (const pt of t.mapPoints) {
+                    if (pt) extendPt(pt.lat, pt.lng);
                 }
             }
 
@@ -13673,12 +15156,10 @@ Departed: ${end}</description>
                             new google.maps.LatLng(fl.fromCoord.lat, fl.fromCoord.lng),
                             new google.maps.LatLng(fl.toCoord.lat, fl.toCoord.lng)
                         ];
+                        extendPt(fl.fromCoord.lat, fl.fromCoord.lng);
+                        extendPt(fl.toCoord.lat, fl.toCoord.lng);
                     }
                     if (flightCoords.length >= 2) {
-                        flightCoords.forEach(pos => {
-                            bounds.extend(pos);
-                            anyPoints = true;
-                        });
                         const flightPoly = new google.maps.Polyline({
                             path: flightCoords,
                             geodesic: true,
@@ -13688,6 +15169,16 @@ Departed: ${end}</description>
                             zIndex: 10,
                             map: map
                         });
+                        flightPoly.addListener('mouseover', () => {
+                            flightPoly.setOptions({ strokeWeight: 5, strokeOpacity: 1.0 });
+                        });
+                        flightPoly.addListener('mouseout', () => {
+                            flightPoly.setOptions({ strokeWeight: 3, strokeOpacity: 0.85 });
+                        });
+                        flightPoly.addListener('click', (e) => {
+                            scrollToListTrip(t.id);
+                            showTripRouteInfoWindow(t, e.latLng, fl);
+                        });
                         tripMapPolylines.push(flightPoly);
                     }
                 }
@@ -13696,6 +15187,11 @@ Departed: ${end}</description>
 
         if (anyPoints && !bounds.isEmpty()) {
             map.fitBounds(bounds, 50);
+            const listener = google.maps.event.addListenerOnce(map, 'idle', () => {
+                if (map.getZoom() > 14) {
+                    map.setZoom(14);
+                }
+            });
         }
     }
 
@@ -13961,41 +15457,52 @@ Departed: ${end}</description>
             });
         }
 
+        function activateTripsView() {
+            summaryViewVisible = false;
+            worldViewVisible = false;
+            tripsViewVisible = true;
+
+            // Map area
+            const summaryView = document.getElementById('summaryView');
+            if (summaryView) summaryView.style.display = 'none';
+            const mapEl = document.getElementById('map');
+            if (mapEl) mapEl.classList.remove('hidden');
+
+            // Sidebar area
+            const timelineEl = document.getElementById('timeline');
+            if (timelineEl) timelineEl.style.display = 'none';
+            const summarySidebar = document.getElementById('summarySidebarContent');
+            if (summarySidebar) summarySidebar.style.display = 'none';
+            const worldSidebar = document.getElementById('worldSidebarContent');
+            if (worldSidebar) worldSidebar.style.display = 'none';
+            if (document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
+
+            // Hide Date controls
+            const datePicker = document.getElementById('datePickerContainer');
+            if (datePicker) datePicker.style.display = 'none';
+            const dateInfo = document.getElementById('date-range-info');
+            if (dateInfo) dateInfo.style.display = 'none';
+            const goContainer = document.getElementById('go-container');
+            if (goContainer) goContainer.style.display = 'none';
+
+            // Show Trips
+            const tripsView = document.getElementById('tripsView');
+            if (tripsView) tripsView.style.display = 'flex';
+
+            if (typeof clearMap === 'function') clearMap();
+            if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
+
+            updateViewToggleButtons();
+            hideTimezoneMismatchBanner();
+            renderTripsView();
+        }
+        window.activateTripsView = activateTripsView;
+
         const tripsBtn = document.getElementById('tripsBtn');
         if (tripsBtn) {
             tripsBtn.addEventListener('click', () => {
                 if (!uiEnabled) return;
-
-                summaryViewVisible = false;
-                worldViewVisible = false;
-                tripsViewVisible = true;
-
-                // Map area
-                document.getElementById('summaryView').style.display = 'none';
-                document.getElementById('map').classList.remove('hidden');
-
-                // Sidebar area
-                document.getElementById('timeline').style.display = 'none';
-                const summarySidebar = document.getElementById('summarySidebarContent');
-                if (summarySidebar) summarySidebar.style.display = 'none';
-                const worldSidebar = document.getElementById('worldSidebarContent');
-                if (worldSidebar) worldSidebar.style.display = 'none';
-                if (document.getElementById('areaResults')) document.getElementById('areaResults').style.display = 'none';
-
-                // Hide Date controls
-                document.getElementById('datePickerContainer').style.display = 'none';
-                document.getElementById('date-range-info').style.display = 'none';
-                document.getElementById('go-container').style.display = 'none';
-
-                // Show Trips
-                const tripsView = document.getElementById('tripsView');
-                if (tripsView) tripsView.style.display = 'flex';
-
-                if (typeof clearWorldMarkers === 'function') clearWorldMarkers();
-
-                updateViewToggleButtons();
-                hideTimezoneMismatchBanner();
-                renderTripsView();
+                activateTripsView();
             });
         }
 
@@ -14008,6 +15515,450 @@ Departed: ${end}</description>
                 if (summaryBtn) summaryBtn.click();
             });
         }
+
+        initTripCustomizationControls();
+        updateTripsIndicator();
+    }
+
+    // --- Trip Customizations, Modals & File Persistence ---
+    // Clean up any stale localStorage from previous versions
+    try {
+        localStorage.removeItem('timeline_trips_data');
+    } catch (e) {}
+
+    function loadTripDataFromParsedJson(json, updateSnapshot = true) {
+        if (!json || typeof json !== 'object') return;
+        const customTrips = Array.isArray(json.customTrips) ? json.customTrips : [];
+        const tripOverrides = (json.tripOverrides && typeof json.tripOverrides === 'object') ? json.tripOverrides : {};
+        const deletedTripIds = Array.isArray(json.deletedTripIds) ? json.deletedTripIds : [];
+
+        tripDataStore = {
+            customTrips,
+            tripOverrides,
+            deletedTripIds
+        };
+        if (updateSnapshot) {
+            savedTripsSnapshot = JSON.stringify(tripDataStore);
+        }
+        cachedTrips = null;
+        updateTripsIndicator();
+        if (typeof renderTripsView === 'function') {
+            renderTripsView();
+        }
+    }
+
+    function saveTripDataToFile() {
+        const dataToSave = {
+            version: 1,
+            customTrips: tripDataStore.customTrips || [],
+            tripOverrides: tripDataStore.tripOverrides || {},
+            deletedTripIds: tripDataStore.deletedTripIds || []
+        };
+        const jsonData = JSON.stringify(dataToSave, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'TimelineTrips.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log("TimelineTrips.json downloaded.");
+
+        savedTripsSnapshot = JSON.stringify(tripDataStore);
+        updateTripsIndicator();
+    }
+
+    function updateTripsIndicator() {
+        const dot = document.getElementById('tripsUnsavedDot');
+        const saveBtn = document.getElementById('saveTripsBtn');
+        const hasUnsaved = JSON.stringify(tripDataStore) !== savedTripsSnapshot;
+        if (dot) {
+            dot.style.display = hasUnsaved ? 'inline-block' : 'none';
+        }
+        if (saveBtn) {
+            saveBtn.style.display = hasUnsaved ? 'inline-flex' : 'none';
+            saveBtn.classList.toggle('has-unsaved', hasUnsaved);
+            saveBtn.title = hasUnsaved ? "Unsaved trip changes! Click to save TimelineTrips.json" : "Save changes to TimelineTrips.json";
+        }
+        const hiddenBadge = document.getElementById('hiddenTripsCountBadge');
+        const hiddenCount = tripDataStore.deletedTripIds?.length || 0;
+        if (hiddenBadge) {
+            hiddenBadge.textContent = hiddenCount;
+            hiddenBadge.style.display = hiddenCount > 0 ? 'inline-flex' : 'none';
+        }
+    }
+
+    function openTripModal(mode, trip = null) {
+        activeTripModalContext = { mode, trip };
+        const modal = document.getElementById('tripEditModal');
+        const heading = document.getElementById('tripModalHeading');
+        const typeBadge = document.getElementById('tripModalTypeBadge');
+        const titleInput = document.getElementById('tripModalTitleInput');
+        const startInput = document.getElementById('tripModalStartDateInput');
+        const endInput = document.getElementById('tripModalEndDateInput');
+        const notesInput = document.getElementById('tripModalNotesInput');
+        const resetTitleBtn = document.getElementById('tripModalResetTitleBtn');
+        const autoTitleHint = document.getElementById('tripModalAutoTitleHint');
+        const autoTitleVal = document.getElementById('tripModalAutoTitleVal');
+        const autoDatesHint = document.getElementById('tripModalAutoDatesHint');
+        const autoDatesVal = document.getElementById('tripModalAutoDatesVal');
+        const deleteBtn = document.getElementById('tripModalDeleteBtn');
+        const resetAllBtn = document.getElementById('tripModalResetAllBtn');
+        const saveModalBtn = document.getElementById('tripModalSaveBtn');
+
+        if (!modal) return;
+
+        if (mode === 'add') {
+            heading.textContent = 'Add Custom Trip';
+            typeBadge.textContent = 'Custom';
+            typeBadge.className = 'trip-modal-pill custom';
+            titleInput.value = '';
+            startInput.value = moment().format('YYYY-MM-DD');
+            endInput.value = moment().format('YYYY-MM-DD');
+            notesInput.value = '';
+            if (saveModalBtn) saveModalBtn.textContent = 'Add Trip';
+            if (resetTitleBtn) resetTitleBtn.style.display = 'none';
+            if (autoTitleHint) autoTitleHint.style.display = 'none';
+            if (autoDatesHint) autoDatesHint.style.display = 'none';
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            if (resetAllBtn) resetAllBtn.style.display = 'none';
+        } else if (trip) {
+            heading.textContent = trip.isCustom ? 'Edit Custom Trip' : 'Edit Trip';
+            typeBadge.textContent = trip.isCustom ? 'Custom' : (trip.isEdited ? 'Edited' : 'Auto');
+            typeBadge.className = `trip-modal-pill ${trip.isCustom ? 'custom' : (trip.isEdited ? 'edited' : 'auto')}`;
+            titleInput.value = trip.title || '';
+            startInput.value = trip.startDate || '';
+            endInput.value = trip.endDate || '';
+            notesInput.value = trip.notes || '';
+            if (saveModalBtn) saveModalBtn.textContent = 'Save Changes';
+
+            if (deleteBtn) {
+                deleteBtn.style.display = 'inline-block';
+                deleteBtn.textContent = trip.isCustom ? '🗑️ Delete Trip' : '👁️ Hide Trip';
+            }
+
+            if (!trip.isCustom && trip.autoTitle && trip.autoTitle !== trip.title) {
+                if (resetTitleBtn) resetTitleBtn.style.display = 'inline-block';
+                if (autoTitleHint) {
+                    autoTitleHint.style.display = 'block';
+                    autoTitleVal.textContent = trip.autoTitle;
+                }
+            } else {
+                if (resetTitleBtn) resetTitleBtn.style.display = 'none';
+                if (autoTitleHint) autoTitleHint.style.display = 'none';
+            }
+
+            if (!trip.isCustom) {
+                if (resetAllBtn) resetAllBtn.style.display = 'inline-block';
+            } else {
+                if (resetAllBtn) resetAllBtn.style.display = 'none';
+            }
+
+            if (autoDatesHint) autoDatesHint.style.display = 'none';
+        }
+
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => modal.classList.add('active'));
+        setTimeout(() => titleInput.focus(), 60);
+    }
+
+    function closeTripEditModal() {
+        const modal = document.getElementById('tripEditModal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            activeTripModalContext = null;
+        }, 180);
+    }
+
+    function saveTripModal() {
+        if (!activeTripModalContext) return;
+        const titleInput = document.getElementById('tripModalTitleInput');
+        const startInput = document.getElementById('tripModalStartDateInput');
+        const endInput = document.getElementById('tripModalEndDateInput');
+        const notesInput = document.getElementById('tripModalNotesInput');
+
+        const title = titleInput.value.trim();
+        const startDate = startInput.value;
+        const endDate = endInput.value;
+        const notes = notesInput.value.trim();
+
+        if (!startDate || !endDate) {
+            alert("Please specify both a start date and an end date.");
+            return;
+        }
+        if (moment(endDate).isBefore(moment(startDate))) {
+            alert("End date cannot be before start date.");
+            return;
+        }
+
+        if (activeTripModalContext.mode === 'add') {
+            const newTrip = {
+                id: `trip_custom_${Date.now()}`,
+                title: title || "Custom Trip",
+                startDate,
+                endDate,
+                notes,
+                isCustom: true,
+                createdAt: Date.now()
+            };
+            if (!tripDataStore.customTrips) tripDataStore.customTrips = [];
+            tripDataStore.customTrips.push(newTrip);
+        } else if (activeTripModalContext.trip) {
+            const trip = activeTripModalContext.trip;
+            if (trip.isCustom) {
+                const idx = tripDataStore.customTrips.findIndex(t => t.id === trip.id);
+                if (idx !== -1) {
+                    tripDataStore.customTrips[idx].title = title || "Custom Trip";
+                    tripDataStore.customTrips[idx].startDate = startDate;
+                    tripDataStore.customTrips[idx].endDate = endDate;
+                    tripDataStore.customTrips[idx].notes = notes;
+                }
+            } else {
+                if (!tripDataStore.tripOverrides) tripDataStore.tripOverrides = {};
+                tripDataStore.tripOverrides[trip.id] = {
+                    title: title || trip.autoTitle || "Trip",
+                    startDate,
+                    endDate,
+                    notes
+                };
+            }
+        }
+
+        cachedTrips = null;
+        updateTripsIndicator();
+        closeTripEditModal();
+        renderTripsView();
+    }
+
+    function deleteOrHideTrip(trip) {
+        if (!trip) return;
+        if (trip.isCustom) {
+            if (!confirm(`Delete custom trip "${trip.title}"?`)) return;
+            tripDataStore.customTrips = (tripDataStore.customTrips || []).filter(t => t.id !== trip.id);
+        } else {
+            if (!confirm(`Hide auto-detected trip "${trip.title}"?`)) return;
+            if (!tripDataStore.deletedTripIds) tripDataStore.deletedTripIds = [];
+            if (!tripDataStore.deletedTripIds.includes(trip.id)) {
+                tripDataStore.deletedTripIds.push(trip.id);
+            }
+        }
+        cachedTrips = null;
+        updateTripsIndicator();
+        renderTripsView();
+    }
+
+    function openTripManageModal() {
+        const modal = document.getElementById('tripManageModal');
+        if (!modal) return;
+        renderHiddenTripsList();
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => modal.classList.add('active'));
+    }
+
+    function closeTripManageModal() {
+        const modal = document.getElementById('tripManageModal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 180);
+    }
+
+    function renderHiddenTripsList() {
+        const listContainer = document.getElementById('hiddenTripsList');
+        const countSpan = document.getElementById('hiddenTripsListCount');
+        if (!listContainer) return;
+
+        const deletedIds = tripDataStore.deletedTripIds || [];
+        if (countSpan) countSpan.textContent = deletedIds.length;
+
+        if (deletedIds.length === 0) {
+            listContainer.innerHTML = `
+                <div style="padding: 24px 15px; text-align: center; color: #94a3b8; font-size: 12px;">
+                    No hidden auto-detected trips.
+                </div>
+            `;
+            return;
+        }
+
+        // We can inspect all detected raw trips to find the titles and dates of hidden ones
+        const savedDeleted = [...tripDataStore.deletedTripIds];
+        tripDataStore.deletedTripIds = [];
+        cachedTrips = null;
+        const allRawTrips = detectTrips();
+        tripDataStore.deletedTripIds = savedDeleted;
+        cachedTrips = null;
+
+        let html = '';
+        for (const hid of deletedIds) {
+            const match = allRawTrips.find(t => t.id === hid);
+            const title = match ? match.title : "Hidden Trip";
+            const dates = match ? match.dateDisplay : hid;
+
+            html += `
+                <div class="hidden-trip-item">
+                    <div class="hidden-trip-info">
+                        <div class="hidden-trip-title">${escapeHtml(title)}</div>
+                        <div class="hidden-trip-dates">${escapeHtml(dates)}</div>
+                    </div>
+                    <button type="button" class="hidden-trip-restore-btn" data-restore-id="${escapeHtml(hid)}">↺ Restore</button>
+                </div>
+            `;
+        }
+
+        listContainer.innerHTML = html;
+
+        listContainer.querySelectorAll('.hidden-trip-restore-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const rid = btn.dataset.restoreId;
+                restoreHiddenTrip(rid);
+            });
+        });
+    }
+
+    function restoreHiddenTrip(tripId) {
+        if (!tripId) return;
+        tripDataStore.deletedTripIds = (tripDataStore.deletedTripIds || []).filter(id => id !== tripId);
+        cachedTrips = null;
+        updateTripsIndicator();
+        renderHiddenTripsList();
+        renderTripsView();
+    }
+
+    function initTripCustomizationControls() {
+        // Top header buttons
+        const addBtn = document.getElementById('addNewTripBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => openTripModal('add'));
+        }
+
+        const saveBtn = document.getElementById('saveTripsBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => saveTripDataToFile());
+        }
+
+        const manageBtn = document.getElementById('manageHiddenTripsBtn');
+        if (manageBtn) {
+            manageBtn.addEventListener('click', () => openTripManageModal());
+        }
+
+        // Edit Modal buttons
+        const closeEditBtn = document.getElementById('closeTripEditModalBtn');
+        if (closeEditBtn) {
+            closeEditBtn.addEventListener('click', closeTripEditModal);
+        }
+
+        const cancelEditBtn = document.getElementById('tripModalCancelBtn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', closeTripEditModal);
+        }
+
+        const saveEditBtn = document.getElementById('tripModalSaveBtn');
+        if (saveEditBtn) {
+            saveEditBtn.addEventListener('click', saveTripModal);
+        }
+
+        const deleteModalBtn = document.getElementById('tripModalDeleteBtn');
+        if (deleteModalBtn) {
+            deleteModalBtn.addEventListener('click', () => {
+                if (activeTripModalContext && activeTripModalContext.trip) {
+                    deleteOrHideTrip(activeTripModalContext.trip);
+                    closeTripEditModal();
+                }
+            });
+        }
+
+        const resetTitleBtn = document.getElementById('tripModalResetTitleBtn');
+        if (resetTitleBtn) {
+            resetTitleBtn.addEventListener('click', () => {
+                if (activeTripModalContext && activeTripModalContext.trip && activeTripModalContext.trip.autoTitle) {
+                    document.getElementById('tripModalTitleInput').value = activeTripModalContext.trip.autoTitle;
+                    resetTitleBtn.style.display = 'none';
+                    const autoTitleHint = document.getElementById('tripModalAutoTitleHint');
+                    if (autoTitleHint) autoTitleHint.style.display = 'none';
+                }
+            });
+        }
+
+        const resetAllBtn = document.getElementById('tripModalResetAllBtn');
+        if (resetAllBtn) {
+            resetAllBtn.addEventListener('click', () => {
+                if (!activeTripModalContext || !activeTripModalContext.trip) return;
+                const trip = activeTripModalContext.trip;
+                const tid = trip.id;
+                if (tripDataStore.tripOverrides) {
+                    if (tripDataStore.tripOverrides[tid]) {
+                        delete tripDataStore.tripOverrides[tid];
+                    }
+                    for (const key of Object.keys(tripDataStore.tripOverrides)) {
+                        if (key === tid || (trip.rawId && key === trip.rawId)) {
+                            delete tripDataStore.tripOverrides[key];
+                        }
+                    }
+                }
+
+                if (trip.autoTitle) {
+                    const titleInput = document.getElementById('tripModalTitleInput');
+                    if (titleInput) titleInput.value = trip.autoTitle;
+                }
+                if (trip.autoStartDate) {
+                    const startInput = document.getElementById('tripModalStartDateInput');
+                    if (startInput) startInput.value = trip.autoStartDate;
+                }
+                if (trip.autoEndDate) {
+                    const endInput = document.getElementById('tripModalEndDateInput');
+                    if (endInput) endInput.value = trip.autoEndDate;
+                }
+                const notesInput = document.getElementById('tripModalNotesInput');
+                if (notesInput) notesInput.value = '';
+
+                cachedTrips = null;
+                updateTripsIndicator();
+                closeTripEditModal();
+                renderTripsView();
+            });
+        }
+
+        // Manage Modal buttons
+        const closeManageBtn = document.getElementById('closeTripManageModalBtn');
+        if (closeManageBtn) {
+            closeManageBtn.addEventListener('click', closeTripManageModal);
+        }
+
+        const closeManageFooterBtn = document.getElementById('closeTripManageModalFooterBtn');
+        if (closeManageFooterBtn) {
+            closeManageFooterBtn.addEventListener('click', closeTripManageModal);
+        }
+
+        // Backdrop click to close modals
+        const editModal = document.getElementById('tripEditModal');
+        if (editModal) {
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) closeTripEditModal();
+            });
+        }
+
+        const manageModal = document.getElementById('tripManageModal');
+        if (manageModal) {
+            manageModal.addEventListener('click', (e) => {
+                if (e.target === manageModal) closeTripManageModal();
+            });
+        }
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (editModal && editModal.style.display !== 'none') {
+                    closeTripEditModal();
+                } else if (manageModal && manageModal.style.display !== 'none') {
+                    closeTripManageModal();
+                }
+            }
+        });
     }
 
 
@@ -14046,6 +15997,10 @@ Departed: ${end}</description>
             const storedWorkIds = await getSetting('workPlaceIds');
             if (storedWorkIds) {
                 workPlaceIds = storedWorkIds;
+            }
+            const storedMinTripDist = await getSetting('minTripDistanceKm');
+            if (typeof storedMinTripDist === 'number' && storedMinTripDist > 0) {
+                minTripDistanceKm = storedMinTripDist;
             }
             const storedDebugMode = await getSetting('debugMode');
             if (storedDebugMode !== undefined) {
