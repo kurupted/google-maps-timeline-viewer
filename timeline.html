@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  September 16, 2026
+        Version:  September 18, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -772,6 +772,12 @@
             border-bottom: 1px solid #dee2e6;
             font-size: 14px;
             color: #192027;
+        }
+        body.debug-mode-active #timeline .date-header {
+            cursor: pointer;
+        }
+        body.debug-mode-active #timeline .date-header:hover {
+            background-color: #bbbbbb;
         }
         .timeline-item {
             display: flex;
@@ -5239,6 +5245,9 @@
             const dateHeader = document.createElement('div');
             dateHeader.className = 'date-header';
             dateHeader.dataset.date = currentDate;
+            if (isDebugMode) {
+                dateHeader.title = 'Click to view day JSON (Debug Mode)';
+            }
             // UPDATE THIS LINE to include the Add button (+):
             dateHeader.innerHTML = `<span>${formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY')}</span> <button class="add-entry-btn" style="margin-left:auto; background:none; border:none; cursor:pointer;" title="Add Entry">➕</button>`;
 
@@ -5246,8 +5255,15 @@
             timelineContainer.appendChild(dateHeader);
 
             // Add Listener
-            dateHeader.querySelector('.add-entry-btn').addEventListener('click', () => {
+            dateHeader.querySelector('.add-entry-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 openEditModal(null, currentDate); // null item = Add New
+            });
+
+            dateHeader.addEventListener('click', (e) => {
+                if (e.target.closest('.add-entry-btn')) return;
+                if (!isDebugMode) return;
+                viewDayDebugJson(currentDate, dateHeader);
             });
         }
 
@@ -6520,6 +6536,10 @@
                         };
                     }
 
+                    const headerTitle = document.querySelector('#debugOverlayHeader strong');
+                    if (headerTitle) {
+                        headerTitle.textContent = 'Item Debug Info';
+                    }
                     document.getElementById('debugOverlayContent').textContent = JSON.stringify(debugInfo, null, 2);
                     document.getElementById('debugOverlay').style.display = 'flex';
                 } catch(e) {
@@ -6527,6 +6547,54 @@
                     document.getElementById('debugOverlay').style.display = 'flex';
                 }
             }
+        }
+    }
+
+    // Displays the debug JSON for a whole day in the debug overlay
+    function viewDayDebugJson(currentDate, dateHeader) {
+        if (!isDebugMode) return;
+
+        try {
+            let dayItems = [];
+            if (typeof getFilteredDataForRange === 'function') {
+                dayItems = getFilteredDataForRange(currentDate, currentDate);
+            }
+
+            // Fallback to reading rawJson from sibling DOM items if needed
+            if (!dayItems || dayItems.length === 0) {
+                dayItems = [];
+                let sibling = dateHeader ? dateHeader.nextElementSibling : null;
+                while (sibling && !sibling.classList.contains('date-header')) {
+                    if (sibling.classList.contains('timeline-item') && sibling.dataset.rawJson) {
+                        try {
+                            dayItems.push(JSON.parse(sibling.dataset.rawJson));
+                        } catch (err) {
+                            console.error("Error parsing rawJson for item:", err);
+                        }
+                    }
+                    sibling = sibling.nextElementSibling;
+                }
+            }
+
+            const debugInfo = {
+                timelineObjects: dayItems
+            };
+
+            // Deselect any highlighted item in timeline
+            document.querySelectorAll('#timeline .timeline-item.highlighted').forEach(item => {
+                item.classList.remove('highlighted');
+            });
+
+            const headerTitle = document.querySelector('#debugOverlayHeader strong');
+            if (headerTitle) {
+                headerTitle.textContent = `Day Debug Info (${currentDate})`;
+            }
+            document.getElementById('debugOverlayContent').textContent = JSON.stringify(debugInfo, null, 2);
+            document.getElementById('debugOverlay').style.display = 'flex';
+        } catch (e) {
+            console.error("Error viewing day debug JSON:", e);
+            document.getElementById('debugOverlayContent').textContent = "Error generating day debug info: " + e.message;
+            document.getElementById('debugOverlay').style.display = 'flex';
         }
     }
 
@@ -10685,6 +10753,10 @@
         const debugModeToggle = document.getElementById('debugModeToggle');
         debugModeToggle.addEventListener('change', async (e) => {
             isDebugMode = e.target.checked;
+            document.body.classList.toggle('debug-mode-active', isDebugMode);
+            document.querySelectorAll('#timeline .date-header').forEach(header => {
+                header.setAttribute('title', isDebugMode ? 'Click to view day JSON (Debug Mode)' : '');
+            });
             await saveSetting('debugMode', isDebugMode);
             if (!isDebugMode) {
                 document.getElementById('debugOverlay').style.display = 'none';
@@ -16006,6 +16078,7 @@ Departed: ${end}</description>
             if (storedDebugMode !== undefined) {
                 isDebugMode = storedDebugMode;
                 document.getElementById('debugModeToggle').checked = isDebugMode;
+                document.body.classList.toggle('debug-mode-active', isDebugMode);
             }
 
             // Load the theme BEFORE initMap() runs
