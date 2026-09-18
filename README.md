@@ -6,31 +6,29 @@ If you're like me, you have years worth of timeline data that you want to be abl
 ### Features:
 - Supports both Google Takeout data and On-Device data file (Android or iOS)
 - Timeline and map view
-- Place info and icons
 - Duration of visits ; distance traveled (in km or miles)
 - Travel modes color-coded ; direction of travel arrows when clicking a path
 - View multiple days at once
 - Search by place name to find dates with visits
 - Find all visited places within the viewable map area
-- Summary of activities by year/month
-- World View shows a heat map of your activity, and a list of countries and cities visited
+- Summary of activities by year/month, with bar charts
 - Trips View automatically detects vacations and travels away from home, with duration filters and flight detection
+- World View shows a heat map of your activity, and a list of countries and cities visited
 - Timeline items are editable, including route paths
-- Timezone setting for viewing your travel days with local times
-- Toggle layers on and off, eg to view only places, without travel paths
+- Timezone detection for viewing your travel days with local times
 - Place details retrieved from Google Places API can be saved locally, to reduce future API calls
 - Import gps locations from a folder of photos (in combination with exiftool)
 - Export to KML file
 - Mobile-friendly UI, so you can use this on your phone
 
 <p align="center">
-  <a href="/screenshot.png"><img src="/screenshot.png?raw=true" alt="Map View" width="48%"></a>
-  <a href="/screenshot2.png"><img src="/screenshot2.png?raw=true" alt="Summary View" width="48%"></a>
+  <a href="/screenshot.jpg"><img src="/screenshot.jpg?raw=true" alt="Map View" width="48%"></a>
+  <a href="/screenshot2.jpg"><img src="/screenshot2.jpg?raw=true" alt="Summary View" width="48%"></a>
 </p>
 
 <p align="center">
-  <a href="/screenshot3.png"><img src="/screenshot3.png?raw=true" alt="Area Search" width="48%"></a>
-  <a href="/screenshot4.png"><img src="/screenshot4.png?raw=true" alt="World View" width="48%"></a>
+  <a href="/screenshot3.jpg"><img src="/screenshot3.jpg?raw=true" alt="Area Search" width="48%"></a>
+  <a href="/screenshot5.jpg"><img src="/screenshot5.jpg?raw=true" alt="Trips View" width="48%"></a>
 </p>
 
 #
