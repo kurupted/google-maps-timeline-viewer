@@ -1,7 +1,7 @@
 # Google Maps Timeline Viewer
-Google announced in 2024 that they would begin storing your Timeline data (ie your Location History) locally on your device, rather than in the cloud on their systems. The desktop version of their timeline viewer was also discontinued, since the data is now on your phone.
+This project is a feature-rich replacement for the discontinued Google Maps desktop timeline site.
 
-If you're like me, you have years worth of timeline data that you want to be able to view. This project enables that. It supports the old data format from Google Takeout, as well as the new on-device data format (which you can export from your device to your computer).
+Since Google transitioned to storing location history locally on your device rather than in the cloud, exploring years of travel data on a larger screen became nearly impossible. This Timeline Viewer allows you to visualize, search, and map your location history, and supports both the current on-device data format (exported from your phone) and the legacy format from Google Takeout.
 
 ### Features:
 - Supports both Google Takeout data and On-Device data file (Android or iOS)
