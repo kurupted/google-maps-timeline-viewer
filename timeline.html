@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  September 18, 2026
+        Version:  September 22, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -927,6 +927,19 @@
             background-color: #f8f9fa;
             color: #adb5bd;
             cursor: not-allowed;
+        }
+        #saveCacheBtn:not(:disabled),
+        #saveEditsBtn:not(:disabled) {
+            background-color: #dcfce7;
+            border-color: #86efac;
+            color: #15803d;
+            font-weight: 600;
+        }
+        #saveCacheBtn:hover:not(:disabled),
+        #saveEditsBtn:hover:not(:disabled) {
+            background-color: #bbf7d0;
+            border-color: #4ade80;
+            color: #14532d;
         }
         #disableApiBtn.active {
             background-color: #f2bcb8;
@@ -2839,6 +2852,16 @@
             background-color: #f1f5f9;
             color: #0f172a;
         }
+        #editsModalSaveBtn {
+            background-color: #dcfce7;
+            border-color: #86efac;
+            color: #15803d;
+        }
+        #editsModalSaveBtn:hover {
+            background-color: #bbf7d0;
+            border-color: #4ade80;
+            color: #14532d;
+        }
 
         /* --- Trip Customizations & Actions Header --- */
         .trips-actions-row {
@@ -2898,9 +2921,15 @@
             border-color: #86efac;
         }
         .trip-action-top-btn.btn-save.has-unsaved {
-            background-color: #fefce8;
-            border-color: #fde047;
-            color: #854d0e;
+            background-color: #dcfce7;
+            border-color: #86efac;
+            color: #15803d;
+            font-weight: 600;
+        }
+        .trip-action-top-btn.btn-save.has-unsaved:hover {
+            background-color: #bbf7d0;
+            border-color: #4ade80;
+            color: #14532d;
         }
         .trip-action-top-btn.btn-manage {
             background-color: #f8fafc;
@@ -2919,15 +2948,15 @@
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background-color: #f59e0b;
-            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+            background-color: #16a34a;
+            box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25);
             display: inline-block;
             margin-left: 2px;
             animation: pulse-dot 1.8s infinite;
         }
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
+            50% { opacity: 0.3; transform: scale(1.2); }
         }
         .hidden-count-badge {
             background-color: #64748b;
@@ -4218,6 +4247,7 @@
     let tripDataStore = { customTrips: [], tripOverrides: {}, deletedTripIds: [] };
     let savedTripsSnapshot = JSON.stringify({ customTrips: [], tripOverrides: {}, deletedTripIds: [] });
     let activeTripModalContext = null; // { mode: 'edit' | 'add', trip }
+    let tripModalInitialState = null;
 
     let worldMapMode = 'pins'; // 'pins' or 'heatmap'
     let heatmapLayer = null;
@@ -9346,8 +9376,43 @@
 
             if (item.placeVisit || item.visit) {
                 document.getElementById('editEntryType').value = 'placeVisit';
-                document.getElementById('editPlaceId').value = item.placeVisit?.location?.placeId || item.visit?.topCandidate?.placeID || '';
-                document.getElementById('editPlaceName').value = item.placeVisit?.location?.name || item.visit?.topCandidate?.name || '';
+                const placeId = item.placeVisit?.location?.placeId || item.visit?.topCandidate?.placeID || item.placeVisit?.location?.placeID || '';
+                document.getElementById('editPlaceId').value = placeId;
+
+                // Determine current (detected) name
+                let detectedName = '';
+                const isIOS = !!item.visit;
+                const visitData = isIOS ? item.visit : item.placeVisit;
+                const locationData = isIOS ? visitData?.topCandidate : visitData?.location;
+                const rawSemantic = locationData?.semanticType;
+                const semanticType = typeof getCustomSemanticType === 'function' ? getCustomSemanticType(placeId, rawSemantic)?.toUpperCase() : rawSemantic?.toUpperCase();
+                const lowerName = locationData?.name?.toLowerCase();
+
+                if (semanticType === "HOME" || semanticType === "TYPE_HOME" || lowerName === "home") {
+                    detectedName = "Home";
+                } else if (semanticType === "WORK" || semanticType === "TYPE_WORK" || lowerName === "work") {
+                    detectedName = "Work";
+                } else if (item.isEdited && locationData?.name) {
+                    detectedName = locationData.name;
+                } else if (placeId && placeDetailsCache[placeId]?.displayName) {
+                    detectedName = placeDetailsCache[placeId].displayName;
+                } else if (locationData?.name && locationData.name !== 'Unknown Location') {
+                    detectedName = locationData.name;
+                } else if (placeId && placeDetailsCache[placeId]?.name) {
+                    detectedName = placeDetailsCache[placeId].name;
+                } else {
+                    const sidebarItem = document.querySelector(`.timeline-item[data-start-timestamp="${itemStart}"][data-end-timestamp="${itemEnd}"]`);
+                    const sidebarName = sidebarItem?.querySelector('strong')?.textContent?.trim();
+                    if (sidebarName && sidebarName !== 'Unknown Location') {
+                        detectedName = sidebarName;
+                    } else if (locationData?.address) {
+                        detectedName = locationData.address;
+                    } else if (placeId && placeDetailsCache[placeId]?.formattedAddress) {
+                        detectedName = placeDetailsCache[placeId].formattedAddress;
+                    }
+                }
+
+                document.getElementById('editPlaceName').value = detectedName || '';
                 // Grab existing types if available
                 const types = item.placeVisit?.location?.placeTypes || item.visit?.topCandidate?.placeTypes || [];
                 document.getElementById('editPlaceTypes').value = JSON.stringify(types);
@@ -10372,10 +10437,18 @@
         // Close on clicking backdrop
         const modal = document.getElementById('timelineEditsModal');
         if (modal) {
+            let editsModalMouseDownOnBackdrop = false;
+            modal.addEventListener('mousedown', (e) => {
+                editsModalMouseDownOnBackdrop = (e.target === modal);
+            });
+            window.addEventListener('mouseup', () => {
+                setTimeout(() => { editsModalMouseDownOnBackdrop = false; }, 0);
+            });
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
+                if (e.target === modal && editsModalMouseDownOnBackdrop) {
                     closeEditsModal();
                 }
+                editsModalMouseDownOnBackdrop = false;
             });
         }
 
@@ -15731,9 +15804,44 @@ Departed: ${end}</description>
             if (autoDatesHint) autoDatesHint.style.display = 'none';
         }
 
+        tripModalInitialState = {
+            title: titleInput ? titleInput.value : '',
+            startDate: startInput ? startInput.value : '',
+            endDate: endInput ? endInput.value : '',
+            notes: notesInput ? notesInput.value : ''
+        };
+
         modal.style.display = 'flex';
         requestAnimationFrame(() => modal.classList.add('active'));
         setTimeout(() => titleInput.focus(), 60);
+    }
+
+    function hasTripModalUnsavedChanges() {
+        if (!activeTripModalContext || !tripModalInitialState) return false;
+        const titleInput = document.getElementById('tripModalTitleInput');
+        const startInput = document.getElementById('tripModalStartDateInput');
+        const endInput = document.getElementById('tripModalEndDateInput');
+        const notesInput = document.getElementById('tripModalNotesInput');
+
+        const currentTitle = titleInput ? titleInput.value : '';
+        const currentStartDate = startInput ? startInput.value : '';
+        const currentEndDate = endInput ? endInput.value : '';
+        const currentNotes = notesInput ? notesInput.value : '';
+
+        return currentTitle !== tripModalInitialState.title ||
+               currentStartDate !== tripModalInitialState.startDate ||
+               currentEndDate !== tripModalInitialState.endDate ||
+               currentNotes !== tripModalInitialState.notes;
+    }
+
+    function attemptCloseTripEditModal() {
+        if (hasTripModalUnsavedChanges()) {
+            if (!confirm("You have unsaved changes. Are you sure you want to discard them?")) {
+                return false;
+            }
+        }
+        closeTripEditModal();
+        return true;
     }
 
     function closeTripEditModal() {
@@ -15743,6 +15851,7 @@ Departed: ${end}</description>
         setTimeout(() => {
             modal.style.display = 'none';
             activeTripModalContext = null;
+            tripModalInitialState = null;
         }, 180);
     }
 
@@ -15807,12 +15916,12 @@ Departed: ${end}</description>
     }
 
     function deleteOrHideTrip(trip) {
-        if (!trip) return;
+        if (!trip) return false;
         if (trip.isCustom) {
-            if (!confirm(`Delete custom trip "${trip.title}"?`)) return;
+            if (!confirm(`Delete custom trip "${trip.title}"?`)) return false;
             tripDataStore.customTrips = (tripDataStore.customTrips || []).filter(t => t.id !== trip.id);
         } else {
-            if (!confirm(`Hide auto-detected trip "${trip.title}"?`)) return;
+            if (!confirm(`Hide auto-detected trip "${trip.title}"?`)) return false;
             if (!tripDataStore.deletedTripIds) tripDataStore.deletedTripIds = [];
             if (!tripDataStore.deletedTripIds.includes(trip.id)) {
                 tripDataStore.deletedTripIds.push(trip.id);
@@ -15821,6 +15930,7 @@ Departed: ${end}</description>
         cachedTrips = null;
         updateTripsIndicator();
         renderTripsView();
+        return true;
     }
 
     function openTripManageModal() {
@@ -15921,12 +16031,12 @@ Departed: ${end}</description>
         // Edit Modal buttons
         const closeEditBtn = document.getElementById('closeTripEditModalBtn');
         if (closeEditBtn) {
-            closeEditBtn.addEventListener('click', closeTripEditModal);
+            closeEditBtn.addEventListener('click', attemptCloseTripEditModal);
         }
 
         const cancelEditBtn = document.getElementById('tripModalCancelBtn');
         if (cancelEditBtn) {
-            cancelEditBtn.addEventListener('click', closeTripEditModal);
+            cancelEditBtn.addEventListener('click', attemptCloseTripEditModal);
         }
 
         const saveEditBtn = document.getElementById('tripModalSaveBtn');
@@ -15938,8 +16048,9 @@ Departed: ${end}</description>
         if (deleteModalBtn) {
             deleteModalBtn.addEventListener('click', () => {
                 if (activeTripModalContext && activeTripModalContext.trip) {
-                    deleteOrHideTrip(activeTripModalContext.trip);
-                    closeTripEditModal();
+                    if (deleteOrHideTrip(activeTripModalContext.trip)) {
+                        closeTripEditModal();
+                    }
                 }
             });
         }
@@ -15960,6 +16071,7 @@ Departed: ${end}</description>
         if (resetAllBtn) {
             resetAllBtn.addEventListener('click', () => {
                 if (!activeTripModalContext || !activeTripModalContext.trip) return;
+                if (!confirm("Reset all changes for this trip back to auto-detected values?")) return;
                 const trip = activeTripModalContext.trip;
                 const tid = trip.id;
                 if (tripDataStore.tripOverrides) {
@@ -16009,15 +16121,37 @@ Departed: ${end}</description>
         // Backdrop click to close modals
         const editModal = document.getElementById('tripEditModal');
         if (editModal) {
+            let editModalMouseDownOnBackdrop = false;
+            editModal.addEventListener('mousedown', (e) => {
+                editModalMouseDownOnBackdrop = (e.target === editModal);
+            });
+            window.addEventListener('mouseup', () => {
+                setTimeout(() => {
+                    editModalMouseDownOnBackdrop = false;
+                }, 0);
+            });
             editModal.addEventListener('click', (e) => {
-                if (e.target === editModal) closeTripEditModal();
+                if (e.target === editModal && editModalMouseDownOnBackdrop) {
+                    attemptCloseTripEditModal();
+                }
+                editModalMouseDownOnBackdrop = false;
             });
         }
 
         const manageModal = document.getElementById('tripManageModal');
         if (manageModal) {
+            let manageModalMouseDownOnBackdrop = false;
+            manageModal.addEventListener('mousedown', (e) => {
+                manageModalMouseDownOnBackdrop = (e.target === manageModal);
+            });
+            window.addEventListener('mouseup', () => {
+                setTimeout(() => {
+                    manageModalMouseDownOnBackdrop = false;
+                }, 0);
+            });
             manageModal.addEventListener('click', (e) => {
-                if (e.target === manageModal) closeTripManageModal();
+                if (e.target === manageModal && manageModalMouseDownOnBackdrop) closeTripManageModal();
+                manageModalMouseDownOnBackdrop = false;
             });
         }
 
@@ -16025,7 +16159,7 @@ Departed: ${end}</description>
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (editModal && editModal.style.display !== 'none') {
-                    closeTripEditModal();
+                    attemptCloseTripEditModal();
                 } else if (manageModal && manageModal.style.display !== 'none') {
                     closeTripManageModal();
                 }
