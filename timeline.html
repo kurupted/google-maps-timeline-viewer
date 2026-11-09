@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  September 22, 2026
+        Version:  November 9, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -8598,6 +8598,7 @@
                 console.log("Place details cache saved.");
                 initialCacheSizeFromFile = Object.keys(placeDetailsCache).length;
                 updateCacheIndicator();
+                if (typeof invalidateTripCaches === 'function') invalidateTripCaches();
             } catch (error) {
                 console.error("Error saving cache:", error);
                 alert("Could not save cache data. See console for details.");
@@ -8811,6 +8812,7 @@
                         initialCacheSizeFromFile = 0;
                     }
                 }
+                if (typeof invalidateTripCaches === 'function') invalidateTripCaches();
             }
 
             // --- Step 2: Process single Timeline.json if found ---
@@ -12056,6 +12058,11 @@ Departed: ${end}</description>
         btn100.disabled = false;
         progressDoneDiv.style.display = 'block';
 
+        if (typeof invalidateTripCaches === 'function') invalidateTripCaches();
+        if (typeof renderTripsView === 'function' && tripsViewVisible) {
+            renderTripsView();
+        }
+
         checkAndRenderWorldData(); // Refresh lists and prompt visibility
     }
 
@@ -12120,6 +12127,11 @@ Departed: ${end}</description>
         btnAll.disabled = false;
         btn100.disabled = false;
         progressDoneDiv.style.display = 'block';
+
+        if (typeof invalidateTripCaches === 'function') invalidateTripCaches();
+        if (typeof renderTripsView === 'function' && tripsViewVisible) {
+            renderTripsView();
+        }
 
         checkAndRenderWorldData();
     }
@@ -12705,6 +12717,16 @@ Departed: ${end}</description>
 
     let cachedTrips = null;
     let cachedPlacesLived = null;
+    let lastPlaceCacheSizeForTrips = -1;
+    let lastPlaceCacheSizeForPlacesLived = -1;
+
+    function invalidateTripCaches() {
+        cachedTrips = null;
+        cachedPlacesLived = null;
+        lastPlaceCacheSizeForTrips = -1;
+        lastPlaceCacheSizeForPlacesLived = -1;
+    }
+    window.invalidateTripCaches = invalidateTripCaches;
     let tripMapPolyline = null;
     let tripMapPolylines = [];
     let tripMapMarkers = [];
@@ -13006,7 +13028,7 @@ Departed: ${end}</description>
         "UZ": "UZ", "Uzbekistan": "UZ",
         "VU": "VU", "Vanuatu": "VU",
         "VE": "VE", "Venezuela": "VE",
-        "VN": "VN", "Vietnam": "VN",
+        "VN": "VN", "Vietnam": "VN", "Viet Nam": "VN",
         "VG": "VG", "Virgin Islands, British": "VG", "British Virgin Islands": "VG",
         "VI": "VI", "Virgin Islands, U.S.": "VI", "U.S. Virgin Islands": "VI",
         "WF": "WF", "Wallis and Futuna": "WF",
@@ -13038,6 +13060,9 @@ Departed: ${end}</description>
         }
         if (c === "United Kingdom" || c === "Great Britain" || c === "GB") {
             return "UK";
+        }
+        if (c === "Viet Nam") {
+            return "Vietnam";
         }
         return c;
     }
@@ -13071,19 +13096,42 @@ Departed: ${end}</description>
         return cleanCity || cleanCountry || "Residence";
     }
 
-    function getCountryFlagEmoji(countryName) {
+    function getCountryIsoCode(countryName) {
         if (!countryName || countryName === "Unknown Country") return "";
-        let code = countryToIso[countryName];
-        if (!code) {
-            for (const [name, c] of Object.entries(countryToIso)) {
-                if (countryName.toLowerCase().includes(name.toLowerCase())) {
-                    code = c;
-                    break;
-                }
+        const trimmed = countryName.trim();
+        if (!trimmed) return "";
+
+        // 1. Direct exact match in countryToIso table
+        if (countryToIso[trimmed]) return countryToIso[trimmed];
+
+        const lower = trimmed.toLowerCase();
+
+        // 2. Case-insensitive exact match
+        for (const [name, iso] of Object.entries(countryToIso)) {
+            if (name.toLowerCase() === lower) {
+                return iso;
             }
         }
-        if (!code && countryName.length === 2) code = countryName.toUpperCase();
-        if (!code) return "";
+
+        // 3. Substring match ONLY for full country names (length >= 4), NEVER 2-letter ISO keys
+        for (const [name, iso] of Object.entries(countryToIso)) {
+            if (name.length >= 4 && lower.includes(name.toLowerCase())) {
+                return iso;
+            }
+        }
+
+        // 4. Standalone 2-letter ISO code
+        if (trimmed.length === 2 && /^[A-Za-z]{2}$/.test(trimmed)) {
+            const upper = trimmed.toUpperCase();
+            if (countryToIso[upper]) return upper;
+        }
+
+        return "";
+    }
+
+    function getCountryFlagEmoji(countryName) {
+        const code = getCountryIsoCode(countryName);
+        if (!code || code.length !== 2) return "";
         try {
             return code.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt(0)));
         } catch (e) {
@@ -13237,18 +13285,13 @@ Departed: ${end}</description>
                 else if (rawAddr.includes('京都市') || rawAddr.includes('京都府') || rawAddr.includes('Kyoto')) { city = 'Kyoto'; country = 'Japan'; }
                 else if (rawAddr.includes('大阪市') || rawAddr.includes('大阪府') || rawAddr.includes('Osaka')) { city = 'Osaka'; country = 'Japan'; }
                 else if (rawAddr.includes('横浜市') || rawAddr.includes('Yokohama')) { city = 'Yokohama'; country = 'Japan'; }
-                else if (rawAddr.includes('กรุงเทพมหานคร') || rawAddr.includes('Bangkok') || rawAddr.includes('บางพลี')) { city = 'Bangkok'; country = 'Thailand'; }
-                else if (rawAddr.includes('ภูเก็ต') || rawAddr.includes('Phuket')) { city = 'Phuket'; country = 'Thailand'; }
-                else if (rawAddr.includes('เชียงใหม่') || rawAddr.includes('Chiang Mai')) { city = 'Chiang Mai'; country = 'Thailand'; }
-                else if (rawAddr.includes('张家界')) { city = 'Zhangjiajie'; country = 'China'; }
-                else if (rawAddr.includes('北京')) { city = 'Beijing'; country = 'China'; }
-                else if (rawAddr.includes('上海')) { city = 'Shanghai'; country = 'China'; }
-                else if (rawAddr.includes('Hồ Chí Minh') || rawAddr.includes('Quận ')) { city = 'Ho Chi Minh City'; country = 'Vietnam'; }
                 else {
                     const parts = rawAddr.split(',').map(s => s.trim());
                     if (country === "Unknown Country" && parts.length >= 1) {
                         const last = parts[parts.length - 1].replace(/\b\d{4,6}\b/g, '').trim();
-                        if (last) country = last;
+                        if (last && typeof getCountryIsoCode === 'function' && getCountryIsoCode(last)) {
+                            country = last;
+                        }
                     }
                     if (city === "Unknown City" && parts.length >= 3) {
                         city = parts[parts.length - 3].trim();
@@ -13256,12 +13299,7 @@ Departed: ${end}</description>
                 }
             }
             if (country === "Unknown Country") {
-                if (rawAddr.includes('日本') || rawAddr.includes('Japan')) country = 'Japan';
-                else if (rawAddr.includes('中国') || rawAddr.includes('China')) country = 'China';
-                else if (rawAddr.includes('United States') || rawAddr.includes('USA')) country = 'United States';
-                else if (rawAddr.includes('ไทย') || rawAddr.includes('Thailand')) country = 'Thailand';
-                else if (rawAddr.includes('Việt Nam') || rawAddr.includes('Vietnam')) country = 'Vietnam';
-                else if (rawAddr.includes('台灣') || rawAddr.includes('Taiwan')) country = 'Taiwan';
+                //
             }
         }
 
@@ -13280,7 +13318,9 @@ Departed: ${end}</description>
 
     // Step 1: Detect Places Lived (Sorted Newest -> Oldest)
     function detectPlacesLived() {
-        if (cachedPlacesLived) return cachedPlacesLived;
+        const currentCacheSize = Object.keys(placeDetailsCache).length;
+        if (cachedPlacesLived && currentCacheSize === lastPlaceCacheSizeForPlacesLived) return cachedPlacesLived;
+        lastPlaceCacheSizeForPlacesLived = currentCacheSize;
 
         const allItems = getAllTimelineItemsChronological();
         const excludedList = getExcludedResidences();
@@ -13451,6 +13491,7 @@ Departed: ${end}</description>
         // Sort residences in order of NEWEST > OLDEST
         residences.sort((a, b) => (b.lastStayMs !== a.lastStayMs ? b.lastStayMs - a.lastStayMs : b.firstStayMs - a.firstStayMs));
         cachedPlacesLived = residences;
+        lastPlaceCacheSizeForPlacesLived = currentCacheSize;
         return residences;
     }
 
@@ -13723,6 +13764,15 @@ Departed: ${end}</description>
                         arrivalTime: p.item.endMoment.clone().tz(toTz).format("MMM D, h:mm A"),
                         pathPoints: p.loc.pathPoints || []
                     });
+
+                    // Capture destination country from arrival airport
+                    if (toAirport && toAirport.country && toAirport.country !== "Unknown Country") {
+                        if (!firstSeenCountry[toAirport.country]) firstSeenCountry[toAirport.country] = p.item.endMoment.valueOf();
+                        const lastCountry = routeCountries.length > 0 ? routeCountries[routeCountries.length - 1] : null;
+                        if (lastCountry !== toAirport.country) {
+                            routeCountries.push(toAirport.country);
+                        }
+                    }
                 }
 
                 // Break ground path at flight
@@ -13824,7 +13874,7 @@ Departed: ${end}</description>
                         cityNights[stayCity] = cityNightsDates[stayCity].size;
                         if (!firstSeenInTrip[stayCity]) firstSeenInTrip[stayCity] = p.item.startMs;
                     }
-                    if (p.loc.country && p.loc.country !== "Unknown Country") {
+                    if (p.loc.country && p.loc.country !== "Unknown Country" && (typeof getCountryIsoCode !== 'function' || getCountryIsoCode(p.loc.country))) {
                         let cntry = p.loc.country;
                         if (cntry === "Türkiye") cntry = "Turkey";
                         countryNights[cntry] = (countryNights[cntry] || 0) + 1;
@@ -13849,7 +13899,7 @@ Departed: ${end}</description>
                 }
             }
 
-            if (p.loc.country && p.loc.country !== "Unknown Country") {
+            if (p.loc.country && p.loc.country !== "Unknown Country" && (typeof getCountryIsoCode !== 'function' || getCountryIsoCode(p.loc.country))) {
                 let cntry = p.loc.country;
                 if (cntry === "Türkiye") cntry = "Turkey";
                 countryDurationMs[cntry] = (countryDurationMs[cntry] || 0) + dur;
@@ -13998,7 +14048,22 @@ Departed: ${end}</description>
             }
         }
 
-        const tripFlags = (cleanRouteCountries.length > 0 ? cleanRouteCountries : (routeCountries.length > 0 ? routeCountries : [homeCountry]))
+        let countriesForFlags = [];
+        if (nonAirportCountries.length > 0) {
+            countriesForFlags = cleanRouteCountries.filter(c => c !== homeCountry && nonAirportCountries.includes(c));
+            if (countriesForFlags.length === 0) countriesForFlags = nonAirportCountries;
+        } else {
+            const foreignRouteCountries = routeCountries.filter(c => c !== homeCountry);
+            if (foreignRouteCountries.length > 0) {
+                countriesForFlags = cleanRouteCountries.filter(c => c !== homeCountry);
+                if (countriesForFlags.length === 0) countriesForFlags = foreignRouteCountries;
+            } else {
+                countriesForFlags = cleanRouteCountries.length > 0 ? cleanRouteCountries : (routeCountries.length > 0 ? routeCountries : [homeCountry]);
+            }
+        }
+
+        const tripFlags = countriesForFlags
+            .filter(c => typeof getCountryIsoCode === 'function' && Boolean(getCountryIsoCode(c)))
             .map(c => ({
                 country: formatCountryName(c) || c,
                 emoji: getCountryFlagEmoji(c)
@@ -14085,7 +14150,9 @@ Departed: ${end}</description>
 
     // Step 2: Detect Trips
     function detectTrips() {
-        if (cachedTrips) return cachedTrips;
+        const currentCacheSize = Object.keys(placeDetailsCache).length;
+        if (cachedTrips && currentCacheSize === lastPlaceCacheSizeForTrips) return cachedTrips;
+        lastPlaceCacheSizeForTrips = currentCacheSize;
 
         const residences = detectPlacesLived();
         const allItems = getAllTimelineItemsChronological();
@@ -14390,6 +14457,7 @@ Departed: ${end}</description>
 
         trips.sort((a, b) => (Date.parse(b.startDate) || 0) - (Date.parse(a.startDate) || 0));
         cachedTrips = trips;
+        lastPlaceCacheSizeForTrips = currentCacheSize;
         return trips;
     }
 
@@ -15685,7 +15753,7 @@ Departed: ${end}</description>
         if (updateSnapshot) {
             savedTripsSnapshot = JSON.stringify(tripDataStore);
         }
-        cachedTrips = null;
+        invalidateTripCaches();
         updateTripsIndicator();
         if (typeof renderTripsView === 'function') {
             renderTripsView();
@@ -15909,7 +15977,7 @@ Departed: ${end}</description>
             }
         }
 
-        cachedTrips = null;
+        invalidateTripCaches();
         updateTripsIndicator();
         closeTripEditModal();
         renderTripsView();
@@ -15927,7 +15995,7 @@ Departed: ${end}</description>
                 tripDataStore.deletedTripIds.push(trip.id);
             }
         }
-        cachedTrips = null;
+        invalidateTripCaches();
         updateTripsIndicator();
         renderTripsView();
         return true;
