@@ -3324,6 +3324,154 @@
             gap: 10px;
             flex-wrap: wrap;
         }
+
+        /* --- Load Data Split Button & Dropdown --- */
+        .load-data-group {
+            position: relative;
+            display: inline-flex;
+            align-items: stretch;
+        }
+        .load-data-group #folderPicker {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            padding-right: 11px;
+        }
+        #loadDataMenuBtn {
+            padding: 10px 8px;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left: 1px solid rgba(255, 255, 255, 0.35);
+            font-size: 12px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #loadDataDropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+            z-index: 1200;
+            min-width: 195px;
+            padding: 4px 0;
+        }
+        #loadDataDropdown.open {
+            display: block;
+        }
+        .load-data-dropdown-item {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 9px 12px;
+            font-size: 13px;
+            color: #1e293b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-sizing: border-box;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .load-data-dropdown-item:hover:not(:disabled) {
+            background-color: #f1f5f9;
+            color: #0284c7;
+        }
+        .load-data-dropdown-item:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .load-data-dropdown-hint {
+            padding: 6px 12px 7px;
+            font-size: 11px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 3px;
+            line-height: 1.35;
+        }
+
+        /* --- Global Drag & Drop Overlay --- */
+        #drop-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9500;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        #drop-overlay.active {
+            display: flex;
+        }
+        .drop-overlay-card {
+            background: #ffffff;
+            color: #0f172a;
+            border: 2.5px dashed #3b82f6;
+            border-radius: 14px;
+            padding: 32px 42px;
+            text-align: center;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+            max-width: 420px;
+        }
+        .drop-overlay-icon {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+        .drop-overlay-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .drop-overlay-subtitle {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.45;
+        }
+
+        /* --- Toast Notification --- */
+        #app-toast {
+            position: fixed;
+            bottom: 22px;
+            right: 22px;
+            z-index: 9800;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 11px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            max-width: 420px;
+            line-height: 1.4;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        #app-toast.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        #app-toast.toast-success {
+            background: #14532d;
+            border-left: 4px solid #4ade80;
+        }
+        #app-toast.toast-info {
+            background: #1e293b;
+            border-left: 4px solid #60a5fa;
+        }
+        #app-toast.toast-warning {
+            background: #78350f;
+            border-left: 4px solid #fbbf24;
+        }
     </style>
 </head>
 <body>
@@ -3348,7 +3496,23 @@
 
         <div id="controls-container">
             <div id="controls-left">
-                <button id="folderPicker" class="control-btn">Load Data</button>
+                <div class="load-data-group">
+                    <button id="folderPicker" class="control-btn">Load Data</button>
+                    <button id="loadDataMenuBtn" class="control-btn" type="button" title="More loading options" aria-label="More loading options">▾</button>
+                    <div id="loadDataDropdown" role="menu">
+                        <button id="loadFolderOptionBtn" class="load-data-dropdown-item" type="button" role="menuitem">
+                            <span>📂</span> Select Folder
+                        </button>
+                        <button id="loadFilesOptionBtn" class="load-data-dropdown-item" type="button" role="menuitem">
+                            <span>📄</span> Select JSON File(s)
+                        </button>
+                        <div class="load-data-dropdown-hint">
+                            Tip: You can also drag &amp; drop a folder or <code>Timeline.json</code> anywhere on the page.
+                        </div>
+                    </div>
+                </div>
+                <input type="file" id="fallbackFolderInput" webkitdirectory directory multiple style="display: none;">
+                <input type="file" id="fallbackFilesInput" accept=".json,application/json" multiple style="display: none;">
                 <button id="reloadBtn" class="icon-btn" title="Reload last used folder" style="display: none;">&#x21bb;</button>
             </div>
             <div id="controls-right">
@@ -4068,12 +4232,15 @@
 
             <h3 style="color: #0056b3; margin-top: 30px; display: flex; align-items: center; gap: 8px;">📂 Loading Your Data</h3>
             <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                <p style="margin-top: 0; font-size: 14.5px;">Click the blue <strong>Load Data</strong> button on the top left and select the folder containing your Timeline data.</p>
+                <p style="margin-top: 0; font-size: 14.5px;">Click the blue <strong>Load Data</strong> button on the top left to select your Timeline folder (or use the <strong>▾</strong> menu to pick JSON files directly), or simply <strong>drag &amp; drop</strong> your folder or <code>Timeline.json</code> onto this page.</p>
                 <ul style="line-height: 1.6; margin-bottom: 0; font-size: 14px; color: #333;">
-                    <li style="margin-bottom: 8px;"><strong>For On-Device exported data:</strong> Choose the folder containing your <code>Timeline.json</code> file.<br>
-                        <span style="color: #666; font-size: 13px;"><em>Note: If your system language isn't English, Google may have named this file differently. Please rename it to <code>Timeline.json</code>.</em></span></li>
+                    <li style="margin-bottom: 8px;"><strong>For On-Device exported data:</strong> Choose the folder containing your <code>Timeline.json</code> file, or select the JSON file directly.<br>
+                        <span style="color: #666; font-size: 13px;"><em>Note: If you have companion files (<code>TimelinePlaceCache.json</code>, <code>TimelineEdits.json</code>, <code>TimelineTrips.json</code>), select the folder or select them together with your timeline file.</em></span></li>
                     <li><strong>For Google Takeout data:</strong> Navigate to <code>Takeout\Location History (Timeline)\Semantic Location History</code>. Select this main parent folder (do <strong>not</strong> navigate into the individual yearly subfolders).</li>
                 </ul>
+                <p id="firefoxUploadNote" style="display: none; margin: 12px 0 0 0; padding: 10px 12px; background-color: #fff8e6; border: 1px solid #ffe0a3; border-radius: 6px; font-size: 13px; color: #7a4f01; line-height: 1.45;">
+                    <strong>Firefox note:</strong> Firefox will ask you to "Upload" your data when you load it, but this is simply a quirk of the permission dialog &mdash; your data never leaves your computer.
+                </p>
             </div>
 
             <h3 style="color: #0056b3; margin-top: 30px; display: flex; align-items: center; gap: 8px;">🧭 Exploring Your Timeline</h3>
@@ -4140,9 +4307,8 @@
                 <p style="margin-top: 0; font-size: 14.5px;">To display accurate names, categories, and icons, the app fetches details directly from the Google Maps API. <strong>To save your API quota and drastically speed up loading next time, you must save the Place Cache!</strong></p>
                 <ul style="margin-bottom: 0; font-size: 14px;">
                     <li style="margin-bottom: 6px;">Whenever new places are fetched from Google, a <strong>Save</strong> button will light up in the bottom left corner under "Place cache".</li>
-                    <li style="margin-bottom: 6px;">Clicking this button downloads a file named <code>TimelinePlaceCache.json</code>.</li>
-                    <li><strong>Important:</strong> You must place this downloaded file and save it to the same folder as your Timeline data (overwriting any previous version).<br>
-                        <em>(Tip: If your browser automatically saves files without asking you for a destination, you will need to manually move the file into your data folder.)</em></li>
+                    <li style="margin-bottom: 6px;">In Chrome and Edge (when opened via folder selection or folder drag &amp; drop), clicking <strong>Save</strong> writes <code>TimelinePlaceCache.json</code> directly back to your data folder after you approve write access.</li>
+                    <li>In other browsers (or if write access is declined), clicking <strong>Save</strong> downloads <code>TimelinePlaceCache.json</code> so you can place it in the same folder as your Timeline data (overwriting any previous version).</li>
                 </ul>
             </div>
 
@@ -4206,6 +4372,15 @@
     </div>
 </div>
 
+<div id="drop-overlay" aria-hidden="true">
+    <div class="drop-overlay-card">
+        <div class="drop-overlay-icon">📂</div>
+        <div class="drop-overlay-title">Drop Timeline Folder or JSON Files</div>
+        <div class="drop-overlay-subtitle">Drop your Takeout folder, On-Device folder, or <code>Timeline.json</code> (plus optional cache/edits/trips files) to load.</div>
+    </div>
+</div>
+
+<div id="app-toast" role="status" aria-live="polite"></div>
 
 <script>
     // --- Global Variables ---
@@ -4229,6 +4404,8 @@
     let displayTimezone = 'default'; // User-selected timezone
     let distanceUnit = 'km'; // User-selected distance unit ('km' or 'mi')
     let storedDirHandle = null; // For storing last used directory handle
+    let activeDirHandle = null; // Real FileSystemDirectoryHandle for currently loaded folder (enables direct save-back)
+    let appToastTimer = null;
     let locationBias = null; // For biasing autocomplete results
     let lastAreaSearchResults = [];
     let lastAreaSearchMode = 'all';
@@ -4661,6 +4838,8 @@
         if (settingsBtn) settingsBtn.disabled = false;
         const folderPicker = document.getElementById('folderPicker');
         if(folderPicker) folderPicker.disabled = true;
+        const loadDataMenuBtn = document.getElementById('loadDataMenuBtn');
+        if(loadDataMenuBtn) loadDataMenuBtn.disabled = true;
         showSidebarTab('settings');
     }
 
@@ -8565,6 +8744,58 @@
         }
     }
 
+    function showToast(message, type = 'info', duration = 3800) {
+        const toast = document.getElementById('app-toast');
+        if (!toast) return;
+        if (appToastTimer) {
+            clearTimeout(appToastTimer);
+            appToastTimer = null;
+        }
+        toast.textContent = message;
+        toast.className = `toast-${type} visible`;
+        appToastTimer = setTimeout(() => {
+            toast.classList.remove('visible');
+            appToastTimer = null;
+        }, duration);
+    }
+
+    function downloadTextFile(filename, content, mimeType = 'application/json') {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async function saveJsonFileToDataFolder(filename, jsonString) {
+        if (activeDirHandle && typeof activeDirHandle.getFileHandle === 'function') {
+            try {
+                const hasPermission = await verifyPermission(activeDirHandle, true);
+                if (hasPermission) {
+                    const fileHandle = await activeDirHandle.getFileHandle(filename, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+                    console.log(`${filename} saved to data folder.`);
+                    showToast(`Saved ${filename} to your data folder.`, 'success');
+                    return { savedDirectly: true };
+                }
+                console.warn(`Write permission declined for ${filename}; falling back to browser download.`);
+            } catch (err) {
+                console.warn(`Direct save failed for ${filename}; falling back to browser download.`, err);
+            }
+        }
+
+        downloadTextFile(filename, jsonString, 'application/json');
+        console.log(`${filename} downloaded.`);
+        showToast(`Downloaded ${filename}. Move it into your data folder to keep it.`, 'info', 4500);
+        return { savedDirectly: false };
+    }
+
     function initCacheControls() {
         const disableApiBtn = document.getElementById('disableApiBtn');
         const saveCacheBtn = document.getElementById('saveCacheBtn');
@@ -8579,23 +8810,14 @@
             }
         });
 
-        saveCacheBtn.addEventListener('click', () => {
+        saveCacheBtn.addEventListener('click', async () => {
             if (Object.keys(placeDetailsCache).length === 0) {
                 alert("Cache is empty. Nothing to save.");
                 return;
             }
             try {
                 const jsonData = JSON.stringify(placeDetailsCache, null, 2); // Pretty print JSON
-                const blob = new Blob([jsonData], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'TimelinePlaceCache.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                console.log("Place details cache saved.");
+                await saveJsonFileToDataFolder('TimelinePlaceCache.json', jsonData);
                 initialCacheSizeFromFile = Object.keys(placeDetailsCache).length;
                 updateCacheIndicator();
                 if (typeof invalidateTripCaches === 'function') invalidateTripCaches();
@@ -8738,20 +8960,39 @@
             // --- Step 1: Scan for Timeline.json and TimelinePlaceCache.json at current level (non-recursive) ---
             let editsFile = null;
             let tripsFile = null;
+            let fallbackTimelineCandidate = null;
+            const companionNames = new Set([
+                'timelineplacecache.json',
+                'timelineedits.json',
+                'timelinetrips.json',
+                'timelineviewersettings.json'
+            ]);
             if (!isRecursive) {
                 await setLoadingStatus("Scanning folder for timeline data...");
                 for await (const entry of dirHandle.values()) {
                     if (entry.kind === 'file') {
-                        if (entry.name.toLowerCase() === 'timeline.json') {
+                        const lowerName = entry.name.toLowerCase();
+                        if (lowerName === 'timeline.json') {
                             timelineJsonFile = entry;
-                        } else if (entry.name.toLowerCase() === 'timelineplacecache.json') {
+                        } else if (lowerName === 'timelineplacecache.json') {
                             placeCacheFile = entry;
-                        } else if (entry.name.toLowerCase() === 'timelineedits.json') {
+                        } else if (lowerName === 'timelineedits.json') {
                             editsFile = entry;
-                        } else if (entry.name.toLowerCase() === 'timelinetrips.json') {
+                        } else if (lowerName === 'timelinetrips.json') {
                             tripsFile = entry;
+                        } else if (
+                            dirHandle._allowAnySingleJson &&
+                            !fallbackTimelineCandidate &&
+                            lowerName.endsWith('.json') &&
+                            !companionNames.has(lowerName) &&
+                            !/^\d{4}_\w+\.json$/i.test(entry.name)
+                        ) {
+                            fallbackTimelineCandidate = entry;
                         }
                     }
+                }
+                if (!timelineJsonFile && fallbackTimelineCandidate) {
+                    timelineJsonFile = fallbackTimelineCandidate;
                 }
 
                 if (editsFile) {
@@ -9296,8 +9537,12 @@
                     // Update the data source indicator text
                     updateCacheIndicator(); // Display the initial cache counts
 
-                    await saveDirectoryHandle(dirHandle);
-                    storedDirHandle = dirHandle;
+                    const isRealDirHandle = Boolean(dirHandle && typeof dirHandle.getFileHandle === 'function');
+                    activeDirHandle = isRealDirHandle ? dirHandle : null;
+                    if (isRealDirHandle) {
+                        await saveDirectoryHandle(dirHandle);
+                        storedDirHandle = dirHandle;
+                    }
 
                     populateActivityFilters();
                     displayMinMaxDates();
@@ -9476,18 +9721,9 @@
         modal.style.display = 'block';
     }
 
-    function saveEditsToFile() {
+    async function saveEditsToFile() {
         const jsonData = JSON.stringify(timelineEdits, null, 2);
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'TimelineEdits.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log("TimelineEdits.json downloaded.");
+        await saveJsonFileToDataFolder('TimelineEdits.json', jsonData);
 
         // Treat current edits as 'saved' for the remainder of the session
         initialEditsCount = (timelineEdits.additions?.length || 0) + (timelineEdits.modifications?.length || 0) + (timelineEdits.deletions?.length || 0);
@@ -10592,45 +10828,315 @@
     }
 
 
-    // Initializes the "Load Data" button
+    // Builds a duck-typed directory handle compatible with readFilesFromDirectory() from a FileList or File[]
+    function createVirtualDirHandleFromFiles(fileList, options = {}) {
+        const files = Array.from(fileList || []);
+        const root = { dirs: new Map(), files: [] };
+
+        files.forEach(file => {
+            const relPath = (file._relativePath || file.webkitRelativePath || file.name || '').replace(/\\/g, '/');
+            const parts = relPath.split('/').filter(Boolean);
+
+            let pathParts = parts;
+            if (options.stripRootFolder && parts.length > 1) {
+                pathParts = parts.slice(1);
+            }
+            if (pathParts.length === 0) return;
+
+            let node = root;
+            for (let i = 0; i < pathParts.length - 1; i++) {
+                const dirName = pathParts[i];
+                if (!node.dirs.has(dirName)) {
+                    node.dirs.set(dirName, { dirs: new Map(), files: [] });
+                }
+                node = node.dirs.get(dirName);
+            }
+            node.files.push({
+                kind: 'file',
+                name: pathParts[pathParts.length - 1],
+                getFile: async () => file
+            });
+        });
+
+        function toHandle(node, name, isRoot = false) {
+            return {
+                kind: 'directory',
+                name,
+                _isVirtual: true,
+                _allowAnySingleJson: Boolean(isRoot && options.allowAnySingleJson),
+                async *values() {
+                    for (const fileEntry of node.files) {
+                        yield fileEntry;
+                    }
+                    for (const [dirName, childNode] of node.dirs.entries()) {
+                        yield toHandle(childNode, dirName, false);
+                    }
+                }
+            };
+        }
+
+        return toHandle(root, options.rootName || 'Selected Files', true);
+    }
+
+    function readAllWebkitDirectoryEntries(dirReader) {
+        return new Promise((resolve, reject) => {
+            const allEntries = [];
+            const readBatch = () => {
+                dirReader.readEntries(entries => {
+                    if (!entries || entries.length === 0) {
+                        resolve(allEntries);
+                    } else {
+                        allEntries.push(...entries);
+                        readBatch();
+                    }
+                }, reject);
+            };
+            readBatch();
+        });
+    }
+
+    async function collectFilesFromWebkitEntry(entry, prefix = '') {
+        if (entry.isFile) {
+            return new Promise((resolve) => {
+                entry.file(
+                    file => {
+                        file._relativePath = prefix ? `${prefix}/${file.name}` : file.name;
+                        resolve([file]);
+                    },
+                    () => resolve([])
+                );
+            });
+        }
+        if (entry.isDirectory) {
+            const reader = entry.createReader();
+            const children = await readAllWebkitDirectoryEntries(reader);
+            const nextPrefix = prefix ? `${prefix}/${entry.name}` : entry.name;
+            const nested = [];
+            for (const child of children) {
+                const childFiles = await collectFilesFromWebkitEntry(child, nextPrefix);
+                nested.push(...childFiles);
+            }
+            return nested;
+        }
+        return [];
+    }
+
+    function initDragAndDrop() {
+        const dropOverlay = document.getElementById('drop-overlay');
+        if (!dropOverlay) return;
+
+        let dragDepth = 0;
+
+        const hasFiles = (e) => {
+            const types = e.dataTransfer?.types;
+            if (!types) return false;
+            return Array.from(types).includes('Files');
+        };
+
+        window.addEventListener('dragenter', (e) => {
+            if (!hasFiles(e)) return;
+            e.preventDefault();
+            dragDepth++;
+            dropOverlay.classList.add('active');
+        });
+
+        window.addEventListener('dragover', (e) => {
+            if (!hasFiles(e)) return;
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+        });
+
+        window.addEventListener('dragleave', (e) => {
+            if (!hasFiles(e)) return;
+            dragDepth = Math.max(0, dragDepth - 1);
+            if (dragDepth === 0) {
+                dropOverlay.classList.remove('active');
+            }
+        });
+
+        window.addEventListener('drop', async (e) => {
+            if (!hasFiles(e)) return;
+            e.preventDefault();
+            dragDepth = 0;
+            dropOverlay.classList.remove('active');
+
+            const folderPicker = document.getElementById('folderPicker');
+            if (folderPicker && folderPicker.disabled) return;
+
+            const items = Array.from(e.dataTransfer?.items || []);
+            // Snapshot synchronous drop data BEFORE any await (browsers clear dataTransfer after yielding)
+            const webkitEntries = items
+                .map(item => (typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null))
+                .filter(Boolean);
+            const plainFiles = Array.from(e.dataTransfer?.files || []);
+            const handlePromise = (items.length === 1 && typeof items[0].getAsFileSystemHandle === 'function')
+                ? items[0].getAsFileSystemHandle().catch(err => {
+                    console.warn('getAsFileSystemHandle failed on drop; falling back to entry/file reader.', err);
+                    return null;
+                })
+                : null;
+
+            // 1. Prefer real FileSystemDirectoryHandle when a single folder is dropped in Chromium (enables direct save-back)
+            if (handlePromise) {
+                const handle = await handlePromise;
+                if (handle && handle.kind === 'directory') {
+                    await readFilesFromDirectory(handle);
+                    return;
+                }
+            }
+
+            // 2. Fallback: webkitGetAsEntry (supports folders in Firefox/Safari & mixed drops)
+            if (webkitEntries.length > 0) {
+                const droppedSingleDir = webkitEntries.length === 1 && webkitEntries[0].isDirectory;
+                const collectedFiles = [];
+                for (const entry of webkitEntries) {
+                    const files = await collectFilesFromWebkitEntry(entry, '');
+                    collectedFiles.push(...files);
+                }
+                if (collectedFiles.length > 0) {
+                    const virtualHandle = createVirtualDirHandleFromFiles(collectedFiles, {
+                        stripRootFolder: droppedSingleDir,
+                        allowAnySingleJson: !droppedSingleDir
+                    });
+                    await readFilesFromDirectory(virtualHandle);
+                    return;
+                }
+            }
+
+            // 3. Final fallback: plain FileList
+            if (plainFiles.length > 0) {
+                const virtualHandle = createVirtualDirHandleFromFiles(plainFiles, {
+                    stripRootFolder: false,
+                    allowAnySingleJson: true
+                });
+                await readFilesFromDirectory(virtualHandle);
+            }
+        });
+    }
+
+    // Initializes the "Load Data" button, fallback inputs, and drag-and-drop
     async function initFolderPicker() {
         const folderPicker = document.getElementById('folderPicker');
+        const loadDataMenuBtn = document.getElementById('loadDataMenuBtn');
+        const loadDataDropdown = document.getElementById('loadDataDropdown');
+        const loadFolderOptionBtn = document.getElementById('loadFolderOptionBtn');
+        const loadFilesOptionBtn = document.getElementById('loadFilesOptionBtn');
+        const fallbackFolderInput = document.getElementById('fallbackFolderInput');
+        const fallbackFilesInput = document.getElementById('fallbackFilesInput');
         const reloadBtn = document.getElementById('reloadBtn');
 
-        // Check if showDirectoryPicker is supported
-        if ('showDirectoryPicker' in window) {
-            folderPicker.addEventListener('click', async () => {
+        const supportsNativeDirPicker = 'showDirectoryPicker' in window;
+        const supportsWebkitDirectory = Boolean(fallbackFolderInput && 'webkitdirectory' in fallbackFolderInput);
+        const isLikelyMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
+        const closeLoadDropdown = () => {
+            if (loadDataDropdown) loadDataDropdown.classList.remove('open');
+        };
+
+        const openFolderPicker = async () => {
+            closeLoadDropdown();
+            if (supportsNativeDirPicker) {
                 try {
-                    // Options for directory picker
                     const opts = {
                         mode: 'read',
-                        startIn: storedDirHandle || 'documents' // Suggest last used handle or a default
+                        startIn: storedDirHandle || 'documents'
                     };
-                    // Show the directory picker dialog
                     const dirHandle = await window.showDirectoryPicker(opts);
-                    // Start processing the selected directory
-                    await readFilesFromDirectory(dirHandle); // Pass the handle to the processing function
+                    await readFilesFromDirectory(dirHandle);
                 } catch (err) {
-                    // Handle errors, including user cancellation
                     if (err.name === 'AbortError') {
                         console.log('Folder selection cancelled by user.');
                     } else {
                         console.error('Error selecting folder:', err);
                         alert(`Could not select folder: ${err.message}`);
                     }
-                    // Ensure loading overlay is hidden if selection fails/is cancelled before processing starts
                     document.getElementById('loading-overlay').style.display = "none";
-                    // Keep UI disabled if it failed before any data was loaded
-                    if(Object.keys(timelineData).length === 0) setUIEnabled(false);
+                    if (Object.keys(timelineData).length === 0) setUIEnabled(false);
                 }
+            } else if (supportsWebkitDirectory) {
+                fallbackFolderInput.value = '';
+                fallbackFolderInput.click();
+            } else if (fallbackFilesInput) {
+                fallbackFilesInput.value = '';
+                fallbackFilesInput.click();
+            }
+        };
+
+        const openFilesPicker = () => {
+            closeLoadDropdown();
+            if (fallbackFilesInput) {
+                fallbackFilesInput.value = '';
+                fallbackFilesInput.click();
+            }
+        };
+
+        // Primary button: folder picker on desktop (native or webkitdirectory), file picker on mobile without directory support
+        folderPicker.addEventListener('click', () => {
+            if (!supportsNativeDirPicker && (isLikelyMobile || !supportsWebkitDirectory)) {
+                openFilesPicker();
+            } else {
+                openFolderPicker();
+            }
+        });
+
+        if (loadDataMenuBtn && loadDataDropdown) {
+            loadDataMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                loadDataDropdown.classList.toggle('open');
             });
 
-            // Add listener for the reload button
+            document.addEventListener('click', (e) => {
+                if (!loadDataDropdown.contains(e.target) && !loadDataMenuBtn.contains(e.target)) {
+                    closeLoadDropdown();
+                }
+            });
+        }
+
+        if (loadFolderOptionBtn) {
+            if (!supportsNativeDirPicker && !supportsWebkitDirectory) {
+                loadFolderOptionBtn.disabled = true;
+                loadFolderOptionBtn.title = 'Folder selection is not supported in this browser; use Select JSON File(s).';
+            } else {
+                loadFolderOptionBtn.addEventListener('click', openFolderPicker);
+            }
+        }
+
+        if (loadFilesOptionBtn) {
+            loadFilesOptionBtn.addEventListener('click', openFilesPicker);
+        }
+
+        if (fallbackFolderInput) {
+            fallbackFolderInput.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+                const virtualHandle = createVirtualDirHandleFromFiles(files, {
+                    stripRootFolder: true,
+                    allowAnySingleJson: false
+                });
+                await readFilesFromDirectory(virtualHandle);
+                fallbackFolderInput.value = '';
+            });
+        }
+
+        if (fallbackFilesInput) {
+            fallbackFilesInput.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+                const virtualHandle = createVirtualDirHandleFromFiles(files, {
+                    stripRootFolder: false,
+                    allowAnySingleJson: true
+                });
+                await readFilesFromDirectory(virtualHandle);
+                fallbackFilesInput.value = '';
+            });
+        }
+
+        // Reload button (available when native File System Access API is supported)
+        if (supportsNativeDirPicker && reloadBtn) {
             reloadBtn.addEventListener('click', async () => {
                 if (storedDirHandle) {
                     console.log("Reloading from stored directory handle.");
-                    // Verify permission - this will re-prompt the user if needed
-                    if (await verifyPermission(storedDirHandle, false)) { // Ask for READ-ONLY
+                    if (await verifyPermission(storedDirHandle, false)) {
                         await readFilesFromDirectory(storedDirHandle);
                     } else {
                         console.warn("Permission to reload directory was denied.");
@@ -10640,14 +11146,9 @@
                     alert("No previous folder is stored. Please choose a folder first.");
                 }
             });
-
-        } else {
-            // Fallback or message for unsupported browsers
-            folderPicker.disabled = true;
-            folderPicker.textContent = 'Folder Picker Not Supported';
-            console.warn('window.showDirectoryPicker is not supported in this browser.');
-            alert('Your browser does not support the File System Access API needed to select folders. Please try a different browser (like Chrome or Edge).');
         }
+
+        initDragAndDrop();
     }
 
     // --- IndexedDB Functions for Directory Handle & Settings ---
@@ -15760,7 +16261,7 @@ Departed: ${end}</description>
         }
     }
 
-    function saveTripDataToFile() {
+    async function saveTripDataToFile() {
         const dataToSave = {
             version: 1,
             customTrips: tripDataStore.customTrips || [],
@@ -15768,16 +16269,7 @@ Departed: ${end}</description>
             deletedTripIds: tripDataStore.deletedTripIds || []
         };
         const jsonData = JSON.stringify(dataToSave, null, 2);
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'TimelineTrips.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log("TimelineTrips.json downloaded.");
+        await saveJsonFileToDataFolder('TimelineTrips.json', jsonData);
 
         savedTripsSnapshot = JSON.stringify(tripDataStore);
         updateTripsIndicator();
@@ -16246,6 +16738,8 @@ Departed: ${end}</description>
                 setUIEnabled(false);
                 const folderPicker = document.getElementById('folderPicker');
                 if(folderPicker) folderPicker.disabled = true;
+                const loadDataMenuBtn = document.getElementById('loadDataMenuBtn');
+                if(loadDataMenuBtn) loadDataMenuBtn.disabled = true;
                 return;
             }
 
@@ -16446,6 +16940,11 @@ Departed: ${end}</description>
     }
 
     window.onload = function() {
+        const ua = navigator.userAgent || '';
+        if (/Firefox\//i.test(ua) && !/Seamonkey\//i.test(ua)) {
+            const firefoxNote = document.getElementById('firefoxUploadNote');
+            if (firefoxNote) firefoxNote.style.display = 'block';
+        }
         initializeApp();
     };
 
