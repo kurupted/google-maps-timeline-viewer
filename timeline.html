@@ -27,7 +27,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.43/moment-timezone-with-data.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simpleheat@0.4.0/simpleheat.min.js"></script>
     <script src="https://unpkg.com/tz-lookup@6.1.25/tz.js"></script>
 
     <style>
@@ -3472,22 +3472,135 @@
             background: #78350f;
             border-left: 4px solid #fbbf24;
         }
+
+        /* --- OpenStreetMap / Leaflet Mode Styles --- */
+        .api-key-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 14px 0 12px;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .api-key-divider::before,
+        .api-key-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .api-key-divider span {
+            padding: 0 10px;
+        }
+        #useOsmModeBtn {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: #16a34a;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #useOsmModeBtn:hover {
+            background-color: #15803d;
+        }
+        .osm-mode-note {
+            font-size: 11.5px;
+            color: #64748b;
+            margin: 6px 0 0;
+            line-height: 1.4;
+        }
+        .osm-pin-wrapper {
+            background: transparent;
+            border: none;
+        }
+        .osm-pin {
+            position: relative;
+            width: 26px;
+            height: 26px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+            border: 2px solid #ffffff;
+            box-sizing: border-box;
+        }
+        .osm-pin-inner {
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            line-height: 1;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .osm-pin-inner img {
+            width: 13px;
+            height: 13px;
+            object-fit: contain;
+        }
+        .osm-arrow-icon {
+            background: transparent;
+            border: none;
+            pointer-events: none;
+        }
+        .osm-vertex-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2.5px solid #007bff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+            cursor: move;
+            box-sizing: border-box;
+        }
+        .osm-midpoint-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.72);
+            border: 2px solid rgba(0, 123, 255, 0.75);
+            cursor: copy;
+            box-sizing: border-box;
+        }
+        .leaflet-container {
+            font-family: inherit;
+        }
+        .leaflet-popup-content {
+            margin: 10px 12px;
+        }
+        #map.osm-dark-tiles {
+            background: #1a1d24;
+        }
+        #map.osm-dark-tiles .leaflet-tile-pane {
+            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+        }
     </style>
 </head>
 <body>
 
 <div id="apiKeyModal">
     <div class="modal-content">
-        <h3 id="apiKeyModalTitle">Enter API Key</h3>
-        <p id="apiKeyModalMessage">A Google Maps API Key is required. Please enter it below to continue.</p>
+        <h3 id="apiKeyModalTitle">Choose Map Provider / API Key</h3>
+        <p id="apiKeyModalMessage">Enter a Google Maps API key for full Google Maps &amp; Places details, or continue with OpenStreetMap (no API key required).</p>
         <p id="apiKeyModalHelp" class="settings-help">For details on how to obtain a key, please see the <a href="https://github.com/kurupted/google-maps-timeline-viewer/" target="_blank" rel="noopener">project page</a>.</p>
-        <input type="text" id="apiKeyInput" placeholder="Paste your API key here">
+        <input type="text" id="apiKeyInput" placeholder="Paste your Google Maps API key here">
         <label class="remember-key">
             <input type="checkbox" id="rememberApiKey" checked>
-            Remember this key in this browser
+            Remember this choice in this browser
         </label>
-        <button id="apiKeySubmit">Submit</button>
+        <button id="apiKeySubmit">Use Google Maps Key</button>
         <button id="apiKeyCancel" class="secondary" style="display: none;">Cancel</button>
+        <div id="osmModeSection">
+            <div class="api-key-divider"><span>or</span></div>
+            <button id="useOsmModeBtn" type="button">🗺️ Continue with OpenStreetMap</button>
+            <p class="osm-mode-note">No API key needed. Uses your saved Place Cache if present; uncached places appear without Google Places lookups.</p>
+        </div>
     </div>
 </div>
 
@@ -3768,6 +3881,13 @@
             <div id="settingsView">
                 <div id="settingsHeader">
                 </div>
+                <h4>Map Provider</h4>
+                <label for="map-provider-select">Basemap &amp; Places engine:</label>
+                <select id="map-provider-select" style="width: 100%; padding: 8px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #ced4da; font-size: 14px;">
+                    <option value="google">Google Maps (API Key Required)</option>
+                    <option value="osm">OpenStreetMap (No API Key Needed)</option>
+                </select>
+                <p id="mapProviderHelp" class="settings-help" style="margin-bottom: 12px;">Switch between Google Maps (with Google Places lookups) and OpenStreetMap tiles (Leaflet).</p>
                 <h4>Google Maps API Key</h4>
                 <p id="apiKeyStatus" class="settings-help"></p>
                 <div class="settings-button-row">
@@ -4458,6 +4578,8 @@
 
     const API_KEY_PLACEHOLDER = 'YOUR_API_KEY';
     const API_KEY_STORAGE_KEY = 'googleMapsApiKey';
+    const MAP_PROVIDER_STORAGE_KEY = 'mapProvider';
+    let activeMapProvider = 'google'; // 'google' | 'osm'
     const API_KEY_SOURCE = Object.freeze({
         MISSING: 'missing',
         LOCAL_CONFIG: 'localConfig',
@@ -4644,12 +4766,27 @@
     }
 
     async function resolveGoogleMapsApiKey() {
+        try {
+            const sessionProvider = sessionStorage.getItem('mapProviderSession');
+            const sessionKey = sessionStorage.getItem('googleMapsSessionApiKey');
+            if (sessionProvider === 'google' && isUsableApiKey(sessionKey)) {
+                sessionStorage.removeItem('mapProviderSession');
+                sessionStorage.removeItem('googleMapsSessionApiKey');
+                return { provider: 'google', key: normalizeApiKey(sessionKey), source: API_KEY_SOURCE.SESSION };
+            }
+        } catch (e) {}
+
+        const storedProvider = await getSetting(MAP_PROVIDER_STORAGE_KEY);
+        if (storedProvider === 'osm') {
+            return { provider: 'osm', key: '', source: API_KEY_SOURCE.MISSING };
+        }
+
         const configuredKey = getConfiguredApiKey();
-        if (configuredKey) return configuredKey;
+        if (configuredKey) return { provider: 'google', ...configuredKey };
 
         const storedKey = await getSetting(API_KEY_STORAGE_KEY);
         if (isUsableApiKey(storedKey)) {
-            return { key: normalizeApiKey(storedKey), source: API_KEY_SOURCE.BROWSER_STORAGE };
+            return { provider: 'google', key: normalizeApiKey(storedKey), source: API_KEY_SOURCE.BROWSER_STORAGE };
         }
 
         return await promptForApiKey();
@@ -4665,8 +4802,10 @@
             const help = document.getElementById('apiKeyModalHelp');
             const submit = document.getElementById('apiKeySubmit');
             const cancel = document.getElementById('apiKeyCancel');
+            const osmSection = document.getElementById('osmModeSection');
+            const osmBtn = document.getElementById('useOsmModeBtn');
 
-            title.textContent = options.title || 'Enter API Key';
+            title.textContent = options.title || 'Choose Map Provider / API Key';
             if (options.message) {
                 message.textContent = options.message;
             }
@@ -4677,11 +4816,15 @@
                 help.textContent = options.help;
             }
             cancel.style.display = options.allowCancel ? 'inline-block' : 'none';
+            if (osmSection) {
+                osmSection.style.display = options.hideOsmOption ? 'none' : 'block';
+            }
 
             const cleanup = () => {
                 submit.removeEventListener('click', submitKey);
                 cancel.removeEventListener('click', cancelKey);
                 input.removeEventListener('keydown', handleKeydown);
+                if (osmBtn) osmBtn.removeEventListener('click', selectOsmMode);
             };
 
             const cancelKey = () => {
@@ -4690,10 +4833,19 @@
                 resolve(null);
             };
 
+            const selectOsmMode = async () => {
+                if (remember.checked) {
+                    await saveSetting(MAP_PROVIDER_STORAGE_KEY, 'osm');
+                }
+                modal.style.display = 'none';
+                cleanup();
+                resolve({ provider: 'osm', key: '', source: API_KEY_SOURCE.MISSING });
+            };
+
             const submitKey = async () => {
                 const apiKey = normalizeApiKey(input.value);
                 if (!isUsableApiKey(apiKey)) {
-                    alert('Please enter a valid Google Maps API key.');
+                    alert('Please enter a valid Google Maps API key, or click "Continue with OpenStreetMap".');
                     input.focus();
                     return;
                 }
@@ -4701,6 +4853,7 @@
                 let saved = false;
                 if (remember.checked) {
                     saved = await saveSetting(API_KEY_STORAGE_KEY, apiKey);
+                    await saveSetting(MAP_PROVIDER_STORAGE_KEY, 'google');
                     if (!saved) {
                         if (options.forceRemember) {
                             alert('The API key could not be saved in this browser. The current key was not changed.');
@@ -4713,7 +4866,7 @@
 
                 modal.style.display = 'none';
                 cleanup();
-                resolve({ key: apiKey, source: saved ? API_KEY_SOURCE.BROWSER_STORAGE : API_KEY_SOURCE.SESSION });
+                resolve({ provider: 'google', key: apiKey, source: saved ? API_KEY_SOURCE.BROWSER_STORAGE : API_KEY_SOURCE.SESSION });
             };
 
             const handleKeydown = event => {
@@ -4723,6 +4876,7 @@
             submit.addEventListener('click', submitKey);
             cancel.addEventListener('click', cancelKey);
             input.addEventListener('keydown', handleKeydown);
+            if (osmBtn) osmBtn.addEventListener('click', selectOsmMode);
             modal.style.display = 'flex';
             setTimeout(() => input.focus(), 0);
         });
@@ -4760,7 +4914,668 @@
         });
     }
 
+    // --- OpenStreetMap (Leaflet) Dynamic Loader & Compatibility Shim ---
+    function loadExternalCss(href) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`link[href="${href}"]`)) { resolve(); return; }
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = () => resolve();
+            link.onerror = () => reject(new Error(`Failed to load stylesheet: ${href}`));
+            document.head.appendChild(link);
+        });
+    }
+
+    function loadExternalScript(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+            document.head.appendChild(script);
+        });
+    }
+
+    async function loadLeafletLibraries() {
+        await loadExternalCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+        await loadExternalScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+    }
+
+    function installOpenStreetMapShim() {
+        const L = window.L;
+        if (!L) throw new Error('Leaflet library failed to load.');
+
+        const toLatLngObj = (val) => {
+            if (!val) return null;
+            if (typeof val.lat === 'function' && typeof val.lng === 'function') {
+                return { lat: Number(val.lat()), lng: Number(val.lng()) };
+            }
+            if (Array.isArray(val) && val.length >= 2) {
+                return { lat: Number(val[0]), lng: Number(val[1]) };
+            }
+            if (typeof val.lat !== 'undefined' && typeof val.lng !== 'undefined') {
+                return { lat: Number(val.lat), lng: Number(val.lng) };
+            }
+            return null;
+        };
+
+        class OsmLatLng {
+            constructor(lat, lng) {
+                if (typeof lat === 'object' && lat !== null) {
+                    const p = toLatLngObj(lat);
+                    this._lat = p ? p.lat : NaN;
+                    this._lng = p ? p.lng : NaN;
+                } else {
+                    this._lat = Number(lat);
+                    this._lng = Number(lng);
+                }
+            }
+            lat() { return this._lat; }
+            lng() { return this._lng; }
+            equals(other) {
+                const p = toLatLngObj(other);
+                return Boolean(p && Math.abs(this._lat - p.lat) < 1e-9 && Math.abs(this._lng - p.lng) < 1e-9);
+            }
+            toJSON() { return { lat: this._lat, lng: this._lng }; }
+        }
+
+        class OsmLatLngBounds {
+            constructor() {
+                this._bounds = L.latLngBounds([]);
+            }
+            extend(pt) {
+                const p = toLatLngObj(pt);
+                if (p && Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+                    this._bounds.extend([p.lat, p.lng]);
+                }
+                return this;
+            }
+            isEmpty() {
+                return !this._bounds.isValid();
+            }
+            getCenter() {
+                if (!this._bounds.isValid()) return new OsmLatLng(0, 0);
+                const c = this._bounds.getCenter();
+                return new OsmLatLng(c.lat, c.lng);
+            }
+            getNorthEast() {
+                if (!this._bounds.isValid()) return new OsmLatLng(0, 0);
+                const ne = this._bounds.getNorthEast();
+                return new OsmLatLng(ne.lat, ne.lng);
+            }
+            getSouthWest() {
+                if (!this._bounds.isValid()) return new OsmLatLng(0, 0);
+                const sw = this._bounds.getSouthWest();
+                return new OsmLatLng(sw.lat, sw.lng);
+            }
+            contains(pt) {
+                if (!this._bounds.isValid()) return false;
+                const p = toLatLngObj(pt);
+                if (!p || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return false;
+                return this._bounds.contains([p.lat, p.lng]);
+            }
+            _toLeafletBounds() {
+                return this._bounds;
+            }
+        }
+
+        const shouldUseDarkOsmTheme = (theme) => {
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            return theme === 'DARK' || (theme === 'FOLLOW_SYSTEM' && prefersDark);
+        };
+
+        class OsmMap {
+            constructor(container, opts = {}) {
+                this._container = container;
+                const center = toLatLngObj(opts.center) || { lat: 25.03417, lng: 121.56456 };
+                const zoom = typeof opts.zoom === 'number' ? opts.zoom : 12;
+                this._lmap = L.map(container, {
+                    center: [center.lat, center.lng],
+                    zoom: zoom,
+                    zoomControl: opts.zoomControl !== false,
+                    preferCanvas: true
+                });
+                const osmHotLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/">HOT</a>',
+                    subdomains: 'abc',
+                    maxZoom: 19
+                });
+                const esriStreetLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, &copy; OpenStreetMap contributors',
+                    maxZoom: 19
+                });
+                const esriSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+                    maxZoom: 19
+                });
+
+                const googleMapsSwitchLayer = L.layerGroup();
+
+                this._isSatellite = false;
+                this._activeTheme = opts.colorScheme || currentMapTheme || 'FOLLOW_SYSTEM';
+                this._tileLayer = esriStreetLayer.addTo(this._lmap);
+                this._lastOsmLayer = esriStreetLayer;
+
+                L.control.layers(
+                    {
+                        'Esri Street Map': esriStreetLayer,
+                        'OpenStreetMap': osmHotLayer,
+                        'Satellite': esriSatelliteLayer,
+                        'Google Maps': googleMapsSwitchLayer
+                    },
+                    null,
+                    { position: 'topright' }
+                ).addTo(this._lmap);
+
+                this._lmap.on('baselayerchange', async (e) => {
+                    if (e.name === 'Google Maps') {
+                        // Restore the previous Leaflet basemap immediately while handling the switch
+                        const prevLayer = this._lastOsmLayer || esriStreetLayer;
+                        setTimeout(() => {
+                            if (this._lmap.hasLayer(googleMapsSwitchLayer)) {
+                                this._lmap.removeLayer(googleMapsSwitchLayer);
+                            }
+                            if (!this._lmap.hasLayer(prevLayer)) {
+                                prevLayer.addTo(this._lmap);
+                            }
+                        }, 0);
+
+                        const configuredKey = getConfiguredApiKey();
+                        const storedKey = await getSetting(API_KEY_STORAGE_KEY);
+                        if (configuredKey || isUsableApiKey(storedKey)) {
+                            await saveSetting(MAP_PROVIDER_STORAGE_KEY, 'google');
+                            window.location.reload();
+                            return;
+                        }
+
+                        const resolved = await promptForApiKey({
+                            title: 'Enter Google Maps API Key',
+                            message: 'Enter a Google Maps API key to switch to Google Maps & Places.',
+                            allowCancel: true,
+                            hideOsmOption: true
+                        });
+                        if (!resolved || !isUsableApiKey(resolved.key)) return;
+
+                        if (resolved.source === API_KEY_SOURCE.SESSION) {
+                            try {
+                                sessionStorage.setItem('mapProviderSession', 'google');
+                                sessionStorage.setItem('googleMapsSessionApiKey', resolved.key);
+                            } catch (err) {}
+                        } else {
+                            await saveSetting(MAP_PROVIDER_STORAGE_KEY, 'google');
+                        }
+                        window.location.reload();
+                        return;
+                    }
+
+                    this._lastOsmLayer = e.layer;
+                    this._isSatellite = (e.name === 'Satellite');
+                    this.setOsmTheme(this._activeTheme);
+                });
+
+                this.setOsmTheme(this._activeTheme);
+            }
+            setOsmTheme(theme) {
+                this._activeTheme = theme;
+                if (this._container && this._container.classList) {
+                    const applyDark = !this._isSatellite && shouldUseDarkOsmTheme(theme);
+                    this._container.classList.toggle('osm-dark-tiles', applyDark);
+                }
+            }
+            setCenter(pos) {
+                const p = toLatLngObj(pos);
+                if (p && Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+                    this._lmap.setView([p.lat, p.lng], this._lmap.getZoom());
+                }
+            }
+            getCenter() {
+                const c = this._lmap.getCenter();
+                return new OsmLatLng(c.lat, c.lng);
+            }
+            setZoom(z) {
+                if (typeof z === 'number' && Number.isFinite(z)) {
+                    this._lmap.setZoom(z);
+                }
+            }
+            getZoom() {
+                return this._lmap.getZoom();
+            }
+            fitBounds(bounds, padding = 30) {
+                const lb = bounds && bounds._toLeafletBounds ? bounds._toLeafletBounds() : bounds;
+                if (lb && lb.isValid && lb.isValid()) {
+                    const pad = typeof padding === 'number' ? [padding, padding] : [30, 30];
+                    this._lmap.fitBounds(lb, { padding: pad });
+                }
+            }
+            getBounds() {
+                const lb = this._lmap.getBounds();
+                const b = new OsmLatLngBounds();
+                if (lb && lb.isValid()) {
+                    const sw = lb.getSouthWest();
+                    const ne = lb.getNorthEast();
+                    b.extend({ lat: sw.lat, lng: sw.lng });
+                    b.extend({ lat: ne.lat, lng: ne.lng });
+                }
+                return b;
+            }
+            addListener(eventName, handler) {
+                const mapped = eventName === 'zoom_changed' ? 'zoomend' : (eventName === 'idle' ? 'moveend' : eventName);
+                const wrapped = (e) => {
+                    const payload = e && e.latlng ? { latLng: new OsmLatLng(e.latlng.lat, e.latlng.lng) } : {};
+                    handler(payload);
+                };
+                this._lmap.on(mapped, wrapped);
+                return { remove: () => this._lmap.off(mapped, wrapped) };
+            }
+        }
+
+        class OsmPinElement {
+            constructor(opts = {}) {
+                const bg = opts.background || '#4285F4';
+                const border = opts.borderColor || '#ffffff';
+                const scale = typeof opts.scale === 'number' ? opts.scale : 1;
+                const size = Math.max(14, Math.round(26 * scale));
+                const wrap = document.createElement('div');
+                wrap.className = 'osm-pin';
+                wrap.style.width = `${size}px`;
+                wrap.style.height = `${size}px`;
+                wrap.style.background = bg;
+                wrap.style.borderColor = border;
+
+                const inner = document.createElement('div');
+                inner.className = 'osm-pin-inner';
+                if (opts.glyphColor) inner.style.color = opts.glyphColor;
+
+                if (opts.glyph instanceof HTMLElement) {
+                    inner.appendChild(opts.glyph.cloneNode(true));
+                } else if (opts.glyph instanceof URL || (typeof opts.glyph === 'string' && /^https?:\/\//.test(opts.glyph))) {
+                    const img = document.createElement('img');
+                    img.src = opts.glyph.toString();
+                    img.alt = '';
+                    inner.appendChild(img);
+                } else if (typeof opts.glyph === 'string' && opts.glyph.length > 0) {
+                    inner.textContent = opts.glyph;
+                    inner.style.fontSize = `${Math.max(9, Math.round(12 * scale))}px`;
+                }
+                wrap.appendChild(inner);
+                this.element = wrap;
+                this._size = size;
+            }
+        }
+
+        class OsmAdvancedMarkerElement {
+            constructor(opts = {}) {
+                const pos = toLatLngObj(opts.position) || { lat: 0, lng: 0 };
+                this._position = new OsmLatLng(pos.lat, pos.lng);
+                this._map = null;
+                this._title = opts.title || '';
+
+                let htmlStr = '';
+                let iconSize = [26, 26];
+                if (opts.content instanceof HTMLElement) {
+                    htmlStr = opts.content.outerHTML;
+                    const w = parseInt(opts.content.style.width, 10) || 26;
+                    iconSize = [w, w];
+                } else {
+                    const defaultPin = new OsmPinElement({ background: '#EA4335', scale: 0.9 });
+                    htmlStr = defaultPin.element.outerHTML;
+                    iconSize = [defaultPin._size, defaultPin._size];
+                }
+
+                const icon = L.divIcon({
+                    className: 'osm-pin-wrapper',
+                    html: htmlStr,
+                    iconSize: iconSize,
+                    iconAnchor: [iconSize[0] / 2, iconSize[1]]
+                });
+
+                this._props = {};
+                this._layer = L.marker([pos.lat, pos.lng], { icon, title: this._title });
+                if (opts.map) this.map = opts.map;
+            }
+            set(k, v) { this._props[k] = v; }
+            get(k) { return this._props[k]; }
+            get position() { return this._position; }
+            set position(val) {
+                const p = toLatLngObj(val);
+                if (p) {
+                    this._position = new OsmLatLng(p.lat, p.lng);
+                    this._layer.setLatLng([p.lat, p.lng]);
+                }
+            }
+            getPosition() { return this._position; }
+            get map() { return this._map; }
+            set map(m) {
+                if (this._map && this._map._lmap) {
+                    this._map._lmap.removeLayer(this._layer);
+                }
+                this._map = m || null;
+                if (this._map && this._map._lmap) {
+                    this._layer.addTo(this._map._lmap);
+                }
+            }
+            setMap(m) { this.map = m; }
+            addListener(eventName, handler) {
+                const evt = eventName === 'gmp-click' ? 'click' : eventName;
+                this._layer.on(evt, (e) => {
+                    handler({ latLng: this._position, domEvent: e.originalEvent });
+                });
+                return { remove: () => this._layer.off(evt) };
+            }
+            addEventListener(eventName, handler) {
+                return this.addListener(eventName, handler);
+            }
+        }
+
+        class OsmMarker {
+            constructor(opts = {}) {
+                const pos = toLatLngObj(opts.position) || { lat: 0, lng: 0 };
+                this._position = new OsmLatLng(pos.lat, pos.lng);
+                this._map = null;
+
+                if (opts.icon && opts.icon.path === 'CIRCLE') {
+                    this._layer = L.circleMarker([pos.lat, pos.lng], {
+                        radius: opts.icon.scale || 6,
+                        fillColor: opts.icon.fillColor || '#4285F4',
+                        fillOpacity: opts.icon.fillOpacity ?? 0.9,
+                        color: opts.icon.strokeColor || '#ffffff',
+                        weight: opts.icon.strokeWeight ?? 1.5
+                    });
+                } else {
+                    const labelText = typeof opts.label === 'string' ? opts.label : (opts.label?.text || '');
+                    const pin = new OsmPinElement({ background: '#4285F4', glyph: labelText, scale: 0.95 });
+                    const icon = L.divIcon({
+                        className: 'osm-pin-wrapper',
+                        html: pin.element.outerHTML,
+                        iconSize: [pin._size, pin._size],
+                        iconAnchor: [pin._size / 2, pin._size]
+                    });
+                    this._layer = L.marker([pos.lat, pos.lng], { icon, title: opts.title || '' });
+                }
+
+                this._props = {};
+                if (opts.map) this.setMap(opts.map);
+            }
+            set(k, v) { this._props[k] = v; }
+            get(k) { return this._props[k]; }
+            get position() { return this._position; }
+            getPosition() { return this._position; }
+            get map() { return this._map; }
+            set map(m) { this.setMap(m); }
+            setMap(m) {
+                if (this._map && this._map._lmap) {
+                    this._map._lmap.removeLayer(this._layer);
+                }
+                this._map = m || null;
+                if (this._map && this._map._lmap) {
+                    this._layer.addTo(this._map._lmap);
+                }
+            }
+            addListener(eventName, handler) {
+                this._layer.on(eventName, () => handler({ latLng: this._position }));
+                return { remove: () => this._layer.off(eventName) };
+            }
+        }
+
+        class OsmPolyline {
+            constructor(opts = {}) {
+                this._coords = (opts.path || []).map(toLatLngObj).filter(p => p && Number.isFinite(p.lat) && Number.isFinite(p.lng));
+                this._map = null;
+                this._editable = Boolean(opts.editable);
+                this._arrowLayers = [];
+                this._editMarkers = [];
+                this._rightClickHandlers = [];
+
+                this._style = {
+                    color: opts.strokeColor || '#4285F4',
+                    opacity: opts.strokeOpacity ?? 0.85,
+                    weight: opts.strokeWeight ?? 4
+                };
+
+                this._props = {};
+                this._layer = L.polyline(this._coords.map(p => [p.lat, p.lng]), this._style);
+                if (opts.map) this.setMap(opts.map);
+                if (opts.icons && opts.icons.length > 0) this._renderArrows(opts.icons);
+            }
+            set(k, v) { this._props[k] = v; }
+            get(k) { return this._props[k]; }
+            _clearArrows() {
+                if (this._map && this._map._lmap) {
+                    this._arrowLayers.forEach(a => this._map._lmap.removeLayer(a));
+                }
+                this._arrowLayers = [];
+            }
+            _renderArrows(icons) {
+                this._clearArrows();
+                if (!this._map || !this._map._lmap || !icons || icons.length === 0 || this._coords.length < 2) return;
+                const step = Math.max(1, Math.floor(this._coords.length / 8));
+                for (let i = 0; i < this._coords.length - 1; i += step) {
+                    const p1 = this._coords[i];
+                    const p2 = this._coords[i + 1];
+                    const midLat = (p1.lat + p2.lat) / 2;
+                    const midLng = (p1.lng + p2.lng) / 2;
+                    const angle = Math.atan2(p2.lng - p1.lng, p2.lat - p1.lat) * (180 / Math.PI);
+                    const arrowIcon = L.divIcon({
+                        className: 'osm-arrow-icon',
+                        html: `<div style="transform: rotate(${angle}deg); color: #111; font-size: 13px; font-weight: 900; line-height: 1; text-shadow: 0 0 2px #fff;">▲</div>`,
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+                    const m = L.marker([midLat, midLng], { icon: arrowIcon, interactive: false }).addTo(this._map._lmap);
+                    this._arrowLayers.push(m);
+                }
+            }
+            _clearEditMarkers() {
+                if (this._map && this._map._lmap) {
+                    this._editMarkers.forEach(m => this._map._lmap.removeLayer(m));
+                }
+                this._editMarkers = [];
+            }
+            _renderEditMarkers() {
+                this._clearEditMarkers();
+                if (!this._editable || !this._map || !this._map._lmap) return;
+
+                const syncLine = () => {
+                    this._layer.setLatLngs(this._coords.map(p => [p.lat, p.lng]));
+                };
+
+                this._coords.forEach((pt, idx) => {
+                    const vIcon = L.divIcon({ className: 'osm-pin-wrapper', html: '<div class="osm-vertex-dot"></div>', iconSize: [12, 12], iconAnchor: [6, 6] });
+                    const marker = L.marker([pt.lat, pt.lng], { icon: vIcon, draggable: true }).addTo(this._map._lmap);
+                    marker.on('drag', (e) => {
+                        const ll = e.target.getLatLng();
+                        this._coords[idx] = { lat: ll.lat, lng: ll.lng };
+                        syncLine();
+                    });
+                    marker.on('dragend', () => this._renderEditMarkers());
+                    marker.on('contextmenu', () => {
+                        this._rightClickHandlers.forEach(fn => fn.call(this, { vertex: idx }));
+                    });
+                    this._editMarkers.push(marker);
+
+                    if (idx < this._coords.length - 1) {
+                        const next = this._coords[idx + 1];
+                        const midLat = (pt.lat + next.lat) / 2;
+                        const midLng = (pt.lng + next.lng) / 2;
+                        const mIcon = L.divIcon({ className: 'osm-pin-wrapper', html: '<div class="osm-midpoint-dot"></div>', iconSize: [10, 10], iconAnchor: [5, 5] });
+                        const midMarker = L.marker([midLat, midLng], { icon: mIcon, draggable: true }).addTo(this._map._lmap);
+                        midMarker.on('dragend', (e) => {
+                            const ll = e.target.getLatLng();
+                            this._coords.splice(idx + 1, 0, { lat: ll.lat, lng: ll.lng });
+                            syncLine();
+                            this._renderEditMarkers();
+                        });
+                        this._editMarkers.push(midMarker);
+                    }
+                });
+            }
+            getMap() { return this._map; }
+            setMap(m) {
+                this._clearArrows();
+                this._clearEditMarkers();
+                if (this._map && this._map._lmap) {
+                    this._map._lmap.removeLayer(this._layer);
+                }
+                this._map = m || null;
+                if (this._map && this._map._lmap) {
+                    this._layer.addTo(this._map._lmap);
+                    if (this._editable) this._renderEditMarkers();
+                }
+            }
+            setOptions(opts = {}) {
+                if (opts.strokeColor !== undefined) this._style.color = opts.strokeColor;
+                if (opts.strokeOpacity !== undefined) this._style.opacity = opts.strokeOpacity;
+                if (opts.strokeWeight !== undefined) this._style.weight = opts.strokeWeight;
+                this._layer.setStyle(this._style);
+                if (opts.zIndex && opts.zIndex > 0) this._layer.bringToFront();
+                if (opts.icons !== undefined) {
+                    this._renderArrows(opts.icons);
+                }
+            }
+            getPath() {
+                const self = this;
+                return {
+                    getArray: () => self._coords.map(p => new OsmLatLng(p.lat, p.lng)),
+                    forEach: (cb) => self._coords.forEach((p, idx) => cb(new OsmLatLng(p.lat, p.lng), idx)),
+                    getLength: () => self._coords.length,
+                    removeAt: (idx) => {
+                        if (idx >= 0 && idx < self._coords.length) {
+                            self._coords.splice(idx, 1);
+                            self._layer.setLatLngs(self._coords.map(p => [p.lat, p.lng]));
+                            self._renderEditMarkers();
+                        }
+                    }
+                };
+            }
+            addListener(eventName, handler) {
+                if (eventName === 'rightclick') {
+                    this._rightClickHandlers.push(handler);
+                    return { remove: () => { this._rightClickHandlers = this._rightClickHandlers.filter(h => h !== handler); } };
+                }
+                const wrapped = (e) => {
+                    const ll = e && e.latlng ? new OsmLatLng(e.latlng.lat, e.latlng.lng) : (this._coords[0] ? new OsmLatLng(this._coords[0]) : new OsmLatLng(0, 0));
+                    handler.call(this, { latLng: ll });
+                };
+                this._layer.on(eventName, wrapped);
+                return { remove: () => this._layer.off(eventName, wrapped) };
+            }
+        }
+
+        class OsmInfoWindow {
+            constructor(opts = {}) {
+                this._content = opts.content || '';
+                this._position = opts.position ? toLatLngObj(opts.position) : null;
+                this._props = {};
+                this._popup = L.popup({ maxWidth: 340, autoPanPadding: [24, 24] });
+                this._map = null;
+            }
+            set(k, v) { this._props[k] = v; }
+            get(k) { return this._props[k]; }
+            setContent(c) {
+                this._content = c;
+                this._popup.setContent(c);
+            }
+            getContent() { return this._content; }
+            setPosition(pos) {
+                this._position = toLatLngObj(pos);
+                if (this._position) {
+                    this._popup.setLatLng([this._position.lat, this._position.lng]);
+                }
+            }
+            open(arg1, arg2) {
+                let targetMap = null;
+                let anchor = null;
+                if (arg1 && arg1._lmap) {
+                    targetMap = arg1;
+                    anchor = arg2 || null;
+                } else if (arg1 && typeof arg1 === 'object') {
+                    targetMap = arg1.map || null;
+                    anchor = arg1.anchor || null;
+                }
+                if (!targetMap || !targetMap._lmap) return;
+                this._map = targetMap;
+                let pos = this._position;
+                if (anchor && anchor.getPosition) {
+                    pos = toLatLngObj(anchor.getPosition());
+                } else if (anchor && anchor.position) {
+                    pos = toLatLngObj(anchor.position);
+                }
+                if (!pos) return;
+                this._popup.setLatLng([pos.lat, pos.lng]).setContent(this._content).openOn(targetMap._lmap);
+            }
+            close() {
+                if (this._map && this._map._lmap) {
+                    this._map._lmap.closePopup(this._popup);
+                }
+            }
+        }
+
+        const osmEvent = {
+            addListener(target, eventName, handler) {
+                if (target && typeof target.addListener === 'function') {
+                    return target.addListener(eventName, handler);
+                }
+                return { remove: () => {} };
+            },
+            addListenerOnce(target, eventName, handler) {
+                if (eventName === 'idle' || eventName === 'tilesloaded') {
+                    setTimeout(() => handler(), 50);
+                    return { remove: () => {} };
+                }
+                if (target && target._lmap) {
+                    const mapped = eventName === 'zoom_changed' ? 'zoomend' : eventName;
+                    target._lmap.once(mapped, handler);
+                }
+                return { remove: () => {} };
+            },
+            removeListener(handle) {
+                if (handle && typeof handle.remove === 'function') handle.remove();
+            }
+        };
+
+        const osmGeometry = {
+            spherical: {
+                computeLength(path) {
+                    const arr = path && typeof path.getArray === 'function' ? path.getArray() : (Array.isArray(path) ? path : []);
+                    const pts = arr.map(toLatLngObj).filter(Boolean);
+                    return computeHaversineDistance(pts);
+                }
+            }
+        };
+
+        const osmLibraries = {
+            maps: { Map: OsmMap },
+            core: { ColorScheme: { FOLLOW_SYSTEM: 'FOLLOW_SYSTEM', LIGHT: 'LIGHT', DARK: 'DARK' } },
+            geometry: osmGeometry,
+            marker: { AdvancedMarkerElement: OsmAdvancedMarkerElement, PinElement: OsmPinElement },
+            places: { Place: class OsmNoopPlace { constructor() {} async fetchFields() {} } }
+        };
+
+        window.google = {
+            maps: {
+                Map: OsmMap,
+                LatLng: OsmLatLng,
+                LatLngBounds: OsmLatLngBounds,
+                Marker: OsmMarker,
+                Polyline: OsmPolyline,
+                InfoWindow: OsmInfoWindow,
+                event: osmEvent,
+                geometry: osmGeometry,
+                marker: osmLibraries.marker,
+                Animation: { DROP: 'DROP' },
+                SymbolPath: { CIRCLE: 'CIRCLE', FORWARD_CLOSED_ARROW: 'FORWARD_CLOSED_ARROW' },
+                importLibrary: async (name) => osmLibraries[name] || {}
+            }
+        };
+
+    }
+
     function getApiKeySourceMessage() {
+        if (activeMapProvider === 'osm') {
+            return 'Running in OpenStreetMap mode (no Google Maps API key in use).';
+        }
         if (currentApiKeySource === API_KEY_SOURCE.BROWSER_STORAGE) {
             return 'The API key is loaded from this browser storage.';
         }
@@ -4901,13 +5716,15 @@
             const placesModule = await google.maps.importLibrary("places");
             Place = placesModule.Place;
 
-            const authCheckPassed = await waitForGoogleMapsAuthCheck();
-            if (!authCheckPassed) {
-                handleGoogleMapsAuthFailure();
-                return false;
+            if (activeMapProvider !== 'osm') {
+                const authCheckPassed = await waitForGoogleMapsAuthCheck();
+                if (!authCheckPassed) {
+                    handleGoogleMapsAuthFailure();
+                    return false;
+                }
             }
 
-            console.log("Map and libraries loaded successfully");
+            console.log(`Map and libraries loaded successfully (${activeMapProvider === 'osm' ? 'OpenStreetMap / Leaflet' : 'Google Maps'})`);
             return true;
         } catch (error) {
             console.error("Error initializing map libraries:", error);
@@ -5411,7 +6228,7 @@
     function updateApiCallDisplay() {
         const counterElement = document.getElementById('api-call-counter');
         if (counterElement) {
-            counterElement.textContent = `API Calls: ${placeApiCallCount}`;
+            counterElement.textContent = activeMapProvider === 'osm' ? 'OSM Mode' : `API Calls: ${placeApiCallCount}`;
         }
     }
 
@@ -8800,7 +9617,19 @@
         const disableApiBtn = document.getElementById('disableApiBtn');
         const saveCacheBtn = document.getElementById('saveCacheBtn');
 
+        if (activeMapProvider === 'osm') {
+            apiCallsDisabled = true;
+            if (disableApiBtn) {
+                disableApiBtn.textContent = 'OSM Mode';
+                disableApiBtn.disabled = true;
+                disableApiBtn.title = 'Google Places API calls are disabled in OpenStreetMap mode.';
+            }
+            const counterEl = document.getElementById('api-call-counter');
+            if (counterEl) counterEl.textContent = 'OSM Mode';
+        }
+
         disableApiBtn.addEventListener('click', () => {
+            if (activeMapProvider === 'osm') return;
             apiCallsDisabled = !apiCallsDisabled;
             disableApiBtn.textContent = apiCallsDisabled ? 'API Disabled' : 'Disable API';
             disableApiBtn.classList.toggle('active', apiCallsDisabled);
@@ -11323,6 +12152,19 @@
         const themeSelect = document.getElementById('map-theme-select');
         const changeApiKeyBtn = document.getElementById('changeApiKeyBtn');
         const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
+        const mapProviderSelect = document.getElementById('map-provider-select');
+        if (mapProviderSelect) {
+            mapProviderSelect.value = activeMapProvider;
+            mapProviderSelect.addEventListener('change', async (e) => {
+                const chosen = e.target.value === 'osm' ? 'osm' : 'google';
+                await saveSetting(MAP_PROVIDER_STORAGE_KEY, chosen);
+                offerPageReload(
+                    chosen === 'osm'
+                        ? 'Switched to OpenStreetMap (No API Key).'
+                        : 'Switched to Google Maps (API Key required).'
+                );
+            });
+        }
         updateApiKeySettingsUi();
 
         // --- ADD DEBUG LISTENERS ---
@@ -11354,7 +12196,8 @@
                 rememberDefault: true,
                 forceRemember: true,
                 help: 'To use a key without saving it, clear the saved browser key and reload the page.',
-                allowCancel: true
+                allowCancel: true,
+                hideOsmOption: true
             });
             if (!resolved) return;
 
@@ -11507,6 +12350,11 @@
         themeSelect.addEventListener('change', async (e) => {
             currentMapTheme = e.target.value;
             await saveSetting('mapTheme', currentMapTheme);
+
+            if (map && activeMapProvider === 'osm' && typeof map.setOsmTheme === 'function') {
+                map.setOsmTheme(currentMapTheme);
+                return;
+            }
 
             if (map) {
                 // The API strictly requires recreating the map to change the color scheme
@@ -12914,8 +13762,8 @@ Departed: ${end}</description>
                 document.getElementById('loading-spinner').nextElementSibling.textContent = "Generating Heatmap...";
 
                 setTimeout(() => {
-                    // Initial Creation
-                    heatmapLayer = new deck.GoogleMapsOverlay({
+                    // Initial Creation (unified simpleheat canvas overlay for both Google Maps & OSM)
+                    heatmapLayer = new UnifiedSimpleHeatOverlay({
                         layers: [getDynamicHeatmapLayer()]
                     });
 
@@ -13004,29 +13852,213 @@ Departed: ${end}</description>
         return finalPoints;
     }
 
+    class UnifiedSimpleHeatOverlay {
+        constructor(props = {}) {
+            this._map = null;
+            this._props = props;
+            this._canvas = null;
+            this._heat = null;
+            this._rafId = null;
+            this._googleOverlay = null;
+            this._googleListeners = [];
+            this._leafletBoundDraw = null;
+        }
+
+        setMap(targetMap) {
+            this._cleanup();
+            this._map = targetMap || null;
+            if (!this._map) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.style.position = 'absolute';
+            canvas.style.pointerEvents = 'none';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            this._canvas = canvas;
+
+            if (typeof window.simpleheat === 'function') {
+                this._heat = window.simpleheat(canvas);
+            }
+
+            if (this._map._lmap) {
+                // OpenStreetMap / Leaflet mount
+                const lmap = this._map._lmap;
+                canvas.style.zIndex = '400';
+                lmap.getContainer().appendChild(canvas);
+                this._leafletBoundDraw = () => this._scheduleDraw();
+                lmap.on('move moveend zoomend resize', this._leafletBoundDraw);
+                this._scheduleDraw();
+            } else if (window.google?.maps?.OverlayView) {
+                // Google Maps mount via OverlayView
+                const self = this;
+                class GoogleSimpleHeatView extends google.maps.OverlayView {
+                    onAdd() {
+                        const panes = this.getPanes();
+                        if (panes && panes.overlayLayer) {
+                            panes.overlayLayer.appendChild(canvas);
+                        }
+                    }
+                    draw() {
+                        self._scheduleDraw();
+                    }
+                    onRemove() {
+                        if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+                    }
+                }
+                this._googleOverlay = new GoogleSimpleHeatView();
+                this._googleOverlay.setMap(this._map);
+                this._googleListeners = [
+                    this._map.addListener('bounds_changed', () => this._scheduleDraw()),
+                    this._map.addListener('zoom_changed', () => this._scheduleDraw()),
+                    this._map.addListener('idle', () => this._scheduleDraw())
+                ];
+            }
+        }
+
+        setProps(props = {}) {
+            this._props = props;
+            this._scheduleDraw();
+        }
+
+        _scheduleDraw() {
+            if (this._rafId !== null) return;
+            this._rafId = requestAnimationFrame(() => {
+                this._rafId = null;
+                this._draw();
+            });
+        }
+
+        _draw() {
+            if (!this._map || !this._canvas || !this._heat) return;
+
+            const layers = this._props?.layers || [];
+            const cfg = layers[0] || null;
+            const ctx = this._canvas.getContext('2d');
+
+            if (!cfg || !Array.isArray(cfg.data) || cfg.data.length === 0) {
+                ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+                return;
+            }
+
+            let width = 0;
+            let height = 0;
+            const radius = Math.max(8, Math.round((cfg.radiusPixels || 35) * 0.55));
+            const blur = Math.round(radius * 0.75);
+            const pad = radius + blur;
+            const projected = [];
+
+            if (this._map._lmap) {
+                const lmap = this._map._lmap;
+                const size = lmap.getSize();
+                width = size.x;
+                height = size.y;
+                if (width <= 0 || height <= 0) return;
+
+                if (this._canvas.width !== width || this._canvas.height !== height) {
+                    this._canvas.width = width;
+                    this._canvas.height = height;
+                    this._canvas.style.width = `${width}px`;
+                    this._canvas.style.height = `${height}px`;
+                    this._heat = window.simpleheat(this._canvas);
+                }
+
+                for (let i = 0; i < cfg.data.length; i++) {
+                    const d = cfg.data[i];
+                    const pt = lmap.latLngToContainerPoint([d.position[1], d.position[0]]);
+                    if (pt.x >= -pad && pt.x <= width + pad && pt.y >= -pad && pt.y <= height + pad) {
+                        projected.push([pt.x, pt.y, d.weight ?? 0.05]);
+                    }
+                }
+            } else if (this._googleOverlay) {
+                const projection = this._googleOverlay.getProjection();
+                const mapDiv = this._map.getDiv ? this._map.getDiv() : null;
+                if (!projection || !mapDiv) return;
+
+                width = mapDiv.offsetWidth;
+                height = mapDiv.offsetHeight;
+                if (width <= 0 || height <= 0) return;
+
+                if (this._canvas.width !== width || this._canvas.height !== height) {
+                    this._canvas.width = width;
+                    this._canvas.height = height;
+                    this._canvas.style.width = `${width}px`;
+                    this._canvas.style.height = `${height}px`;
+                    this._heat = window.simpleheat(this._canvas);
+                }
+
+                // Keep the viewport-sized canvas pinned to the top-left of the visible map container
+                const topLeftLatLng = projection.fromContainerPixelToLatLng(new google.maps.Point(0, 0));
+                const topLeftDiv = topLeftLatLng ? projection.fromLatLngToDivPixel(topLeftLatLng) : null;
+                if (topLeftDiv) {
+                    this._canvas.style.left = `${Math.round(topLeftDiv.x)}px`;
+                    this._canvas.style.top = `${Math.round(topLeftDiv.y)}px`;
+                }
+
+                for (let i = 0; i < cfg.data.length; i++) {
+                    const d = cfg.data[i];
+                    const pt = projection.fromLatLngToContainerPixel(new google.maps.LatLng(d.position[1], d.position[0]));
+                    if (pt && pt.x >= -pad && pt.x <= width + pad && pt.y >= -pad && pt.y <= height + pad) {
+                        projected.push([pt.x, pt.y, d.weight ?? 0.05]);
+                    }
+                }
+            }
+
+            const intensity = cfg.intensity || 1;
+            const maxVal = Math.max(0.8, 9 / Math.max(0.1, intensity));
+            const minOpacity = Math.max(0.05, Math.min(0.35, 0.18 - (cfg.threshold || 0.01) * 0.2));
+
+            this._heat
+                .data(projected)
+                .max(maxVal)
+                .radius(radius, blur)
+                .gradient({
+                    0.2: '#4169e1',
+                    0.45: '#00ffff',
+                    0.65: '#00ff00',
+                    0.85: '#ffff00',
+                    1.0: '#ff0000'
+                })
+                .draw(minOpacity);
+        }
+
+        _cleanup() {
+            if (this._rafId !== null) {
+                cancelAnimationFrame(this._rafId);
+                this._rafId = null;
+            }
+            if (this._map && this._map._lmap && this._leafletBoundDraw) {
+                this._map._lmap.off('move moveend zoomend resize', this._leafletBoundDraw);
+                this._leafletBoundDraw = null;
+            }
+            if (this._googleListeners.length > 0 && window.google?.maps?.event) {
+                this._googleListeners.forEach(l => google.maps.event.removeListener(l));
+                this._googleListeners = [];
+            }
+            if (this._googleOverlay) {
+                this._googleOverlay.setMap(null);
+                this._googleOverlay = null;
+            }
+            if (this._canvas && this._canvas.parentNode) {
+                this._canvas.parentNode.removeChild(this._canvas);
+            }
+            this._canvas = null;
+            this._heat = null;
+        }
+    }
+
     function getDynamicHeatmapLayer() {
         const zoom = map ? (map.getZoom() || 10) : 10;
         const tier = getHeatmapTier(zoom);
         const conf = heatmapConfigs[tier]; // Pull the exact save state for this zoom
         const factor = heatmapGridFactors[conf.gridIdx];
 
-        return new deck.HeatmapLayer({
+        return {
             id: 'heatmapLayer',
             data: getGridCappedData(factor, conf.cap),
-            getPosition: d => d.position,
-            getWeight: d => d.weight,
             radiusPixels: conf.r,
             intensity: conf.i,
-            threshold: conf.t,
-            colorRange: [
-                [0, 0, 255, 0],
-                [65, 105, 225, 255],
-                [0, 255, 255, 255],
-                [0, 255, 0, 255],
-                [255, 255, 0, 255],
-                [255, 0, 0, 255]
-            ]
-        });
+            threshold: conf.t
+        };
     }
 
 
@@ -16732,8 +17764,8 @@ Departed: ${end}</description>
     async function initializeApp() {
         try {
             const resolvedApiKey = await resolveGoogleMapsApiKey();
-            if (!resolvedApiKey || !isUsableApiKey(resolvedApiKey.key)) {
-                document.getElementById('howToMessage').innerHTML = "<h3>Configuration Error</h3><p>Please enter a Google Maps API key to use this tool.</p>";
+            if (!resolvedApiKey) {
+                document.getElementById('howToMessage').innerHTML = "<h3>Configuration Error</h3><p>Please enter a Google Maps API key or choose OpenStreetMap mode to use this tool.</p>";
                 document.getElementById('howToMessage').style.display = "block";
                 setUIEnabled(false);
                 const folderPicker = document.getElementById('folderPicker');
@@ -16743,9 +17775,28 @@ Departed: ${end}</description>
                 return;
             }
 
-            window.GOOGLE_MAPS_API_KEY = resolvedApiKey.key;
-            currentApiKeySource = resolvedApiKey.source;
-            installGoogleMapsLoader(resolvedApiKey.key);
+            if (resolvedApiKey.provider === 'osm') {
+                activeMapProvider = 'osm';
+                apiCallsDisabled = true;
+                currentApiKeySource = API_KEY_SOURCE.MISSING;
+                await loadLeafletLibraries();
+                installOpenStreetMapShim();
+            } else {
+                if (!isUsableApiKey(resolvedApiKey.key)) {
+                    document.getElementById('howToMessage').innerHTML = "<h3>Configuration Error</h3><p>Please enter a Google Maps API key or choose OpenStreetMap mode to use this tool.</p>";
+                    document.getElementById('howToMessage').style.display = "block";
+                    setUIEnabled(false);
+                    const folderPicker = document.getElementById('folderPicker');
+                    if(folderPicker) folderPicker.disabled = true;
+                    const loadDataMenuBtn = document.getElementById('loadDataMenuBtn');
+                    if(loadDataMenuBtn) loadDataMenuBtn.disabled = true;
+                    return;
+                }
+                activeMapProvider = 'google';
+                window.GOOGLE_MAPS_API_KEY = resolvedApiKey.key;
+                currentApiKeySource = resolvedApiKey.source;
+                installGoogleMapsLoader(resolvedApiKey.key);
+            }
 
             // Load stored settings from IndexedDB first
             const storedTimezone = await getSetting('displayTimezone');

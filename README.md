@@ -61,7 +61,11 @@ Setup only takes a few minutes and doesn't require any special technical skills.
    - Ensure that the archive contained a folder called "Location History (Timeline)". If not, you'll need to use on-device data, as described above. (Note that "Timeline Edits.json" is *not* the same as the "Timeline.json" that comes from your device.)
 
 
-## Obtain a Google Maps API Key
+## Map Provider: Google Maps or OpenStreetMap
+
+Using Google Maps as the map provider is recommended, as it's required for place name lookups. Setup is very simple but requires a couple of extra steps, described below. As an alternative, you can use OpenStreetMaps, which requires no additional setup. You can switch at any time.
+
+### Obtaining a Google Maps API Key (Optional)
 
 1. **Go to the Google Cloud Console:**
    - Visit [Google Cloud Console](https://console.cloud.google.com/).
