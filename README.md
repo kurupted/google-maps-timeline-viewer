@@ -13,6 +13,7 @@ Since Google transitioned to storing location history locally on your device rat
 - Find all visited places within the viewable map area
 - Summary of activities by year/month, with bar charts
 - Trips View automatically detects vacations and travels away from home, with duration filters and flight detection
+- Animated Journey Replay animates your route for any day, date range, or trip with a live clock, scrubber, speed controls, and trailing path
 - World View shows a heat map of your activity, and a list of countries and cities visited
 - Timeline items are editable, including route paths
 - Timezone detection for viewing your travel days with local times

@@ -3,7 +3,7 @@
 
 <!-- -----
 
-        Version:  November 9, 2026
+        Version:  November 21, 2026
         Full details here:
         https://github.com/kurupted/google-maps-timeline-viewer/
 
@@ -476,6 +476,9 @@
             align-items: center;
             justify-content: center;
             padding-top: 5px;
+        }
+        #go-container.go-hidden {
+            display: none !important;
         }
         #goBtn, #findInAreaBtn {
             flex-grow: 1;
@@ -973,10 +976,13 @@
             position: absolute;
             bottom: 25px;
             right: 80px;
-            z-index: 10;
-            display: flex;
+            z-index: 1100;
+            display: none;
             flex-direction: column;
             gap: 10px;
+        }
+        #map.hidden ~ .map-custom-controls {
+            display: none !important;
         }
         .map-overlay-btn {
             background-color: #fff;
@@ -3580,6 +3586,301 @@
         #map.osm-dark-tiles .leaflet-tile-pane {
             filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
         }
+
+        /* --- Animated Journey Replay Bar & Marker --- */
+        #replayBar {
+            display: none;
+            position: fixed;
+            bottom: 22px;
+            left: calc(50% + 175px);
+            transform: translateX(-50%);
+            z-index: 2600;
+            width: min(540px, calc(100vw - 390px));
+            background: rgba(15, 23, 42, 0.93);
+            color: #f8fafc;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 12px;
+            padding: 9px 14px 9px;
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+            box-sizing: border-box;
+        }
+        @media (max-width: 768px) {
+            #replayBar {
+                left: 50%;
+                bottom: 58px;
+                width: calc(100vw - 24px);
+                padding: 10px 12px;
+            }
+            #map.mobile-hidden ~ #replayBar,
+            #map.mobile-hidden ~ .map-custom-controls {
+                display: none !important;
+            }
+        }
+        .replay-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .replay-status-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+        #replayActivityBadge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #2563eb;
+            font-size: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        .replay-status-text {
+            min-width: 0;
+            flex: 1;
+        }
+        #replayPlaceLabel {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #replayClock {
+            font-size: 11.5px;
+            color: #94a3b8;
+            font-variant-numeric: tabular-nums;
+            margin-top: 1px;
+        }
+        #replayCloseBtn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: #cbd5e1;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            line-height: 1;
+            flex-shrink: 0;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        #replayCloseBtn:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: #ffffff;
+        }
+        .replay-scrubber-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .replay-scrubber-track-wrap {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            height: 20px;
+        }
+        #replayScrubber {
+            width: 100%;
+            margin: 0;
+            accent-color: #3b82f6;
+            cursor: pointer;
+            height: 5px;
+            position: relative;
+            z-index: 2;
+        }
+        #replayDayMarkers {
+            position: absolute;
+            left: 7px;
+            right: 7px;
+            top: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 3;
+        }
+        .replay-day-tick {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 3px;
+            height: 11px;
+            background: rgba(251, 191, 36, 0.92);
+            border-radius: 2px;
+            box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.75);
+            pointer-events: auto;
+            cursor: pointer;
+            transition: transform 0.12s ease, background-color 0.12s ease;
+        }
+        .replay-day-tick:hover {
+            transform: translate(-50%, -50%) scaleY(1.35);
+            background: #fde047;
+        }
+        #replayProgressText {
+            font-size: 11px;
+            color: #94a3b8;
+            font-variant-numeric: tabular-nums;
+            min-width: 36px;
+            text-align: right;
+        }
+        .replay-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .replay-transport {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .replay-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 7px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+        .replay-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+        .replay-btn.primary {
+            background: #2563eb;
+            border-color: #3b82f6;
+            padding: 5px 13px;
+        }
+        .replay-btn.primary:hover {
+            background: #1d4ed8;
+        }
+        .replay-btn.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: #60a5fa;
+            color: #ffffff;
+        }
+        .replay-speed-popover-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+        .replay-speed-menu {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 6px);
+            right: 0;
+            flex-direction: column;
+            background: rgba(15, 23, 42, 0.97);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 8px;
+            padding: 4px;
+            gap: 2px;
+            min-width: 58px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            z-index: 2700;
+        }
+        .replay-speed-menu.open {
+            display: flex;
+        }
+        .replay-speed-option {
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .replay-speed-option:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+        }
+        .replay-speed-option.active {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+        .replay-marker-wrapper {
+            background: transparent;
+            border: none;
+        }
+        .replay-marker-dot {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3.5px solid #2563eb;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), 0 0 0 5px rgba(37, 99, 235, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            animation: replay-pulse 1.6s infinite;
+        }
+        .replay-marker-emoji {
+            font-size: 18px;
+            line-height: 1;
+        }
+        @keyframes replay-pulse {
+            0%, 100% { box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(37, 99, 235, 0.28); }
+            50% { box-shadow: 0 3px 14px rgba(0, 0, 0, 0.45), 0 0 0 9px rgba(37, 99, 235, 0.12); }
+        }
+        .replay-marker-dot {
+            position: relative;
+        }
+        .replay-visit-pill {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 9px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.92);
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            pointer-events: none;
+            align-items: center;
+            gap: 5px;
+            z-index: 10000;
+        }
+        .replay-visit-pill.visible {
+            display: inline-flex;
+        }
+        .replay-visit-pill::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px 5px 0 5px;
+            border-style: solid;
+            border-color: rgba(15, 23, 42, 0.92) transparent transparent transparent;
+        }
     </style>
 </head>
 <body>
@@ -3646,6 +3947,9 @@
                     <button id="nextDayBtn" disabled title="Next day (Hold Ctrl to adjust End Date only)">&gt;</button>
                 </div>
                 <div id="date-range-info"></div>
+                <div id="go-container" class="go-hidden">
+                    <button id="goBtn" class="control-btn" disabled>GO</button>
+                </div>
                 <div id="icon-buttons-container">
                     <div id="icon-buttons-left">
                         <button id="mapBtn" class="icon-btn active" title="Show Timeline" disabled>
@@ -3663,6 +3967,9 @@
                         <div class="more-menu-container" style="position: relative; display: inline-flex;">
                             <button id="timelineMoreBtn" class="icon-btn" title="More options" disabled style="padding: 5px 7px; font-size: 16px; line-height: 1;">&#8942;</button>
                             <div id="timelineMoreDropdown" class="timeline-more-dropdown">
+                                <button id="replayMoreBtn" class="more-dropdown-item" title="Animate your route for the selected date range" disabled>
+                                    <span>▶️</span> Replay Journey
+                                </button>
                                 <button id="kmlBtn" class="more-dropdown-item" title="Export currently selected date range as KML" disabled>
                                     <span>📤</span> Export to KML
                                 </button>
@@ -3670,9 +3977,6 @@
                         </div>
                     </div>
                     <div id="icon-buttons-right"></div>
-                </div>
-                <div id="go-container">
-                    <button id="goBtn" class="control-btn" disabled>GO</button>
                 </div>
                 <div id="timezoneMismatchBanner" style="display: none; margin: 6px 12px; padding: 8px 10px; background-color: #e8f4fd; border: 1px solid #b8daff; border-radius: 6px; box-sizing: border-box; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px;">
@@ -4345,6 +4649,44 @@
         <button id="currentLocationBtn" class="map-overlay-btn" title="My Location">𖦏</button>
     </div>
 
+    <div id="replayBar" role="region" aria-label="Journey Replay Controls">
+        <div class="replay-top-row">
+            <div class="replay-status-wrap">
+                <span id="replayActivityBadge">🗺️</span>
+                <div class="replay-status-text">
+                    <div id="replayPlaceLabel">Ready to replay</div>
+                    <div id="replayClock">--</div>
+                </div>
+            </div>
+            <button id="replayCloseBtn" type="button" title="Close Replay (Esc)">✕</button>
+        </div>
+        <div class="replay-scrubber-row">
+            <div class="replay-scrubber-track-wrap">
+                <input type="range" id="replayScrubber" min="0" max="1000" step="1" value="0" aria-label="Replay timeline scrubber">
+                <div id="replayDayMarkers" aria-hidden="true"></div>
+            </div>
+            <span id="replayProgressText">0%</span>
+        </div>
+        <div class="replay-controls-row">
+            <div class="replay-transport">
+                <button id="replayRestartBtn" class="replay-btn" type="button" title="Restart">⏮</button>
+                <button id="replayPlayPauseBtn" class="replay-btn primary" type="button" title="Play / Pause (Space)">▶ Play</button>
+                <button id="replayFollowBtn" class="replay-btn active" type="button" title="Auto-pan map to follow marker">🎯 Follow</button>
+                <button id="replayAutoZoomBtn" class="replay-btn active" type="button" title="Automatically adjust zoom for flights and wide routes (respects manual zoom-in)">🔍 Auto-Zoom</button>
+                <button id="replayPauseVisitsBtn" class="replay-btn active" type="button" title="Briefly pause at each place visit and show a minimal place label">📍 Pause Visits</button>
+            </div>
+            <div class="replay-speed-popover-wrap">
+                <div id="replaySpeedMenu" class="replay-speed-menu" role="menu" aria-label="Playback speed">
+                    <button type="button" class="replay-speed-option" data-speed="5" role="menuitem">5x</button>
+                    <button type="button" class="replay-speed-option" data-speed="3" role="menuitem">3x</button>
+                    <button type="button" class="replay-speed-option" data-speed="2" role="menuitem">2x</button>
+                    <button type="button" class="replay-speed-option active" data-speed="1" role="menuitem">1x</button>
+                </div>
+                <button type="button" id="replaySpeedTriggerBtn" class="replay-btn" title="Change playback speed">1x ▴</button>
+            </div>
+        </div>
+    </div>
+
     <div id="howToMessage">
         <div style="max-width: 850px; margin: 0 auto; padding-bottom: 40px;">
             <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0;">Welcome to Google Maps Timeline Viewer</h2>
@@ -4521,6 +4863,8 @@
     let pendingPlaceRequests = {}; // Tracks in-flight API requests (CONCURRENCY LOCK)
     let globalMinDate = null; // Earliest date in loaded data
     let globalMaxDate = null; // Latest date in loaded data
+    let loadedStartDate = null; // Currently loaded Start Date in the view
+    let loadedEndDate = null; // Currently loaded End Date in the view
     let displayTimezone = 'default'; // User-selected timezone
     let distanceUnit = 'km'; // User-selected distance unit ('km' or 'mi')
     let storedDirHandle = null; // For storing last used directory handle
@@ -5915,8 +6259,9 @@
         if (tripsBtn) tripsBtn.classList.remove('active');
         if (placesLivedBtn) placesLivedBtn.classList.remove('active');
 
-        // Clear any active trip map overlay if switching away from date
+        // Close journey replay & clear trip map overlay if switching away from date
         if (tabName !== 'date') {
+            if (typeof stopJourneyReplay === 'function') stopJourneyReplay(true);
             if (typeof clearTripMap === 'function') clearTripMap();
             else if (typeof window.clearTripMap === 'function') window.clearTripMap();
         }
@@ -6274,11 +6619,18 @@
             if (isDebugMode) {
                 dateHeader.title = 'Click to view day JSON (Debug Mode)';
             }
-            // UPDATE THIS LINE to include the Add button (+):
-            dateHeader.innerHTML = `<span>${formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY')}</span> <button class="add-entry-btn" style="margin-left:auto; background:none; border:none; cursor:pointer;" title="Add Entry">➕</button>`;
+            dateHeader.innerHTML = `<span>${formatTimestamp(currentDate, 'dddd, MMMM DD, YYYY')}</span><span style="margin-left:auto; display:inline-flex; align-items:center; gap:4px;"><button class="replay-day-btn" style="background:none; border:none; cursor:pointer; font-size:13px; color:#333; padding:2px 5px; line-height:1;" title="Replay journey starting from this day">&#9654;&#xFE0E;</button><button class="add-entry-btn" style="background:none; border:none; cursor:pointer; padding:2px 4px;" title="Add Entry">➕</button></span>`;
 
             const timelineContainer = document.getElementById('timeline');
             timelineContainer.appendChild(dateHeader);
+
+            dateHeader.querySelector('.replay-day-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!uiEnabled || typeof startJourneyReplay !== 'function') return;
+                const startStr = document.getElementById('startDatePicker')?.value || currentDate;
+                const endStr = document.getElementById('endDatePicker')?.value || currentDate;
+                startJourneyReplay(startStr, endStr, '', { jumpToDate: currentDate });
+            });
 
             // Add Listener
             dateHeader.querySelector('.add-entry-btn').addEventListener('click', (e) => {
@@ -6287,7 +6639,7 @@
             });
 
             dateHeader.addEventListener('click', (e) => {
-                if (e.target.closest('.add-entry-btn')) return;
+                if (e.target.closest('.add-entry-btn, .replay-day-btn')) return;
                 if (!isDebugMode) return;
                 viewDayDebugJson(currentDate, dateHeader);
             });
@@ -6449,6 +6801,7 @@
 
     // Clears all markers, polylines, and info windows from the map
     function clearMap() {
+        if (typeof stopJourneyReplay === 'function') stopJourneyReplay(true, false);
         if (typeof clearTripMap === 'function') clearTripMap();
         else if (typeof window.clearTripMap === 'function') window.clearTripMap();
         if (typeof clearHomeMarker === 'function') clearHomeMarker();
@@ -8105,6 +8458,11 @@
             }
         }
 
+        loadedStartDate = startDateStr;
+        loadedEndDate = endDateStr;
+        if (typeof updateGoButtonState === 'function') updateGoButtonState();
+
+        const wasReplayOpen = typeof replayState !== 'undefined' && replayState.active;
         clearMap();
         clearTimeline();
         globalIndex = 0;
@@ -8146,6 +8504,9 @@
                     if (tripsView) tripsView.style.display = 'flex';
                 } else {
                     fitMapToData();
+                    if (wasReplayOpen && typeof startJourneyReplay === 'function') {
+                        startJourneyReplay(startDateStr, endDateStr, '', { autoPlay: false, fitBounds: false });
+                    }
                 }
                 console.log(`Finished loading range. Total API Calls: ${placeApiCallCount}`);
             }
@@ -9191,8 +9552,7 @@
         prevDayBtn.addEventListener('click', (e) => navigateDays(-1, e.ctrlKey));
         nextDayBtn.addEventListener('click', (e) => navigateDays(1, e.ctrlKey));
 
-        // GO button click handler
-        goBtn.addEventListener('click', () => {
+        const executeGoAction = () => {
             if (!uiEnabled) return;
             const tz = getSelectedTimezone();
             const startDate = moment.tz(startDatePicker.value, tz);
@@ -9215,6 +9575,9 @@
             }
 
             if (summaryViewVisible) {
+                loadedStartDate = startDatePicker.value;
+                loadedEndDate = endDatePicker.value;
+                updateGoButtonState();
                 displaySelectedDatesSummary(startDatePicker.value, endDatePicker.value);
                 return;
             }
@@ -9228,8 +9591,39 @@
                 }
             }
 
-            loadTimelineDataInDateRange(startDatePicker.value, endDatePicker.value, true); // Pass true or remove for default warning behavior in loadTimelineDataInDateRange if needed
-        });
+            loadTimelineDataInDateRange(startDatePicker.value, endDatePicker.value, true);
+        };
+
+        // GO button click handler (and preserve programmatic goBtn.click() reloads even when visually disabled)
+        goBtn.addEventListener('click', executeGoAction);
+        goBtn.click = () => executeGoAction();
+
+        // Enable GO only when the user changes a date input to something not yet loaded
+        startDatePicker.addEventListener('input', updateGoButtonState);
+        startDatePicker.addEventListener('change', updateGoButtonState);
+        endDatePicker.addEventListener('input', updateGoButtonState);
+        endDatePicker.addEventListener('change', updateGoButtonState);
+    }
+
+    function updateGoButtonState() {
+        const goBtn = document.getElementById('goBtn');
+        const goContainer = document.getElementById('go-container');
+        const startDatePicker = document.getElementById('startDatePicker');
+        const endDatePicker = document.getElementById('endDatePicker');
+        if (!goBtn || !startDatePicker || !endDatePicker) return;
+
+        if (!uiEnabled || !startDatePicker.value || !endDatePicker.value) {
+            goBtn.disabled = true;
+            if (goContainer) goContainer.classList.add('go-hidden');
+            return;
+        }
+
+        const hasUnappliedChange = (
+            startDatePicker.value !== loadedStartDate ||
+            endDatePicker.value !== loadedEndDate
+        );
+        goBtn.disabled = !hasUnappliedChange;
+        if (goContainer) goContainer.classList.toggle('go-hidden', !hasUnappliedChange);
     }
 
     // Updates the toggle button text for activity filters (e.g. "5 of 15 selected")
@@ -9439,6 +9833,7 @@
         // Toggle Summary View on button click
         summaryBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
+            if (typeof stopJourneyReplay === 'function') stopJourneyReplay(true);
 
             if (!summaryViewVisible) {
                 if (!allYearlySummaries) {
@@ -9669,7 +10064,7 @@
             document.getElementById('endDatePicker'),
             document.getElementById('prevDayBtn'),
             document.getElementById('nextDayBtn'),
-            document.getElementById('goBtn'),
+            document.getElementById('replayMoreBtn'),
             document.getElementById('fitMapBtn'),
             document.getElementById('areaBtn'),
             document.getElementById('summaryBtn'),
@@ -9701,6 +10096,8 @@
         if (settingsLockedMessage) settingsLockedMessage.style.display = enabled ? 'none' : 'block';
 
         if (!enabled) {
+            loadedStartDate = null;
+            loadedEndDate = null;
             // Reset state when UI is disabled (e.g., no data loaded)
             document.getElementById('cache-indicator').style.display = 'none';
             clearMap();
@@ -9726,6 +10123,11 @@
             document.getElementById('saveCacheBtn').disabled = newCount <= 0;
             updateViewToggleButtons();
         }
+        const mapCustomControls = document.querySelector('.map-custom-controls');
+        if (mapCustomControls) {
+            mapCustomControls.style.display = enabled ? 'flex' : 'none';
+        }
+        if (typeof updateGoButtonState === 'function') updateGoButtonState();
     }
 
     async function setLoadingStatus(mainText, subText = '') {
@@ -13114,6 +13516,7 @@ Departed: ${end}</description>
 
         worldBtn.addEventListener('click', () => {
             if (!uiEnabled) return;
+            if (typeof stopJourneyReplay === 'function') stopJourneyReplay(true);
 
             // State
             summaryViewVisible = false;
@@ -16330,6 +16733,7 @@ Departed: ${end}</description>
                         <div class="trip-card-actions">
                             <button class="trip-action-btn btn-edit-trip ${trip.isEdited ? 'is-edited' : 'is-default'}" data-trip-id="${trip.id}">${trip.isEdited ? '✏️ Edited' : '✏️ Edit'}</button>
                             <button class="trip-action-btn btn-view-map" data-trip-id="${trip.id}">🗺️ Preview</button>
+                            <button class="trip-action-btn btn-replay-trip" data-trip-id="${trip.id}">▶️ Replay</button>
                             <button class="trip-action-btn btn-open-timeline" data-start="${trip.startDate}" data-end="${trip.endDate}">📅 Open in Timeline ↗</button>
                         </div>
                     </div>
@@ -16411,9 +16815,30 @@ Departed: ${end}</description>
                 container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
                 if (card) card.classList.add('active-trip');
                 if (trip) {
+                    window.activePreviewedTrip = trip;
                     showTripOnMap(trip);
                     const showMapBtn = document.getElementById('show-map-btn');
                     if (showMapBtn) showMapBtn.click();
+                }
+            });
+        });
+
+        container.querySelectorAll('.btn-replay-trip').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tripId = btn.dataset.tripId;
+                const trip = trips.find(t => t.id === tripId);
+                const card = btn.closest('.trip-card');
+                container.querySelectorAll('.trip-card').forEach(c => c.classList.remove('active-trip'));
+                if (card) card.classList.add('active-trip');
+                if (trip) {
+                    window.activePreviewedTrip = trip;
+                    showTripOnMap(trip);
+                    const showMapBtn = document.getElementById('show-map-btn');
+                    if (showMapBtn) showMapBtn.click();
+                    if (typeof startJourneyReplay === 'function') {
+                        startJourneyReplay(trip.startDate, trip.endDate, trip.title);
+                    }
                 }
             });
         });
@@ -17761,6 +18186,995 @@ Departed: ${end}</description>
 
 
 
+    // --- Animated Journey Replay Engine ---
+    const replayState = {
+        active: false,
+        playing: false,
+        follow: true,
+        autoZoom: true,
+        pauseAtVisits: true,
+        isDwellingAtVisit: false,
+        speed: 1,
+        progress: 0, // 0..1
+        baseDurationMs: 42000,
+        lastFrameTs: null,
+        rafId: null,
+        segments: [],
+        totalWeight: 0,
+        title: '',
+        marker: null,
+        markerDotEl: null,
+        markerEmojiEl: null,
+        markerPillEl: null,
+        trailSegments: [],
+        hiddenPolylines: [],
+        visitPauseTimer: null,
+        lastPanTs: 0,
+        lastSegIdx: -1,
+        pausedVisitSegIdx: -1,
+        manualZoomOverride: false,
+        isProgrammaticZoom: false,
+        programmaticZoomTimer: null,
+        zoomListener: null
+    };
+
+    function extractReplayPointsFromActivity(seg) {
+        const pts = [];
+        const pushPt = (lat, lng) => {
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+            const prev = pts[pts.length - 1];
+            if (!prev || Math.abs(prev.lat - lat) > 1e-6 || Math.abs(prev.lng - lng) > 1e-6) {
+                pts.push({ lat, lng });
+            }
+        };
+
+        const startCoord = getRenderableCoordinate(seg.startLocation, true, true);
+        if (startCoord) pushPt(startCoord.lat, startCoord.lng);
+
+        const rawPath = seg.waypointPath?.waypoints || seg.simplifiedRawPath?.points || seg.path || [];
+        for (const p of rawPath) {
+            const c = getRenderableCoordinate(p, true, true);
+            if (c) pushPt(c.lat, c.lng);
+        }
+
+        const endCoord = getRenderableCoordinate(seg.endLocation, true, true);
+        if (endCoord) pushPt(endCoord.lat, endCoord.lng);
+
+        return pts;
+    }
+
+    function buildReplaySegments(startDateStr, endDateStr) {
+        const items = getFilteredDataForRange(startDateStr, endDateStr);
+        const segments = [];
+
+        for (const item of items) {
+            if (item.placeVisit || item.visit) {
+                const isIOS = !!item.visit;
+                const visitData = isIOS ? item.visit : item.placeVisit;
+                const loc = isIOS ? visitData.topCandidate : visitData.location;
+                const startTs = isIOS ? item.startTime : visitData.duration?.startTimestamp;
+                const endTs = isIOS ? item.endTime : visitData.duration?.endTimestamp;
+                const startMs = Date.parse(startTs);
+                const endMs = Date.parse(endTs);
+                const coord = getRenderableVisitCoordinate(item);
+                if (!coord || isNaN(startMs) || isNaN(endMs)) continue;
+
+                const placeId = isIOS ? loc?.placeID : loc?.placeId;
+                const rawSemantic = loc?.semanticType;
+                const semanticType = getCustomSemanticType(placeId, rawSemantic)?.toUpperCase();
+                let label = loc?.name || 'Visited Place';
+                if (semanticType === 'HOME' || semanticType === 'TYPE_HOME' || label.toLowerCase() === 'home') {
+                    label = 'Home';
+                } else if (semanticType === 'WORK' || semanticType === 'TYPE_WORK' || label.toLowerCase() === 'work') {
+                    label = 'Work';
+                } else if (placeId && placeDetailsCache[placeId]?.displayName) {
+                    label = placeDetailsCache[placeId].displayName;
+                }
+
+                const types = (placeId && placeDetailsCache[placeId]?.types) || loc?.placeTypes || [];
+                const style = getPlaceStyle(types, Boolean(placeId && placeDetailsCache[placeId]), semanticType);
+
+                const address = (placeId && placeDetailsCache[placeId]?.formattedAddress) || loc?.address || '';
+                segments.push({
+                    kind: 'visit',
+                    startMs,
+                    endMs: Math.max(startMs, endMs),
+                    lat: coord.lat,
+                    lng: coord.lng,
+                    label,
+                    address,
+                    icon: style.icon,
+                    color: style.color,
+                    weight: 0.7 // Compressed dwell so overnight stays don't freeze playback
+                });
+            } else if (item.activitySegment) {
+                const seg = item.activitySegment;
+                const startMs = Date.parse(seg.duration?.startTimestamp);
+                const endMs = Date.parse(seg.duration?.endTimestamp);
+                const pts = extractReplayPointsFromActivity(seg);
+                if (pts.length < 2 || isNaN(startMs) || isNaN(endMs)) continue;
+
+                const cumDist = [0];
+                let totalDist = 0;
+                for (let i = 1; i < pts.length; i++) {
+                    const d = computeHaversineDistance([pts[i - 1], pts[i]]);
+                    totalDist += d;
+                    cumDist.push(totalDist);
+                }
+
+                const actType = seg.activityType || (seg.activities && seg.activities[0]?.activityType) || (seg.waypointPath && seg.waypointPath.travelMode) || 'UNKNOWN';
+                const label = formatActivityType(actType);
+                const icon = getActivityIcon(actType);
+                const color = getActivityColor(actType);
+                const distMeters = seg.distance || totalDist;
+                const isFlight = getGroupedActivityType(actType) === 'FLYING';
+                // Give long drives, trains, and flights generous playback weight so they glide smoothly
+                let weight;
+                if (isFlight) {
+                    weight = Math.min(16, Math.max(9, 6 + Math.log10(Math.max(100000, distMeters)) * 1.5));
+                } else if (distMeters >= 50000) {
+                    weight = Math.min(13, 6.5 + Math.log10(distMeters / 50000) * 5.5);
+                } else if (distMeters >= 5000) {
+                    weight = 3.2 + Math.log10(distMeters / 5000) * 3.3;
+                } else {
+                    weight = Math.max(1.4, 1.4 + Math.log10(Math.max(100, distMeters) / 100) * 1.05);
+                }
+
+                segments.push({
+                    kind: 'activity',
+                    isFlight,
+                    startMs,
+                    endMs: Math.max(startMs, endMs),
+                    points: pts,
+                    cumDist,
+                    totalDist,
+                    label: distMeters > 0 ? `${label} · ${formatDistance(distMeters)}` : label,
+                    icon,
+                    color,
+                    weight
+                });
+            }
+        }
+
+        // Compute normalized weight intervals [wStart, wEnd] across 0..1
+        const totalWeight = segments.reduce((sum, s) => sum + s.weight, 0);
+        let acc = 0;
+        for (const s of segments) {
+            s.wStart = totalWeight > 0 ? acc / totalWeight : 0;
+            acc += s.weight;
+            s.wEnd = totalWeight > 0 ? acc / totalWeight : 1;
+        }
+        return { segments, totalWeight };
+    }
+
+    function sampleReplayAtProgress(progress) {
+        const segs = replayState.segments;
+        if (!segs.length) return null;
+        const p = Math.max(0, Math.min(1, progress));
+
+        let segIdx = segs.length - 1;
+        for (let i = 0; i < segs.length; i++) {
+            if (p <= segs[i].wEnd || i === segs.length - 1) {
+                segIdx = i;
+                break;
+            }
+        }
+
+        const seg = segs[segIdx];
+        const span = Math.max(1e-9, seg.wEnd - seg.wStart);
+        const localT = Math.max(0, Math.min(1, (p - seg.wStart) / span));
+        const currentMs = seg.startMs + (seg.endMs - seg.startMs) * localT;
+
+        let lat, lng;
+        const activeSegPoints = [];
+
+        if (seg.kind === 'visit') {
+            lat = seg.lat;
+            lng = seg.lng;
+        } else {
+            const targetDist = seg.totalDist * localT;
+            let k = 1;
+            while (k < seg.cumDist.length - 1 && seg.cumDist[k] < targetDist) {
+                k++;
+            }
+            for (let j = 0; j < k; j++) {
+                activeSegPoints.push(seg.points[j]);
+            }
+            const d0 = seg.cumDist[k - 1];
+            const d1 = seg.cumDist[k];
+            const frac = d1 > d0 ? (targetDist - d0) / (d1 - d0) : 0;
+            const p0 = seg.points[k - 1];
+            const p1 = seg.points[k];
+            lat = p0.lat + (p1.lat - p0.lat) * frac;
+            lng = p0.lng + (p1.lng - p0.lng) * frac;
+            activeSegPoints.push({ lat, lng });
+        }
+
+        return { segIdx, seg, lat, lng, currentMs, activeSegPoints };
+    }
+
+    function hideBasePolylinesForReplay() {
+        replayState.hiddenPolylines = [];
+        const hideList = (arr) => {
+            if (!Array.isArray(arr)) return;
+            arr.forEach(p => {
+                if (!p) return;
+                const currentMap = typeof p.getMap === 'function' ? p.getMap() : null;
+                if (currentMap) {
+                    replayState.hiddenPolylines.push(p);
+                    if (typeof p.setMap === 'function') p.setMap(null);
+                }
+            });
+        };
+        hideList(polylines);
+        if (typeof tripMapPolylines !== 'undefined') hideList(tripMapPolylines);
+        if (typeof tripMapPolyline !== 'undefined' && tripMapPolyline) hideList([tripMapPolyline]);
+    }
+
+    function restoreBasePolylinesAfterReplay() {
+        if (!replayState.hiddenPolylines || replayState.hiddenPolylines.length === 0) return;
+        replayState.hiddenPolylines.forEach(p => {
+            if (p && typeof p.setMap === 'function' && map) {
+                p.setMap(map);
+            }
+        });
+        replayState.hiddenPolylines = [];
+    }
+
+    function clearReplayTrailSegments() {
+        if (!replayState.trailSegments || replayState.trailSegments.length === 0) return;
+        replayState.trailSegments.forEach(line => {
+            if (!line) return;
+            if (map && map._lmap && typeof map._lmap.removeLayer === 'function') {
+                map._lmap.removeLayer(line);
+            } else if (typeof line.setMap === 'function') {
+                line.setMap(null);
+            }
+        });
+        replayState.trailSegments = [];
+    }
+
+    function createReplayTrailLine(points, color) {
+        if (!map || !points || points.length < 2) return null;
+        if (map._lmap && window.L) {
+            return L.polyline(points.map(pt => [pt.lat, pt.lng]), {
+                color: color || '#2563eb',
+                weight: 4.5,
+                opacity: 0.9
+            }).addTo(map._lmap);
+        }
+        if (window.google?.maps?.Polyline) {
+            return new google.maps.Polyline({
+                path: points,
+                geodesic: true,
+                strokeColor: color || '#2563eb',
+                strokeOpacity: 0.9,
+                strokeWeight: 4.5,
+                zIndex: 500,
+                map: map
+            });
+        }
+        return null;
+    }
+
+    function syncReplayProgressiveTrails(segIdx, activeSegPoints) {
+        const segs = replayState.segments;
+        for (let i = 0; i < segs.length; i++) {
+            const s = segs[i];
+            if (s.kind !== 'activity') continue;
+
+            const existing = replayState.trailSegments[i] || null;
+            if (i < segIdx) {
+                // Fully passed activity segment: ensure full polyline is visible
+                if (!existing) {
+                    replayState.trailSegments[i] = createReplayTrailLine(s.points, s.color);
+                } else if (existing._replayFull !== true) {
+                    if (map._lmap) existing.setLatLngs(s.points.map(pt => [pt.lat, pt.lng]));
+                    else existing.setPath(s.points);
+                    existing._replayFull = true;
+                }
+            } else if (i === segIdx) {
+                // Currently active segment: update progressively up to current scrubber position
+                if (activeSegPoints && activeSegPoints.length >= 2) {
+                    if (!existing) {
+                        const line = createReplayTrailLine(activeSegPoints, s.color);
+                        if (line) line._replayFull = false;
+                        replayState.trailSegments[i] = line;
+                    } else {
+                        if (map._lmap) existing.setLatLngs(activeSegPoints.map(pt => [pt.lat, pt.lng]));
+                        else existing.setPath(activeSegPoints);
+                        existing._replayFull = false;
+                    }
+                } else if (existing) {
+                    if (map._lmap) map._lmap.removeLayer(existing);
+                    else if (typeof existing.setMap === 'function') existing.setMap(null);
+                    replayState.trailSegments[i] = null;
+                }
+            } else if (existing) {
+                // Future segment (e.g. after scrubbing backwards): remove it
+                if (map._lmap) map._lmap.removeLayer(existing);
+                else if (typeof existing.setMap === 'function') existing.setMap(null);
+                replayState.trailSegments[i] = null;
+            }
+        }
+    }
+
+    function renderReplayDayMarkers(startDateStr = '') {
+        const container = document.getElementById('replayDayMarkers');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const segs = replayState.segments || [];
+        if (segs.length === 0) return;
+
+        const dayStarts = [];
+        const seenDays = new Set();
+        for (const s of segs) {
+            const dayKey = formatTimestamp(s.startMs, 'YYYY-MM-DD');
+            if (!seenDays.has(dayKey)) {
+                seenDays.add(dayKey);
+                dayStarts.push({
+                    dayKey,
+                    label: formatTimestamp(s.startMs, 'ddd, MMM D'),
+                    progress: s.wStart
+                });
+            }
+        }
+
+        // Only show day-start ticks for subsequent days (hide the first day and any overnight carryover before it)
+        const visibleDays = dayStarts.filter((d, idx) => idx > 0 && (!startDateStr || d.dayKey > startDateStr));
+        if (visibleDays.length === 0) return;
+
+        visibleDays.forEach((d) => {
+            const tick = document.createElement('div');
+            tick.className = 'replay-day-tick';
+            tick.style.left = `${(d.progress * 100).toFixed(2)}%`;
+            tick.title = `Start of ${d.label} (click to jump)`;
+            tick.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!replayState.active) return;
+                clearReplayVisitPauseTimer();
+                replayState.pausedVisitSegIdx = -1;
+                replayState.progress = d.progress;
+                renderReplayFrame(replayState.progress, { fromScrub: true });
+                updateReplayPlayPauseUi();
+            });
+            container.appendChild(tick);
+        });
+    }
+
+    function ensureReplayMapObjects(lat, lng, icon, color) {
+        if (!map) return;
+
+        if (!replayState.marker) {
+            if (map._lmap && window.L) {
+                const divIcon = L.divIcon({
+                    className: 'replay-marker-wrapper',
+                    html: `<div class="replay-marker-dot" style="border-color: ${color};"><div class="replay-visit-pill"></div><span class="replay-marker-emoji">${icon}</span></div>`,
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 19]
+                });
+                replayState.marker = L.marker([lat, lng], { icon: divIcon, zIndexOffset: 1000 }).addTo(map._lmap);
+                const el = replayState.marker.getElement();
+                replayState.markerDotEl = el ? el.querySelector('.replay-marker-dot') : null;
+                replayState.markerEmojiEl = el ? el.querySelector('.replay-marker-emoji') : null;
+                replayState.markerPillEl = el ? el.querySelector('.replay-visit-pill') : null;
+            } else if (AdvancedMarkerElement) {
+                const dot = document.createElement('div');
+                dot.className = 'replay-marker-dot';
+                dot.style.borderColor = color;
+                const pill = document.createElement('div');
+                pill.className = 'replay-visit-pill';
+                const emoji = document.createElement('span');
+                emoji.className = 'replay-marker-emoji';
+                emoji.textContent = icon;
+                dot.appendChild(pill);
+                dot.appendChild(emoji);
+                replayState.markerDotEl = dot;
+                replayState.markerEmojiEl = emoji;
+                replayState.markerPillEl = pill;
+                replayState.marker = new AdvancedMarkerElement({
+                    map: map,
+                    position: { lat, lng },
+                    content: dot,
+                    zIndex: 9999
+                });
+            }
+        }
+    }
+
+    function getReplayTargetZoomForSegment(seg) {
+        if (!seg) return 13;
+        if (seg.kind === 'visit') return 14;
+        const dist = seg.totalDist || 0;
+        if (seg.isFlight || dist > 200000) {
+            if (dist > 2500000) return 4;
+            if (dist > 900000) return 5;
+            if (dist > 350000) return 6;
+            return 8;
+        }
+        if (dist > 60000) return 10;
+        if (dist > 20000) return 11;
+        if (dist > 6000) return 12;
+        if (dist > 1800) return 13;
+        return 15;
+    }
+
+    function markReplayProgrammaticZoom(durationMs = 1100) {
+        replayState.isProgrammaticZoom = true;
+        if (replayState.programmaticZoomTimer) clearTimeout(replayState.programmaticZoomTimer);
+        replayState.programmaticZoomTimer = setTimeout(() => {
+            replayState.isProgrammaticZoom = false;
+            replayState.programmaticZoomTimer = null;
+        }, durationMs);
+    }
+
+    function getReplayBarBottomPadding() {
+        const bar = document.getElementById('replayBar');
+        if (bar && bar.style.display !== 'none') {
+            const h = bar.offsetHeight || 118;
+            return h + 46;
+        }
+        return 165;
+    }
+
+    function fitReplayBoundsSafe(bounds) {
+        if (!map || !bounds || (typeof bounds.isEmpty === 'function' && bounds.isEmpty())) return;
+        const bottomPad = getReplayBarBottomPadding();
+        if (map._lmap && typeof bounds._toLeafletBounds === 'function') {
+            const lb = bounds._toLeafletBounds();
+            if (lb && lb.isValid()) {
+                map._lmap.fitBounds(lb, {
+                    paddingTopLeft: [50, 50],
+                    paddingBottomRight: [50, bottomPad]
+                });
+            }
+        } else {
+            map.fitBounds(bounds, { top: 50, right: 50, bottom: bottomPad, left: 50 });
+        }
+    }
+
+    function panReplayPointIntoSafeArea(lat, lng, targetZoom = null) {
+        if (!map) return;
+        const bottomPad = getReplayBarBottomPadding();
+        const verticalShiftPx = Math.round(bottomPad * 0.42); // Center marker comfortably above the scrubber bar
+
+        if (map._lmap) {
+            const lmap = map._lmap;
+            const z = targetZoom !== null ? targetZoom : lmap.getZoom();
+            const pt = lmap.project([lat, lng], z);
+            const shiftedLatLng = lmap.unproject([pt.x, pt.y + verticalShiftPx], z);
+            if (targetZoom !== null && Math.abs(targetZoom - lmap.getZoom()) >= 1) {
+                markReplayProgrammaticZoom(1100);
+                lmap.flyTo(shiftedLatLng, targetZoom, { duration: 0.85, easeLinearity: 0.35 });
+            } else {
+                lmap.panTo(shiftedLatLng, { animate: true, duration: 0.4 });
+            }
+        } else {
+            if (targetZoom !== null) {
+                markReplayProgrammaticZoom(800);
+                map.setCenter({ lat, lng });
+                map.setZoom(targetZoom);
+            } else if (typeof map.panTo === 'function') {
+                map.panTo({ lat, lng });
+            } else {
+                map.setCenter({ lat, lng });
+            }
+            if (typeof map.panBy === 'function') {
+                map.panBy(0, verticalShiftPx);
+            }
+        }
+    }
+
+    function isPointInReplaySafeViewport(lat, lng) {
+        if (!map) return true;
+        const bottomPad = getReplayBarBottomPadding();
+        const edgePad = 48;
+
+        if (map._lmap) {
+            const lmap = map._lmap;
+            const size = lmap.getSize();
+            const pt = lmap.latLngToContainerPoint([lat, lng]);
+            return (
+                pt.x >= edgePad &&
+                pt.x <= size.x - edgePad &&
+                pt.y >= edgePad &&
+                pt.y <= size.y - bottomPad
+            );
+        }
+
+        const b = map.getBounds ? map.getBounds() : null;
+        if (!b || (typeof b.isEmpty === 'function' && b.isEmpty())) return false;
+        const ne = b.getNorthEast();
+        const sw = b.getSouthWest();
+        const latSpan = ne.lat() - sw.lat();
+        const lngSpan = ne.lng() - sw.lng();
+        // Exclude bottom ~28% where the scrubber bar sits
+        const safeSouth = sw.lat() + latSpan * 0.28;
+        const safeNorth = ne.lat() - latSpan * 0.08;
+        const safeWest = sw.lng() + lngSpan * 0.08;
+        const safeEast = ne.lng() - lngSpan * 0.08;
+        return lat >= safeSouth && lat <= safeNorth && lng >= safeWest && lng <= safeEast;
+    }
+
+    function clearReplayVisitPauseTimer() {
+        if (replayState.visitPauseTimer) {
+            clearTimeout(replayState.visitPauseTimer);
+            replayState.visitPauseTimer = null;
+        }
+        replayState.isDwellingAtVisit = false;
+    }
+
+    function closeReplayVisitBubble() {
+        if (replayState.markerPillEl) {
+            replayState.markerPillEl.classList.remove('visible');
+        }
+    }
+
+    function showReplayVisitBubble(seg) {
+        if (!seg || seg.kind !== 'visit') return;
+        if (!replayState.markerPillEl && map?._lmap && replayState.marker) {
+            const el = replayState.marker.getElement();
+            replayState.markerPillEl = el ? el.querySelector('.replay-visit-pill') : null;
+        }
+        if (!replayState.markerPillEl) return;
+        replayState.markerPillEl.innerHTML = `<span>${seg.icon}</span><span>${escapeHtml(seg.label)}</span>`;
+        replayState.markerPillEl.classList.add('visible');
+    }
+
+    function segmentFitsInCurrentViewport(seg) {
+        if (!map || !seg) return false;
+        const b = map.getBounds ? map.getBounds() : null;
+        if (!b || (typeof b.isEmpty === 'function' && b.isEmpty())) return false;
+        if (seg.kind === 'visit') {
+            return b.contains(new google.maps.LatLng(seg.lat, seg.lng));
+        }
+        if (seg.points && seg.points.length > 0) {
+            const step = Math.max(1, Math.floor(seg.points.length / 12));
+            for (let i = 0; i < seg.points.length; i += step) {
+                if (!b.contains(new google.maps.LatLng(seg.points[i].lat, seg.points[i].lng))) {
+                    return false;
+                }
+            }
+            const last = seg.points[seg.points.length - 1];
+            return b.contains(new google.maps.LatLng(last.lat, last.lng));
+        }
+        return false;
+    }
+
+    function renderReplayFrame(progress, options = {}) {
+        const sample = sampleReplayAtProgress(progress);
+        if (!sample) return;
+
+        const { segIdx, seg, lat, lng, currentMs, activeSegPoints } = sample;
+        ensureReplayMapObjects(lat, lng, seg.icon, seg.color);
+
+        // Update animated marker position & badge
+        if (replayState.marker) {
+            if (map._lmap) {
+                replayState.marker.setLatLng([lat, lng]);
+                if (!replayState.markerDotEl) {
+                    const el = replayState.marker.getElement();
+                    replayState.markerDotEl = el ? el.querySelector('.replay-marker-dot') : null;
+                    replayState.markerEmojiEl = el ? el.querySelector('.replay-marker-emoji') : null;
+                    replayState.markerPillEl = el ? el.querySelector('.replay-visit-pill') : null;
+                }
+            } else {
+                replayState.marker.position = { lat, lng };
+            }
+            if (replayState.markerDotEl) replayState.markerDotEl.style.borderColor = seg.color;
+            if (replayState.markerEmojiEl) replayState.markerEmojiEl.textContent = seg.icon;
+        }
+
+        // Render only the path lines passed so far, preserving each activity's true color
+        syncReplayProgressiveTrails(segIdx, activeSegPoints);
+
+        const segmentChanged = segIdx !== replayState.lastSegIdx;
+
+        // Minimal visit label pill & brief non-toggling dwell (~1.6s) without flipping Play/Pause button
+        if (segmentChanged) {
+            clearReplayVisitPauseTimer();
+            if (seg.kind === 'visit') {
+                if (replayState.pauseAtVisits) {
+                    showReplayVisitBubble(seg);
+                    const shouldDwell = Boolean(
+                        replayState.playing &&
+                        !options.fromScrub &&
+                        replayState.pausedVisitSegIdx !== segIdx
+                    );
+                    if (shouldDwell) {
+                        replayState.pausedVisitSegIdx = segIdx;
+                        replayState.isDwellingAtVisit = true;
+                        const dwellMs = replayState.speed >= 5 ? 600 : (replayState.speed >= 3 ? 950 : 1600);
+                        replayState.visitPauseTimer = setTimeout(() => {
+                            replayState.visitPauseTimer = null;
+                            replayState.isDwellingAtVisit = false;
+                            replayState.lastFrameTs = null;
+                        }, dwellMs);
+                    }
+                } else {
+                    closeReplayVisitBubble();
+                }
+            } else {
+                closeReplayVisitBubble();
+            }
+        }
+
+        // Smart auto-zoom & safe-area follow (keeps marker and routes above the scrubber bar)
+        if (replayState.follow && map) {
+            const now = performance.now();
+
+            if (segmentChanged) {
+                const currentZoom = map.getZoom ? (map.getZoom() || 12) : 12;
+                const targetZoom = getReplayTargetZoomForSegment(seg);
+                const fitsNow = segmentFitsInCurrentViewport(seg) && isPointInReplaySafeViewport(lat, lng);
+
+                const isLongTravel = Boolean(seg.isFlight || (seg.kind === 'activity' && (seg.totalDist || 0) >= 25000));
+                let shouldAutoZoom = false;
+                let shouldFitSegmentBounds = false;
+
+                if (replayState.autoZoom) {
+                    if (isLongTravel && !fitsNow && seg.points && seg.points.length >= 2) {
+                        // Force zoom-out for flights & long road/train trips (>= 25 km) that would cause jarring panning
+                        replayState.manualZoomOverride = false;
+                        shouldAutoZoom = true;
+                        shouldFitSegmentBounds = true;
+                    } else if (!replayState.manualZoomOverride) {
+                        // Zoom back in when arriving from a wide view (e.g. after a flight or long highway drive)
+                        if (currentZoom <= 10 && targetZoom > currentZoom + 1.5) {
+                            shouldAutoZoom = true;
+                        } else if (!fitsNow && targetZoom < currentZoom - 1.5 && (seg.totalDist || 0) > 12000) {
+                            shouldAutoZoom = true;
+                        }
+                    }
+                }
+
+                if (shouldAutoZoom) {
+                    if (shouldFitSegmentBounds && seg.points && seg.points.length >= 2) {
+                        const segBounds = new google.maps.LatLngBounds();
+                        seg.points.forEach(pt => segBounds.extend(pt));
+                        if (!segBounds.isEmpty()) {
+                            markReplayProgrammaticZoom(1100);
+                            fitReplayBoundsSafe(segBounds);
+                        }
+                    } else {
+                        panReplayPointIntoSafeArea(lat, lng, targetZoom);
+                    }
+                } else if (!fitsNow) {
+                    panReplayPointIntoSafeArea(lat, lng, null);
+                }
+                replayState.lastPanTs = now;
+            } else if (now - replayState.lastPanTs > 150) {
+                replayState.lastPanTs = now;
+                if (!isPointInReplaySafeViewport(lat, lng)) {
+                    panReplayPointIntoSafeArea(lat, lng, null);
+                }
+            }
+        }
+        replayState.lastSegIdx = segIdx;
+
+        // Update HUD
+        const badge = document.getElementById('replayActivityBadge');
+        const placeLabel = document.getElementById('replayPlaceLabel');
+        const clockEl = document.getElementById('replayClock');
+        const scrubber = document.getElementById('replayScrubber');
+        const progressText = document.getElementById('replayProgressText');
+
+        if (badge) {
+            badge.textContent = seg.icon;
+            badge.style.background = seg.color;
+        }
+        if (placeLabel) placeLabel.textContent = seg.label;
+        if (clockEl) clockEl.textContent = formatTimestamp(currentMs, 'ddd, MMM D, YYYY · h:mm A');
+        if (scrubber) scrubber.value = String(Math.round(progress * 1000));
+        if (progressText) progressText.textContent = `${Math.round(progress * 100)}%`;
+    }
+
+    function updateReplayPlayPauseUi() {
+        const btn = document.getElementById('replayPlayPauseBtn');
+        if (!btn) return;
+        btn.textContent = replayState.playing ? '⏸ Pause' : (replayState.progress >= 1 ? '↻ Replay' : '▶ Play');
+    }
+
+    function replayTick(ts) {
+        if (!replayState.active || !replayState.playing) {
+            replayState.rafId = null;
+            return;
+        }
+        if (replayState.lastFrameTs === null) {
+            replayState.lastFrameTs = ts;
+        }
+        const dt = Math.min(100, ts - replayState.lastFrameTs);
+        replayState.lastFrameTs = ts;
+
+        if (replayState.isDwellingAtVisit) {
+            replayState.rafId = requestAnimationFrame(replayTick);
+            return;
+        }
+
+        const deltaProgress = (dt * replayState.speed) / replayState.baseDurationMs;
+        replayState.progress = Math.min(1, replayState.progress + deltaProgress);
+        renderReplayFrame(replayState.progress);
+
+        if (replayState.progress >= 1) {
+            replayState.playing = false;
+            replayState.rafId = null;
+            updateReplayPlayPauseUi();
+            return;
+        }
+        replayState.rafId = requestAnimationFrame(replayTick);
+    }
+
+    function setReplayPlaying(shouldPlay) {
+        clearReplayVisitPauseTimer();
+        if (!replayState.active) return;
+        if (shouldPlay && replayState.progress >= 1) {
+            replayState.progress = 0;
+        }
+        replayState.playing = Boolean(shouldPlay);
+        replayState.lastFrameTs = null;
+        updateReplayPlayPauseUi();
+        if (replayState.playing && !replayState.rafId) {
+            replayState.rafId = requestAnimationFrame(replayTick);
+        } else if (!replayState.playing && replayState.rafId) {
+            cancelAnimationFrame(replayState.rafId);
+            replayState.rafId = null;
+        }
+    }
+
+    function stopJourneyReplay(hideBar = true, restoreLines = true) {
+        if (replayState.rafId) {
+            cancelAnimationFrame(replayState.rafId);
+            replayState.rafId = null;
+        }
+        replayState.playing = false;
+        replayState.active = false;
+        replayState.lastFrameTs = null;
+        replayState.lastSegIdx = -1;
+        clearReplayVisitPauseTimer();
+        replayState.pausedVisitSegIdx = -1;
+        replayState.manualZoomOverride = false;
+        closeReplayVisitBubble();
+        if (replayState.zoomListener) {
+            if (window.google?.maps?.event?.removeListener) {
+                google.maps.event.removeListener(replayState.zoomListener);
+            } else if (typeof replayState.zoomListener.remove === 'function') {
+                replayState.zoomListener.remove();
+            }
+            replayState.zoomListener = null;
+        }
+
+        if (replayState.marker) {
+            if (map && map._lmap && typeof map._lmap.removeLayer === 'function') {
+                map._lmap.removeLayer(replayState.marker);
+            } else if (typeof replayState.marker.setMap === 'function') {
+                replayState.marker.setMap(null);
+            } else {
+                replayState.marker.map = null;
+            }
+            replayState.marker = null;
+            replayState.markerDotEl = null;
+            replayState.markerEmojiEl = null;
+            replayState.markerPillEl = null;
+        }
+
+        clearReplayTrailSegments();
+        if (restoreLines) {
+            restoreBasePolylinesAfterReplay();
+        } else {
+            replayState.hiddenPolylines = [];
+        }
+
+        if (hideBar) {
+            const bar = document.getElementById('replayBar');
+            if (bar) bar.style.display = 'none';
+            const dayMarkersEl = document.getElementById('replayDayMarkers');
+            if (dayMarkersEl) dayMarkersEl.innerHTML = '';
+        }
+        updateReplayPlayPauseUi();
+    }
+
+    function startJourneyReplay(startDateStr, endDateStr, title = '', options = {}) {
+        if (!uiEnabled || !map) return;
+        const autoPlay = options.autoPlay !== false;
+        const shouldFitBounds = options.fitBounds !== false;
+
+        // Exit summary or world view so the map is visible
+        if (summaryViewVisible) {
+            const mapBtn = document.getElementById('mapBtn');
+            if (mapBtn) mapBtn.click();
+        }
+        if (worldViewVisible) {
+            showSidebarTab('date');
+        }
+
+        stopJourneyReplay(false);
+
+        const { segments, totalWeight } = buildReplaySegments(startDateStr, endDateStr);
+        if (!segments || segments.length === 0) {
+            stopJourneyReplay(true);
+            showToast('No route or visits found in this date range to replay.', 'warning');
+            return;
+        }
+
+        let initialProgress = 0;
+        if (options.jumpToDate && options.jumpToDate > startDateStr) {
+            const targetSeg = segments.find(s => formatTimestamp(s.startMs, 'YYYY-MM-DD') >= options.jumpToDate);
+            if (targetSeg) {
+                initialProgress = targetSeg.wStart;
+            }
+        }
+
+        replayState.active = true;
+        replayState.segments = segments;
+        replayState.totalWeight = totalWeight;
+        replayState.progress = initialProgress;
+        replayState.title = title;
+        replayState.manualZoomOverride = false;
+        replayState.pausedVisitSegIdx = -1;
+        // Auto-calibrate base duration from totalWeight so flights & long road trips glide smoothly
+        replayState.baseDurationMs = Math.max(38000, Math.min(180000, Math.round(totalWeight * 1650)));
+
+        // Detect manual user zooms so auto-zoom respects the user's preferred zoom level
+        replayState.zoomListener = map.addListener('zoom_changed', () => {
+            if (replayState.active && !replayState.isProgrammaticZoom) {
+                replayState.manualZoomOverride = true;
+            }
+        });
+
+        // Fit map to full replay route before starting
+        if (shouldFitBounds) {
+            const bounds = new google.maps.LatLngBounds();
+            segments.forEach(s => {
+                if (s.kind === 'visit') bounds.extend({ lat: s.lat, lng: s.lng });
+                else if (s.points) s.points.forEach(pt => bounds.extend(pt));
+            });
+            if (!bounds.isEmpty()) {
+                markReplayProgrammaticZoom(1100);
+                fitReplayBoundsSafe(bounds);
+            }
+        }
+
+        hideBasePolylinesForReplay();
+        renderReplayDayMarkers(startDateStr);
+
+        const bar = document.getElementById('replayBar');
+        if (bar) bar.style.display = 'block';
+
+        if (autoPlay) {
+            const mobileSwitcher = document.getElementById('mobile-view-switcher');
+            if (mobileSwitcher && window.getComputedStyle(mobileSwitcher).display === 'flex') {
+                const showMapBtn = document.getElementById('show-map-btn');
+                if (showMapBtn) showMapBtn.click();
+            }
+        }
+
+        renderReplayFrame(replayState.progress, { fromScrub: !autoPlay });
+        setReplayPlaying(autoPlay);
+    }
+
+    function initJourneyReplay() {
+        const triggerReplay = () => {
+            if (!uiEnabled) return;
+            if (tripsViewVisible && window.activePreviewedTrip) {
+                startJourneyReplay(window.activePreviewedTrip.startDate, window.activePreviewedTrip.endDate, window.activePreviewedTrip.title);
+                return;
+            }
+            const startStr = document.getElementById('startDatePicker')?.value;
+            const endStr = document.getElementById('endDatePicker')?.value;
+            if (startStr && endStr) {
+                startJourneyReplay(startStr, endStr);
+            }
+        };
+
+        const replayMoreBtn = document.getElementById('replayMoreBtn');
+        if (replayMoreBtn) {
+            replayMoreBtn.addEventListener('click', () => {
+                const dd = document.getElementById('timelineMoreDropdown');
+                if (dd) dd.style.display = 'none';
+                triggerReplay();
+            });
+        }
+
+        const playPauseBtn = document.getElementById('replayPlayPauseBtn');
+        if (playPauseBtn) {
+            playPauseBtn.addEventListener('click', () => setReplayPlaying(!replayState.playing));
+        }
+
+        const restartBtn = document.getElementById('replayRestartBtn');
+        if (restartBtn) {
+            restartBtn.addEventListener('click', () => {
+                if (!replayState.active) return;
+                replayState.progress = 0;
+                renderReplayFrame(0);
+                setReplayPlaying(true);
+            });
+        }
+
+        const followBtn = document.getElementById('replayFollowBtn');
+        if (followBtn) {
+            followBtn.addEventListener('click', () => {
+                replayState.follow = !replayState.follow;
+                followBtn.classList.toggle('active', replayState.follow);
+            });
+        }
+
+        const autoZoomBtn = document.getElementById('replayAutoZoomBtn');
+        if (autoZoomBtn) {
+            autoZoomBtn.addEventListener('click', () => {
+                replayState.autoZoom = !replayState.autoZoom;
+                if (replayState.autoZoom) replayState.manualZoomOverride = false;
+                autoZoomBtn.classList.toggle('active', replayState.autoZoom);
+            });
+        }
+
+        const pauseVisitsBtn = document.getElementById('replayPauseVisitsBtn');
+        if (pauseVisitsBtn) {
+            pauseVisitsBtn.addEventListener('click', () => {
+                replayState.pauseAtVisits = !replayState.pauseAtVisits;
+                pauseVisitsBtn.classList.toggle('active', replayState.pauseAtVisits);
+                if (!replayState.pauseAtVisits) {
+                    closeReplayVisitBubble();
+                }
+            });
+        }
+
+        const closeBtn = document.getElementById('replayCloseBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => stopJourneyReplay(true));
+        }
+
+        const scrubber = document.getElementById('replayScrubber');
+        if (scrubber) {
+            scrubber.addEventListener('input', (e) => {
+                if (!replayState.active) return;
+                clearReplayVisitPauseTimer();
+                replayState.pausedVisitSegIdx = -1;
+                replayState.progress = Math.max(0, Math.min(1, parseFloat(e.target.value) / 1000));
+                renderReplayFrame(replayState.progress, { fromScrub: true });
+                updateReplayPlayPauseUi();
+            });
+        }
+
+        const speedTriggerBtn = document.getElementById('replaySpeedTriggerBtn');
+        const speedMenu = document.getElementById('replaySpeedMenu');
+        if (speedTriggerBtn && speedMenu) {
+            speedTriggerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                speedMenu.classList.toggle('open');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!speedMenu.contains(e.target) && !speedTriggerBtn.contains(e.target)) {
+                    speedMenu.classList.remove('open');
+                }
+            });
+
+            speedMenu.querySelectorAll('.replay-speed-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const spd = parseFloat(opt.dataset.speed) || 1;
+                    replayState.speed = spd;
+                    speedTriggerBtn.textContent = `${spd}x ▴`;
+                    speedMenu.querySelectorAll('.replay-speed-option').forEach(b => b.classList.toggle('active', b === opt));
+                    speedMenu.classList.remove('open');
+                });
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!replayState.active) return;
+            const tag = (e.target?.tagName || '').toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                setReplayPlaying(!replayState.playing);
+            } else if (e.key === 'Escape') {
+                stopJourneyReplay(true);
+            }
+        });
+    }
+
     async function initializeApp() {
         try {
             const resolvedApiKey = await resolveGoogleMapsApiKey();
@@ -17859,6 +19273,7 @@ Departed: ${end}</description>
             initCacheControls();
             initSearch();
             initCurrentLocationButton();
+            initJourneyReplay();
             initEditModal();
             initTimelineEditsOverlay();
             initTripsAndPlacesLived();
@@ -17920,6 +19335,7 @@ Departed: ${end}</description>
                     document.getElementById('startDatePicker').value = date;
                     document.getElementById('endDatePicker').value = date;
                 }
+                if (typeof updateGoButtonState === 'function') updateGoButtonState();
                 contextMenu.style.display = 'none';
             });
 
