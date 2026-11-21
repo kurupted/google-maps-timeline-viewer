@@ -96,7 +96,7 @@ Using Google Maps as the map provider is recommended, as it's required for place
 1. **Download The Google Maps Timeline Viewer:**
    - Save this project's [timeline.html](https://raw.githubusercontent.com/kurupted/google-maps-timeline-viewer/refs/heads/main/timeline.html) file anywhere you like, either on your computer (eg in My Documents) or on your mobile device. (To save, copy/paste the text into eg Notepad, and save as "timeline.html")
 
-2. **Add your API key:**
+2. **Add your API key, if using Google Maps:**
    - When you first open `timeline.html`, the app will ask for your Google Maps API key. If you choose to remember it, the key will be saved in your browser's storage, so you won't need to enter it again.
    - If you change browsers or devices, clear your browser data, or move/rename the `timeline.html` file, you may need to enter the key again.
 
