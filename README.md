@@ -23,13 +23,13 @@ Since Google transitioned to storing location history locally on your device rat
 - Mobile-friendly UI, so you can use this on your phone
 
 <p align="center">
-  <a href="/screenshot.jpg"><img src="/screenshot.jpg?raw=true" alt="Map View" width="48%"></a>
-  <a href="/screenshot2.jpg"><img src="/screenshot2.jpg?raw=true" alt="Summary View" width="48%"></a>
+  <a href="screenshots/screenshot.jpg"><img src="screenshots/screenshot.jpg?raw=true" alt="Map View" width="48%"></a>
+  <a href="screenshots/screenshot2.jpg"><img src="screenshots/screenshot2.jpg?raw=true" alt="Summary View" width="48%"></a>
 </p>
 
 <p align="center">
-  <a href="/screenshot3.jpg"><img src="/screenshot3.jpg?raw=true" alt="Area Search" width="48%"></a>
-  <a href="/screenshot5.jpg"><img src="/screenshot5.jpg?raw=true" alt="Trips View" width="48%"></a>
+  <a href="screenshots/screenshot3.jpg"><img src="screenshots/screenshot3.jpg?raw=true" alt="Area Search" width="48%"></a>
+  <a href="screenshots/screenshot5.jpg"><img src="screenshots/screenshot5.jpg?raw=true" alt="Trips View" width="48%"></a>
 </p>
 
 #
