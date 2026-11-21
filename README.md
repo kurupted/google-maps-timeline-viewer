@@ -13,8 +13,8 @@ Since Google transitioned to storing location history locally on your device rat
 - Find all visited places within the viewable map area
 - Summary of activities by year/month, with bar charts
 - Trips View automatically detects vacations and travels away from home, with duration filters and flight detection
-- Animated Journey Replay animates your route for any day, date range, or trip with a live clock, scrubber, speed controls, and trailing path
 - World View shows a heat map of your activity, and a list of countries and cities visited
+- Journey Replay animates your route over the selected time period
 - Timeline items are editable, including route paths
 - Timezone detection for viewing your travel days with local times
 - Place details retrieved from Google Places API can be saved locally, to reduce future API calls
@@ -137,10 +137,11 @@ Replace `YOUR_API_KEY` with the key you obtained from the Google Cloud Console, 
    - Android users: You may not be allowed to load the data if it's in certain folders, such as Downloads -- move the data file to an accessible location.
 
 ## Note on API Usage & Billing
+If you use a Google Maps API key, it is free up to certain usage limits. The limits are high enough that you shouldn't incur any charges with normal use.
 - You can find the free usage limits, and over-the-limit pricing here: https://developers.google.com/maps/billing-and-pricing/pricing#places-pricing
 - Depending on what information is requested during the API call, it will fall into tiers, eg Essentials or Pro. Details here:
   https://developers.google.com/maps/billing-and-pricing/sku-details#place-details-pro-sku
 - At this time, the monthly free limits are 1,000 Place Photos, 5,000 Pro-level requests, and 10,000 Essentials-level requests.
-- There is also an option within the Timeline Viewer to disable API calls, which will still show your activity paths and place visits, however all of the places will be labeled "Unknown Location".
 - You can also save retrieved Place data to a file, which will be loaded automatically next time, to avoid API calls that were done previously.
-  
+- There is an option within the Timeline Viewer to disable API calls, which will still show your activity paths and place visits, however all of the places will be labeled "Unknown Location".
+- You can alternatively use OpenStreetMaps, which doesn't require a Google API key.
